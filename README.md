@@ -86,27 +86,6 @@ echo $sql;
 
 ---
 
-## 📁 Estrutura Básica
-
-```
-src/
-├── Connection/
-│   └── PDOConnection.php
-├── Contracts/
-│   └── QueryBuilderInterface.php
-├── Enums/
-│   ├── JoinType.php
-│   ├── OrderDirection.php
-│   └── SqlOperator.php
-├── Helpers/
-│   └── ...
-├── Paginator/
-│   └── Paginator.php
-└── QueryBuilder.php
-```
-
----
-
 ## 🧪 Testes
 
 Você pode escrever testes com PHPUnit. Exemplo de comando:
@@ -125,7 +104,7 @@ vendor/bin/phpunit
 - [x] Suporte a consultas RAW
 - [ ] Cache de queries (em andamento)
 - [ ] Integração com outras camadas de repositório
-- [ ] Compatibilidade multi-driver estendida (ex: Oracle, Firebird)
+- [ ] Compatibilidade multi-driver estendida
 
 ---
 
