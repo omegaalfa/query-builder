@@ -19,7 +19,7 @@ Inspirada em Eloquent e Doctrine, mas com **zero dependências externas** e foco
 ## 📦 Instalação
 
 ```bash
-composer require omgaalfa/query-builder
+composer require omegaalfa/query-builder
 ```
 
 ---
