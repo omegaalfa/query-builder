@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
-final class PaginationDTO
+final readonly class PaginationDTO
 {
 	/**
 	 * @param  int  $currentPage
@@ -14,9 +14,9 @@ final class PaginationDTO
 	 * @param  int  $totalItems
 	 */
 	public function __construct(
-		public readonly int $currentPage,
-		public readonly int $perPage,
-		public readonly int $totalPages,
-		public readonly int $totalItems
+		public int $currentPage,
+		public int $perPage,
+		public int $totalPages,
+		public int $totalItems
 	) {}
 }
