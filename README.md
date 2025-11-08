@@ -10,7 +10,7 @@
 
 ## 🚀 Sobre o Projeto
 
-**Omgaalfa Query Builder** é uma biblioteca **moderna, leve e tipada** em **PHP 8.2+**, criada para facilitar a **construção fluente de queries SQL** com **PDO**, **cache**, **paginação** e **transações**.
+**Omgaalfa Query Builder** é uma biblioteca **moderna, leve e tipada** em **PHP 8.4+**, criada para facilitar a **construção fluente de queries SQL** com **PDO**, **cache**, **paginação** e **transações**.
 
 Inspirada em Eloquent e Doctrine, mas com **zero dependências externas** e foco em **performance e simplicidade**.
 
@@ -26,7 +26,7 @@ composer require omgaalfa/query-builder
 
 ## 🛠️ Requisitos
 
-- PHP >= 8.2
+- PHP >= 8.4
 - Extensão `pdo` habilitada
 - Banco de dados compatível (MySQL, MariaDB, PostgreSQL, SQLite, etc.)
 
