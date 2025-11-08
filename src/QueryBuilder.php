@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
+use Omegaalfa\QueryBuilder\exceptions\DatabaseException;
 use Omegaalfa\QueryBuilder\exceptions\QueryException;
 use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
 use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
@@ -34,6 +35,7 @@ final class QueryBuilder extends QueryBuilderOperations
         private readonly ?CacheInterface     $cache = null
     )
     {
+        $this->setDriver($this->connection->getDriver());
     }
 
     /**
@@ -64,8 +66,7 @@ final class QueryBuilder extends QueryBuilderOperations
      * Executa a query atual e retorna um PDOStatement.
      *
      * @return PDOStatement
-     * @throws QueryException
-     * @throws exceptions\DatabaseException
+     * @throws DatabaseException
      */
     private function prepareAndExecute(): PDOStatement
     {
@@ -73,14 +74,43 @@ final class QueryBuilder extends QueryBuilderOperations
         $stmt = $pdo->prepare($this->getQuerySql());
 
         foreach ($this->params as $param => $value) {
-            if ($value === '' || $value === [] || $value === null) {
-                throw new QueryException("Field {$param} is empty or invalid.");
-            }
-            if (is_array($value)) {
-                $stmt->bindValue($param, $value);
+            // 🔸 Nulos
+            if ($value === null) {
+                $stmt->bindValue($param, null, PDO::PARAM_NULL);
                 continue;
             }
-            $stmt->bindValue($param, $value);
+
+            // 🔸 Arrays (não são suportados diretamente)
+            if (is_array($value)) {
+                throw new DatabaseException("Invalid binding for {$param}: arrays are not supported here.");
+            }
+
+            // 🔸 DateTime → converte para string compatível com SQL
+            if ($value instanceof \DateTimeInterface) {
+                $stmt->bindValue($param, $value->format('Y-m-d H:i:s'));
+                continue;
+            }
+
+            // 🔸 Inteiros
+            if (is_int($value)) {
+                $stmt->bindValue($param, $value, PDO::PARAM_INT);
+                continue;
+            }
+
+            // 🔸 Booleanos
+            if (is_bool($value)) {
+                $stmt->bindValue($param, (int)$value, PDO::PARAM_INT);
+                continue;
+            }
+
+            // 🔸 Recursos (arquivos, streams, blobs)
+            if (is_resource($value)) {
+                $stmt->bindParam($param, $value, PDO::PARAM_LOB);
+                continue;
+            }
+
+            // 🔸 Qualquer outro tipo (string, float, double, etc)
+            $stmt->bindValue($param, (string)$value);
         }
 
         $stmt->execute();
@@ -119,10 +149,15 @@ final class QueryBuilder extends QueryBuilderOperations
                 );
             }
 
-            $result = new QueryResultDTO($this->streamData($stmt), $count, $pagination);
-            $this->saveToCache($result);
+            $isCacheEnabled = isset($this->cacheTtl) && $this->cache !== null;
+            $data = $this->streamData($stmt);
+            if ($isCacheEnabled) {
+                $result = new QueryResultDTO(iterator_to_array($data, false), $count, $pagination);
+                $this->saveToCache($result);
+                return $result;
+            }
 
-            return $result;
+            return new QueryResultDTO($data, $count, $pagination);
         } catch (PDOException $e) {
             throw new QueryException(
                 message: "Query execution failed: {$e->getMessage()}",
@@ -136,19 +171,34 @@ final class QueryBuilder extends QueryBuilderOperations
      * Obtém total para paginação.
      *
      * @return int
-     * @throws QueryException
-     * @throws exceptions\DatabaseException
+     * @throws DatabaseException
      */
     private function getTotalCount(): int
     {
+        // build base SQL without LIMIT
+        $sql = $this->getQuerySql();
+        // remove LIMIT clause if present
+        $sql = preg_replace('/\s+LIMIT\s+\d+\s*,\s*\d+\s*$/i', '', $sql);
+
+        if (!empty($this->groupBy)) {
+            // wrap as subquery to count groups correctly
+            $countSql = "SELECT COUNT(*) as total FROM ({$sql}) AS __omg_count";
+            $pdo = $this->connection->pdo();
+            $stmt = $pdo->prepare($countSql);
+            foreach ($this->params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->execute();
+            return (int)$stmt->fetchColumn();
+        }
+
+        // default simple count
         $countQuery = clone $this;
         $countQuery->sql = ['SELECT', 'COUNT(*) as total', "FROM {$this->table}"];
         $countQuery->orderBy = [];
         $countQuery->limit = null;
-
         $stmt = $countQuery->prepareAndExecute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
         return (int)($result['total'] ?? 0);
     }
 

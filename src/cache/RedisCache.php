@@ -5,8 +5,9 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder\cache;
 
+use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
 use Redis;
-use Omegaalfa\queryBuilder\interfaces\CacheInterface;
+
 
 class RedisCache implements CacheInterface
 {

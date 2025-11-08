@@ -33,8 +33,9 @@ trait QueryBuilderCacheTrait
     }
 
     /**
-     * @param QueryResultDTO $result
+     * Salva o resultado da query no cache.
      *
+     * @param QueryResultDTO $result
      * @return void
      */
     private function saveToCache(QueryResultDTO $result): void
@@ -43,10 +44,22 @@ trait QueryBuilderCacheTrait
             return;
         }
 
-        $this->cache->set($this->cacheKey, $result, $this->cacheTtl);
+        $data = is_iterable($result->data)
+            ? iterator_to_array($result->data, false)
+            : $result->data;
+
+        $cachedPayload = [
+            'data' => $data,
+            'count' => $result->count,
+            'pagination' => $result->pagination,
+        ];
+
+        $this->cache->set($this->cacheKey, $cachedPayload, $this->cacheTtl);
     }
 
     /**
+     * Recupera o resultado do cache, se existir.
+     *
      * @return QueryResultDTO|null
      */
     private function getFromCache(): ?QueryResultDTO
@@ -59,10 +72,15 @@ trait QueryBuilderCacheTrait
 
         if ($this->cache->has($this->cacheKey)) {
             $cachedResult = $this->cache->get($this->cacheKey);
+
+            if (!is_array($cachedResult) || !isset($cachedResult['data'])) {
+                return null; // evita erros se o cache estiver corrompido
+            }
+
             return new QueryResultDTO(
                 data: $cachedResult['data'],
-                count: $cachedResult['count'],
-                pagination: $cachedResult['pagination']
+                count: $cachedResult['count'] ?? count($cachedResult['data']),
+                pagination: $cachedResult['pagination'] ?? null
             );
         }
 

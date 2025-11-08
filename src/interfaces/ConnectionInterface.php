@@ -26,4 +26,10 @@ interface ConnectionInterface
      * @return mixed
      */
     public function transaction(callable $callback): mixed;
+
+    /**
+     * @return string
+     */
+    public function getDriver(): string;
+
 }

@@ -23,6 +23,45 @@ final class PDOConnection implements ConnectionInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isConnected(): bool
+    {
+        return $this->connection !== null;
+    }
+
+    /**
+     * Executa transações com rollback automático em caso de erro.
+     * @param callable $callback
+     * @return mixed
+     * @throws DatabaseException
+     */
+    public function transaction(callable $callback): mixed
+    {
+        $pdo = $this->connect();
+
+        try {
+            $pdo->beginTransaction();
+
+            $result = $callback($pdo);
+
+            $pdo->commit();
+
+            return $result;
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw new DatabaseException(
+                message: "Transaction failed: {$e->getMessage()}",
+                code: (int)$e->getCode(),
+                previousException: $e
+            );
+        }
+    }
+
+    /**
      * Conecta apenas quando necessário.
      *
      * @return PDO
@@ -59,12 +98,15 @@ final class PDOConnection implements ConnectionInterface
         return $this->connection;
     }
 
+
     /**
-     * @return bool
+     * @return PDO
+     * @throws DatabaseException
      */
-    public function isConnected(): bool
+    public function reconnect(): PDO
     {
-        return $this->connection !== null;
+        $this->disconnect();
+        return $this->connect();
     }
 
     /**
@@ -76,36 +118,12 @@ final class PDOConnection implements ConnectionInterface
     }
 
     /**
-     * Executa transações com rollback automático em caso de erro.
-     * @param callable $callback
-     * @return mixed
-     * @throws DatabaseException
+     * @return string
      */
-    public function transaction(callable $callback): mixed
+    public function getDriver(): string
     {
-        $pdo = $this->connect();
-
-        try {
-            $pdo->beginTransaction();
-
-            $result = $callback($pdo);
-
-            $pdo->commit();
-
-            return $result;
-        } catch (Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-
-            throw new DatabaseException(
-                message: "Transaction failed: {$e->getMessage()}",
-                code: (int)$e->getCode(),
-                previousException: $e
-            );
-        }
+        return $this->config->driver;
     }
-
 
     /**
      * Exposição direta do PDO, para casos específicos.
@@ -115,6 +133,10 @@ final class PDOConnection implements ConnectionInterface
      */
     public function pdo(): PDO
     {
-        return $this->connect();
+        try {
+            return $this->connect();
+        } catch (DatabaseException $e) {
+            return $this->reconnect();
+        }
     }
 }

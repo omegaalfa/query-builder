@@ -11,23 +11,12 @@ use Omegaalfa\QueryBuilder\enums\OrderDirection;
 use Omegaalfa\QueryBuilder\enums\SqlOperator;
 use Omegaalfa\QueryBuilder\exceptions\QueryException;
 use Omegaalfa\QueryBuilder\interfaces\QueryBuilderInterface;
+use Omegaalfa\QueryBuilder\traits\HelperQueryOperationsTrait;
 
 class QueryBuilderOperations implements QueryBuilderInterface
 {
 
-    /**
-     * Lista de operadores suportados para where/orWhere simples
-     */
-    private const array SUPPORTED_OPERATORS = [
-        SqlOperator::EQUALS,
-        SqlOperator::NOT_EQUALS,
-        SqlOperator::GREATER_THAN,
-        SqlOperator::LESS_THAN,
-        SqlOperator::LESS_THAN_OR_EQUALS,
-        SqlOperator::GREATER_THAN_OR_EQUALS,
-        SqlOperator::LIKE,
-        SqlOperator::NOT_LIKE,
-    ];
+    use HelperQueryOperationsTrait;
 
     /**
      * @var array
@@ -70,12 +59,6 @@ class QueryBuilderOperations implements QueryBuilderInterface
     protected array $sql = [];
 
     /**
-     * @var string|null
-     */
-    protected string|null $table = null;
-
-
-    /**
      * Define um alias para a tabela principal da consulta.
      *
      * Exemplo: ->select('doenca')->alias('d')
@@ -85,7 +68,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function alias(string $alias): self
     {
-        $this->sql[] = "AS $alias";
+        $this->sql[] = "AS {$this->quoteIdentifier($alias)}";
         return $this;
     }
 
@@ -100,9 +83,23 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function select(string $table, array $fields = ['*']): self
     {
         $this->resetOperationsState();
-        $this->table = $table;
-        $this->sql = ['SELECT', implode(', ', $fields), "FROM $table"];
+        $this->sql = ['SELECT', implode(', ', $fields), 'FROM ' . $this->quoteIdentifier($table)];
         return $this;
+    }
+
+    /**
+     * @return void
+     */
+    protected function resetOperationsState(): void
+    {
+        $this->sql = [];
+        $this->joins = [];
+        $this->where = [];
+        $this->orderBy = [];
+        $this->groupBy = [];
+        $this->having = [];
+        $this->limit = null;
+        $this->params = [];
     }
 
     /**
@@ -115,11 +112,10 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function insert(string $table, array $data): self
     {
         $this->resetOperationsState();
-        $this->table = $table;
         $fields = array_keys($data);
         $this->sql = [
             'INSERT INTO',
-            $table,
+            $this->quoteIdentifier($table),
             '(' . implode(', ', $fields) . ')',
             'VALUES',
             '(' . implode(', ', array_map(static fn($field) => ':' . $field, $fields)) . ')'
@@ -143,21 +139,15 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function update(string $table, array $data): self
     {
         $this->resetOperationsState();
-        $this->table = $table;
-        $fields = [];
+        $assignments = [];
+
         foreach ($data as $key => $value) {
             $param = ':' . $key;
-            $fields[] = sprintf('%s = %s', $key, $param);
+            $assignments[] = sprintf('%s = %s', $this->quoteIdentifier($key), $param);
             $this->params[$param] = $value;
         }
 
-        $this->sql = [
-            'UPDATE',
-            $table,
-            'SET',
-            implode(', ', $fields)
-        ];
-
+        $this->sql = ['UPDATE', $this->quoteIdentifier($table), 'SET', implode(', ', $assignments)];
         return $this;
     }
 
@@ -170,12 +160,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function delete(string $table): self
     {
         $this->resetOperationsState();
-        $this->table = $table;
-        $this->sql = [
-            'DELETE FROM',
-            $table
-        ];
-
+        $this->sql = ['DELETE FROM', $this->quoteIdentifier($table)];
         return $this;
     }
 
@@ -195,31 +180,10 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $operator = $this->normalizeAndValidateOperator($operator);
 
         $param = ':param' . count($this->params);
-        $this->where[] = sprintf('%s %s %s', $column, $operator->value, $param);
+        $this->where[] = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
         $this->params[$param] = $value;
 
         return $this;
-    }
-
-    /**
-     * Normaliza o operador e valida se é suportado
-     *
-     * @param SqlOperator|string $operator
-     * @return SqlOperator
-     * @throws QueryException
-     */
-    protected function normalizeAndValidateOperator(SqlOperator|string $operator): SqlOperator
-    {
-        if (is_string($operator)) {
-            $operator = SqlOperator::tryFrom(strtoupper($operator))
-                ?? throw new QueryException("Invalid SQL operator: $operator");
-        }
-
-        if (!in_array($operator, self::SUPPORTED_OPERATORS, true)) {
-            throw new QueryException("Operator $operator->value not allowed in where/orWhere(). Use specific method.");
-        }
-
-        return $operator;
     }
 
     /**
@@ -236,9 +200,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function orWhere(string $column, SqlOperator|string $operator, mixed $value): self
     {
         $operator = $this->normalizeAndValidateOperator($operator);
-
         $param = ':param' . count($this->params);
-        $condition = sprintf('%s %s %s', $column, $operator->value, $param);
+        $condition = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
         $this->params[$param] = $value;
 
         $this->where[] = empty($this->where)
@@ -271,7 +234,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $this->params[$param] = $v;
         }
 
-        $this->where[] = sprintf('%s IN (%s)', $column, implode(', ', $placeholders));
+        $this->where[] = sprintf('%s IN (%s)', $this->quoteIdentifier($column), implode(', ', $placeholders));
         return $this;
     }
 
@@ -296,7 +259,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $this->params[$param] = $v;
         }
 
-        $this->where[] = sprintf('%s NOT IN (%s)', $column, implode(', ', $placeholders));
+        $this->where[] = sprintf('%s NOT IN (%s)', $this->quoteIdentifier($column), implode(', ', $placeholders));
         return $this;
     }
 
@@ -316,7 +279,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $param1 = ":{$column}_bt1";
         $param2 = ":{$column}_bt2";
 
-        $this->where[] = sprintf('%s BETWEEN %s AND %s', $column, $param1, $param2);
+        $this->where[] = sprintf('%s BETWEEN %s AND %s', $this->quoteIdentifier($column), $param1, $param2);
         $this->params[$param1] = $range[0];
         $this->params[$param2] = $range[1];
 
@@ -339,7 +302,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $param1 = ":{$column}_nbt1";
         $param2 = ":{$column}_nbt2";
 
-        $this->where[] = sprintf('%s NOT BETWEEN %s AND %s', $column, $param1, $param2);
+        $this->where[] = sprintf('%s NOT BETWEEN %s AND %s', $this->quoteIdentifier($column), $param1, $param2);
         $this->params[$param1] = $range[0];
         $this->params[$param2] = $range[1];
 
@@ -354,7 +317,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function whereNull(string $column): self
     {
-        $this->where[] = "$column IS NULL";
+        $this->where[] = $this->quoteIdentifier($column) . ' IS NULL';
         return $this;
     }
 
@@ -366,7 +329,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function whereNotNull(string $column): self
     {
-        $this->where[] = "$column IS NOT NULL";
+        $this->where[] = $this->quoteIdentifier($column) . ' IS NOT NULL';
         return $this;
     }
 
@@ -384,14 +347,31 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function join(string $table, string $key, string $operator, string $refer, JoinType $type = JoinType::INNER): self
     {
+        // ⚙️ MySQL não suporta FULL JOIN → usar emulação
+        if ($type === JoinType::FULL && $this->driver === 'mysql') {
+            $this->joins[] = sprintf(
+                '(SELECT * FROM %1$s LEFT JOIN %2$s ON %3$s %4$s %5$s
+              UNION
+              SELECT * FROM %1$s RIGHT JOIN %2$s ON %3$s %4$s %5$s)',
+                $this->quoteIdentifier($this->table ?? 't1'),
+                $this->quoteIdentifier($table),
+                $this->quoteIdentifier($key),
+                $operator,
+                $this->quoteIdentifier($refer)
+            );
+            return $this;
+        }
+
+        // ✅ Padrão para todos os demais casos
         $this->joins[] = sprintf(
             '%s %s ON %s %s %s',
             $type->value,
-            $table,
-            $key,
+            $this->quoteIdentifier($table),
+            $this->quoteIdentifier($key),
             $operator,
-            $refer
+            $this->quoteIdentifier($refer)
         );
+
         return $this;
     }
 
@@ -406,7 +386,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function orderBy(string $column, OrderDirection $direction = OrderDirection::ASC): self
     {
-        $this->orderBy[] = sprintf('%s %s', $column, $direction->value);
+        $this->orderBy[] = sprintf('%s %s', $this->quoteIdentifier($column), $direction->value);
         return $this;
     }
 
@@ -418,7 +398,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function groupBy(string $column): self
     {
-        $this->groupBy[] = $column;
+        $this->groupBy[] = $this->quoteIdentifier($column);
         return $this;
     }
 
@@ -443,7 +423,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
         // garante que não reinicia params ou state indevidamente
         $param = ':having' . count($this->params);
-        $this->having[] = sprintf('%s %s %s', $column, $operator->value, $param);
+        $this->having[] = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
         $this->params[$param] = $value;
 
         return $this;
@@ -463,8 +443,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         if (empty($this->groupBy)) {
             throw new QueryException('HAVING clause requires GROUP BY');
         }
-        $this->having = [];
-        $this->having[] = $condition;
+        $this->having[] = $condition; // append
         return $this;
     }
 
@@ -500,22 +479,6 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->params = $params;
 
         return $this;
-    }
-
-    /**
-     * @return void
-     */
-    protected function resetOperationsState(): void
-    {
-        $this->sql = [];
-        $this->joins = [];
-        $this->where = [];
-        $this->orderBy = [];
-        $this->groupBy = [];
-        $this->having = [];
-        $this->limit = null;
-        $this->params = [];
-        $this->table = null;
     }
 
     /**

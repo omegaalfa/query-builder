@@ -4,151 +4,263 @@ declare(strict_types=1);
 
 namespace Tests\QueryBuilder;
 
+use Omegaalfa\QueryBuilder\enums\JoinType;
 use Omegaalfa\QueryBuilder\enums\OrderDirection;
 use Omegaalfa\QueryBuilder\enums\SqlOperator;
 use Omegaalfa\QueryBuilder\exceptions\QueryException;
 use Omegaalfa\QueryBuilder\QueryBuilderOperations;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
-class QueryBuilderOperationsTest extends TestCase
+/**
+ * @covers \Omegaalfa\QueryBuilder\QueryBuilderOperations
+ */
+final class QueryBuilderOperationsTest extends TestCase
 {
-    public function testSelect()
+    private QueryBuilderOperations $qb;
+
+    public function testSelectWithAlias(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users', ['id', 'name']);
-        $this->assertStringContainsString('SELECT id, name FROM users', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->alias('d')->getQuerySql();
+        $this->assertStringContainsString('FROM `doenca` AS `d`', $sql);
     }
 
-    public function testInsert()
+    // ---------------------------------------------------------------------
+    // SELECT / ALIAS
+    // ---------------------------------------------------------------------
+
+    public function testSelectWithFields(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->insert('users', ['name' => 'John']);
-        $this->assertStringContainsString('INSERT INTO users', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca', ['idDoenca', 'nome'])->getQuerySql();
+        $this->assertSame('SELECT idDoenca, nome FROM `doenca`', $sql);
     }
 
-    public function testUpdate()
+    public function testInsertGeneratesExpectedSQL(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->update('users', ['email' => 'john@example.com']);
-        $this->assertStringContainsString('UPDATE users SET email = :email', $qb->getQuerySql());
+        $sql = $this->qb->insert('doenca', ['nome' => 'A', 'status' => 1])->getQuerySql();
+        $this->assertStringContainsString('INSERT INTO `doenca`', $sql);
+        $this->assertStringContainsString('(nome, status)', $sql);
+        $this->assertStringContainsString('VALUES (:nome, :status)', $sql);
     }
 
-    public function testDelete()
+    // ---------------------------------------------------------------------
+    // INSERT / UPDATE / DELETE
+    // ---------------------------------------------------------------------
+
+    public function testUpdateGeneratesExpectedSQL(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->delete('users');
-        $this->assertStringContainsString('DELETE FROM users', $qb->getQuerySql());
+        $sql = $this->qb->update('doenca', ['nome' => 'X'])->getQuerySql();
+        $this->assertSame('UPDATE `doenca` SET `nome` = :nome', $sql);
     }
 
-    public function testAlias()
+    public function testDeleteGeneratesExpectedSQL(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->alias('u');
-        $this->assertStringContainsString('AS u', $qb->getQuerySql());
+        $sql = $this->qb->delete('doenca')->getQuerySql();
+        $this->assertSame('DELETE FROM `doenca`', $sql);
     }
 
-    public function testWhere()
+    public function testWhereEquals(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->where('id', SqlOperator::EQUALS, 1);
-        $this->assertStringContainsString('WHERE id = :param0', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->where('status', SqlOperator::EQUALS, 1)->getQuerySql();
+        $this->assertStringContainsString('WHERE `status` = :param0', $sql);
     }
 
-    public function testOrWhere()
+    // ---------------------------------------------------------------------
+    // WHERE CLAUSES
+    // ---------------------------------------------------------------------
+
+    public function testOrWhere(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->where('id', SqlOperator::EQUALS, 1)->orWhere('name', SqlOperator::LIKE, 'A%');
-        $this->assertStringContainsString('OR name LIKE :param1', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')
+            ->where('status', SqlOperator::EQUALS, 1)
+            ->orWhere('nome', SqlOperator::LIKE, '%botulismo%')
+            ->getQuerySql();
+
+        $this->assertStringContainsString('(`status` = :param0 OR `nome` LIKE :param1)', $sql);
     }
 
-    public function testWhereIn()
+    public function testWhereIn(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->whereIn('id', [1, 2]);
-        $this->assertStringContainsString('id IN (:id_in_0, :id_in_1)', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->whereIn('status', [1, 2])->getQuerySql();
+        $this->assertStringContainsString('`status` IN (:status_in_0, :status_in_1)', $sql);
     }
 
-    public function testWhereNotIn()
+    public function testWhereNotIn(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->whereNotIn('id', [1, 2]);
-        $this->assertStringContainsString('id NOT IN (:id_notin_0, :id_notin_1)', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->whereNotIn('status', [1, 2])->getQuerySql();
+        $this->assertStringContainsString('`status` NOT IN (:status_notin_0, :status_notin_1)', $sql);
     }
 
-    public function testWhereBetween()
+    public function testWhereBetween(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->whereBetween('age', [18, 30]);
-        $this->assertStringContainsString('age BETWEEN :age_bt1 AND :age_bt2', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->whereBetween('idDoenca', [1, 10])->getQuerySql();
+        $this->assertStringContainsString('`idDoenca` BETWEEN :idDoenca_bt1 AND :idDoenca_bt2', $sql);
     }
 
-    public function testWhereNotBetween()
+    public function testWhereNotBetween(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->whereNotBetween('age', [18, 30]);
-        $this->assertStringContainsString('age NOT BETWEEN :age_nbt1 AND :age_nbt2', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->whereNotBetween('idDoenca', [1, 10])->getQuerySql();
+        $this->assertStringContainsString('`idDoenca` NOT BETWEEN :idDoenca_nbt1 AND :idDoenca_nbt2', $sql);
     }
 
-    public function testWhereNull()
+    public function testWhereNullAndNotNull(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->whereNull('deleted_at');
-        $this->assertStringContainsString('deleted_at IS NULL', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->whereNull('acessos')->getQuerySql();
+        $this->assertStringContainsString('`acessos` IS NULL', $sql);
+
+        $sql2 = $this->qb->select('doenca')->whereNotNull('nome')->getQuerySql();
+        $this->assertStringContainsString('`nome` IS NOT NULL', $sql2);
     }
 
-    public function testWhereNotNull()
+    public function testJoin(): void
     {
         $qb = new QueryBuilderOperations();
-        $qb->select('users')->whereNotNull('deleted_at');
-        $this->assertStringContainsString('deleted_at IS NOT NULL', $qb->getQuerySql());
-    }
 
-    public function testJoin()
-    {
+        // LEFT JOIN
+        $sql = $qb->select('doenca', ['d.idDoenca', 'd.nome'])
+            ->alias('d')
+            ->join('doenca_comercial', 'doenca_comercial.idDoenca', '=', 'd.idDoenca', JoinType::LEFT)
+            ->getQuerySql();
+
+        $this->assertStringContainsString(
+            'LEFT JOIN `doenca_comercial` ON `doenca_comercial`.`idDoenca` = `d`.`idDoenca`',
+            $sql
+        );
+
+        // INNER JOIN
         $qb = new QueryBuilderOperations();
-        $qb->select('users')->join('posts', 'users.id', '=', 'posts.user_id');
-        $this->assertStringContainsString('INNER JOIN posts ON users.id = posts.user_id', $qb->getQuerySql());
-    }
+        $sql = $qb->select('pacientes', ['p.id', 'p.nome'])
+            ->alias('p')
+            ->join('consultas', 'p.id', '=', 'consultas.idPaciente', JoinType::INNER)
+            ->getQuerySql();
 
-    public function testOrderBy()
-    {
+        $this->assertStringContainsString(
+            'INNER JOIN `consultas` ON `p`.`id` = `consultas`.`idPaciente`',
+            $sql
+        );
+
+        // RIGHT JOIN
         $qb = new QueryBuilderOperations();
-        $qb->select('users')->orderBy('name', OrderDirection::DESC);
-        $this->assertStringContainsString('ORDER BY name DESC', $qb->getQuerySql());
-    }
+        $sql = $qb->select('exames', ['e.id', 'e.resultado'])
+            ->alias('e')
+            ->join('laboratorios', 'e.idLaboratorio', '=', 'laboratorios.id', JoinType::RIGHT)
+            ->getQuerySql();
 
-    public function testGroupBy()
-    {
+        $this->assertStringContainsString(
+            'RIGHT JOIN `laboratorios` ON `e`.`idLaboratorio` = `laboratorios`.`id`',
+            $sql
+        );
+
+        // Detecta o driver configurado
+        $driverProperty = (new \ReflectionClass($qb))
+            ->getProperty('driver');
+        $driverProperty->setAccessible(true);
+        $driver = $driverProperty->getValue($qb);
+
+        // FULL JOIN (varia conforme o driver)
         $qb = new QueryBuilderOperations();
-        $qb->select('users')->groupBy('role');
-        $this->assertStringContainsString('GROUP BY role', $qb->getQuerySql());
+        $sql = $qb->select('tabela_a', ['a.id'])
+            ->alias('a')
+            ->join('tabela_b', 'a.id', '=', 'tabela_b.id', JoinType::FULL)
+            ->getQuerySql();
+
+        if ($driver === 'mysql') {
+            // No MySQL o FULL JOIN é emulado com UNION
+            $this->assertStringContainsString(
+                'UNION',
+                $sql,
+                "No MySQL, o FULL JOIN deve ser emulado com UNION.\nRecebido:\n{$sql}"
+            );
+        } else {
+            // Em outros drivers (Postgres, SQLite), FULL JOIN é nativo
+            $this->assertStringContainsString(
+                'FULL JOIN `tabela_b` ON `a`.`id` = `tabela_b`.`id`',
+                $sql,
+                "FULL JOIN esperado para driver {$driver}.\nRecebido:\n{$sql}"
+            );
+        }
     }
 
-    public function testHaving()
+
+
+    // ---------------------------------------------------------------------
+    // JOIN
+    // ---------------------------------------------------------------------
+
+    public function testOrderBy(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->groupBy('role')->having('count', SqlOperator::GREATER_THAN, 10);
-        $this->assertStringContainsString('HAVING count > :having0', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->orderBy('idDoenca', OrderDirection::DESC)->getQuerySql();
+        $this->assertStringContainsString('ORDER BY `idDoenca` DESC', $sql);
     }
 
-    public function testHavingWithoutGroupByThrows()
+    // ---------------------------------------------------------------------
+    // ORDER BY / GROUP BY / HAVING
+    // ---------------------------------------------------------------------
+
+    public function testGroupByAndHaving(): void
+    {
+        $sql = $this->qb
+            ->select('doenca', ['status', 'COUNT(*) AS qtd'])
+            ->groupBy('status')
+            ->having('status', SqlOperator::GREATER_THAN, 0)
+            ->getQuerySql();
+
+        $this->assertStringContainsString('GROUP BY `status`', $sql);
+        $this->assertStringContainsString('HAVING `status` > :having0', $sql);
+    }
+
+    public function testHavingRequiresGroupBy(): void
     {
         $this->expectException(QueryException::class);
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->having('count', SqlOperator::GREATER_THAN, 10);
+        $this->qb->select('doenca')->having('status', SqlOperator::GREATER_THAN, 0);
     }
 
-    public function testLimit()
+    public function testHavingRaw(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->select('users')->limit(10, 5);
-        $this->assertStringContainsString('LIMIT 5 , 10', $qb->getQuerySql());
+        $sql = $this->qb
+            ->select('doenca', ['status', 'COUNT(*) AS qtd'])
+            ->groupBy('status')
+            ->havingRaw('COUNT(*) > 1')
+            ->getQuerySql();
+
+        $this->assertStringContainsString('HAVING COUNT(*) > 1', $sql);
     }
 
-    public function testRaw()
+    public function testLimit(): void
     {
-        $qb = new QueryBuilderOperations();
-        $qb->raw('SELECT * FROM users WHERE active = 1');
-        $this->assertSame('SELECT * FROM users WHERE active = 1', $qb->getQuerySql());
+        $sql = $this->qb->select('doenca')->limit(10, 5)->getQuerySql();
+        $this->assertStringContainsString('LIMIT 5 , 10', $sql);
+    }
+
+    // ---------------------------------------------------------------------
+    // LIMIT / RAW
+    // ---------------------------------------------------------------------
+
+    public function testRawQuery(): void
+    {
+        $sql = $this->qb->raw('SELECT * FROM doenca WHERE status = ?', [1])->getQuerySql();
+        $this->assertSame('SELECT * FROM doenca WHERE status = ?', $sql);
+    }
+
+    public function testQuoteIdentifierEscapesProperly(): void
+    {
+        $reflection = new ReflectionClass($this->qb);
+        $method = $reflection->getMethod('quoteIdentifier');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->qb, 'tabela.coluna');
+        $this->assertSame('`tabela`.`coluna`', $result);
+
+        $result2 = $method->invoke($this->qb, 'tabela as t');
+        $this->assertSame('`tabela` AS `t`', $result2);
+    }
+
+    // ---------------------------------------------------------------------
+    // PROTEÇÃO DE IDENTIFICADORES
+    // ---------------------------------------------------------------------
+
+    protected function setUp(): void
+    {
+        $this->qb = new QueryBuilderOperations();
     }
 }
