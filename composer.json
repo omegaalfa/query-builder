@@ -1,5 +1,5 @@
 {
-  "name": "omgaalfa/query-builder",
+  "name": "omegaalfa/query-builder",
   "type": "library",
   "description": "Um Query Builder moderno e minimalista em PHP 8+, totalmente tipado e baseado em PDO, com suporte a cache, paginação, transações e geração fluente de SQL.",
   "keywords": [
@@ -11,7 +11,7 @@
     "orm",
     "pagination",
     "cache",
-    "omgaalfa"
+    "omegaalfa"
   ],
   "homepage": "https://github.com/omegaalfa/query-builder",
   "license": "MIT",
