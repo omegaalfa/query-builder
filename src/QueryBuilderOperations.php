@@ -5,7 +5,6 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
-
 use Omegaalfa\QueryBuilder\enums\JoinType;
 use Omegaalfa\QueryBuilder\enums\OrderDirection;
 use Omegaalfa\QueryBuilder\enums\SqlOperator;
@@ -64,6 +63,18 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     protected string|null $table = null;
 
+
+    /**
+     * @var array Para agrupar condições OR
+     */
+    protected array $whereGroups = [];
+
+
+    /**
+     * @var bool
+     */
+    protected bool $isOrGroup = false;
+
     /**
      * Define um alias para a tabela principal da consulta.
      *
@@ -105,8 +116,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->orderBy = [];
         $this->groupBy = [];
         $this->having = [];
+        $this->table = null;
         $this->limit = null;
         $this->params = [];
+        $this->whereGroups = [];
+        $this->isOrGroup = false;
     }
 
     /**
@@ -137,6 +151,60 @@ class QueryBuilderOperations implements QueryBuilderInterface
         return $this;
     }
 
+
+    /**
+     * Insere múltiplos registros de uma vez (bulk insert)
+     *
+     * @param string $table
+     * @param array $data Array de arrays associativos
+     * @return $this
+     * @throws QueryException
+     */
+    public function insertBatch(string $table, array $data): self
+    {
+        if (empty($data)) {
+            throw new QueryException("Batch insert requires at least one row");
+        }
+
+        $this->resetOperationsState();
+        $this->table = $this->quoteIdentifier($table);
+
+        // Pega colunas do primeiro registro
+        $firstRow = reset($data);
+        $fields = array_keys($firstRow);
+
+        // Valida que todos os registros têm as mesmas colunas
+        foreach ($data as $index => $row) {
+            if (array_keys($row) !== $fields) {
+                throw new QueryException("All rows must have the same columns. Error at index {$index}");
+            }
+        }
+
+        $quotedFields = array_map([$this, 'quoteIdentifier'], $fields);
+
+        // Constrói placeholders
+        $valueSets = [];
+        foreach ($data as $rowIndex => $row) {
+            $placeholders = [];
+            foreach ($fields as $field) {
+                $param = ":{$field}_{$rowIndex}";
+                $placeholders[] = $param;
+                $this->params[$param] = $row[$field];
+            }
+            $valueSets[] = '(' . implode(', ', $placeholders) . ')';
+        }
+
+        $this->sql = [
+            'INSERT INTO',
+            $this->table,
+            '(' . implode(', ', $quotedFields) . ')',
+            'VALUES',
+            implode(', ', $valueSets)
+        ];
+
+        return $this;
+    }
+
     /**
      * Inicia uma operação UPDATE.
      *
@@ -155,7 +223,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $this->params[$param] = $value;
         }
 
-        $this->sql = ['UPDATE',  $this->table, 'SET', implode(', ', $assignments)];
+        $this->sql = ['UPDATE', $this->table, 'SET', implode(', ', $assignments)];
         return $this;
     }
 
@@ -186,8 +254,13 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function where(string $column, SqlOperator|string $operator, mixed $value): self
     {
-        $operator = $this->normalizeAndValidateOperator($operator);
+        if ($this->isOrGroup) {
+            $this->where[] = '(' . implode(' OR ', $this->whereGroups) . ')';
+            $this->whereGroups = [];
+            $this->isOrGroup = false;
+        }
 
+        $operator = $this->normalizeAndValidateOperator($operator);
         $param = ':param' . count($this->params);
         $this->where[] = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
         $this->params[$param] = $value;
@@ -213,9 +286,13 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $condition = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
         $this->params[$param] = $value;
 
-        $this->where[] = empty($this->where)
-            ? $condition
-            : '(' . array_pop($this->where) . ' OR ' . $condition . ')';
+        // Marca que estamos em grupo OR
+        if (!$this->isOrGroup && !empty($this->where)) {
+            $this->isOrGroup = true;
+            $this->whereGroups[] = array_pop($this->where);
+        }
+
+        $this->whereGroups[] = $condition;
 
         return $this;
     }
@@ -353,22 +430,16 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @param string $refer Coluna da tabela relacionada.
      * @param JoinType $type Tipo da junção (INNER, LEFT, RIGHT, FULL).
      * @return $this
+     * @throws QueryException
      */
     public function join(string $table, string $key, string $operator, string $refer, JoinType $type = JoinType::INNER): self
     {
         // ⚙️ MySQL não suporta FULL JOIN → usar emulação
-        if ($type === JoinType::FULL && $this->driver === 'mysql') {
-            $this->joins[] = sprintf(
-                '(SELECT * FROM %1$s LEFT JOIN %2$s ON %3$s %4$s %5$s
-              UNION
-              SELECT * FROM %1$s RIGHT JOIN %2$s ON %3$s %4$s %5$s)',
-                $this->quoteIdentifier($this->table ?? 't1'),
-                $this->quoteIdentifier($table),
-                $this->quoteIdentifier($key),
-                $operator,
-                $this->quoteIdentifier($refer)
+        if ($type === JoinType::FULL && in_array($this->driver, ['mysql', 'mariadb'])) {
+            throw new QueryException(
+                "FULL JOIN não é suportado nativamente pelo MySQL/MariaDB. " .
+                "Para esta funcionalidade, a query deve ser construída manualmente usando UNION."
             );
-            return $this;
         }
 
         // ✅ Padrão para todos os demais casos
@@ -485,7 +556,29 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $this->resetOperationsState();
         $this->sql = [$query];
-        $this->params = $params;
+
+        // Normaliza params para usar named placeholders
+        if (!empty($params)) {
+            $normalizedParams = [];
+
+            // Se params são numéricos (? placeholders)
+            if (array_is_list($params)) {
+                // Converte ? para :param0, :param1, etc
+                $paramCounter = 0;
+                $normalizedQuery = preg_replace_callback('/\?/', static function () use (&$paramCounter, $params, &$normalizedParams) {
+                    $placeholder = ':raw_param' . $paramCounter;
+                    $normalizedParams[$placeholder] = $params[$paramCounter] ?? null;
+                    $paramCounter++;
+                    return $placeholder;
+                }, $query);
+
+                $this->sql = [$normalizedQuery];
+                $this->params = $normalizedParams;
+            } else {
+                // Params já estão nomeados
+                $this->params = $params;
+            }
+        }
 
         return $this;
     }
@@ -501,11 +594,20 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function getQuerySql(): string
     {
         $query = $this->sql;
+
         if ($this->joins) {
             $query[] = implode(' ', $this->joins);
         }
 
+        // Fecha grupo OR pendente como sub-condição (liga por AND implícito)
+        if ($this->isOrGroup && !empty($this->whereGroups)) {
+            $this->where[] = '(' . implode(' OR ', $this->whereGroups) . ')';
+            $this->whereGroups = [];
+            $this->isOrGroup = false;
+        }
+
         if ($this->where) {
+            // Simples e robusto: Tudo ligado por AND (incluindo grupos OR)
             $query[] = 'WHERE ' . implode(' AND ', $this->where);
         }
 
@@ -521,9 +623,22 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $query[] = 'ORDER BY ' . implode(', ', $this->orderBy);
         }
 
-        if ($this->limit) {
-            $query[] = "LIMIT {$this->limit[1]} , {$this->limit[0]}";
+        if ($this->limit && is_array($this->limit) && isset($this->limit[0])) {
+            $limitVal = (int)$this->limit[0];
+            $offsetVal = (int)($this->limit[1] ?? 0);
+
+            if ($limitVal > 0) {
+                $query[] = match ($this->driver) {
+                    'pgsql', 'sqlite' => "LIMIT {$limitVal} OFFSET {$offsetVal}",
+                    'sqlsrv', 'oci' => "OFFSET {$offsetVal} ROWS FETCH NEXT {$limitVal} ROWS ONLY",
+                    default => "LIMIT {$offsetVal} , {$limitVal}"  // MySQL/MariaDB
+                };
+            }
         }
+
+        // Reset states pra evitar vazamentos em chains múltiplas
+        $this->whereGroups = [];
+        $this->isOrGroup = false;
 
         return implode(' ', $query);
     }

@@ -36,4 +36,21 @@ interface CacheInterface
      * @return void
      */
     public function delete(string $key): void;
+
+    /**
+     * @param string $pattern
+     * @return bool
+     */
+    public function deletePattern(string $pattern): bool;
+
+    /**
+     * @return bool
+     */
+    public function clear(): bool;
+
+    /**
+     * @param array $keys
+     * @return array
+     */
+    public function getMultiple(array $keys): array;
 }

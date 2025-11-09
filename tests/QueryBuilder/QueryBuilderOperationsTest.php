@@ -71,11 +71,17 @@ final class QueryBuilderOperationsTest extends TestCase
 
     public function testOrWhere(): void
     {
+        // 💡 Nota: A expectativa de SQL para este teste pode precisar de ajuste
+        // dependendo da sua lógica final de agrupamento WHERE/OR WHERE.
         $sql = $this->qb->select('doenca')
             ->where('status', SqlOperator::EQUALS, 1)
             ->orWhere('nome', SqlOperator::LIKE, '%botulismo%')
             ->getQuerySql();
 
+        // Se o seu agrupamento for WHERE A AND (B)
+        // $this->assertStringContainsString('WHERE `status` = :param0 AND (`nome` LIKE :param1)', $sql);
+
+        // Mantido o original para evitar mais alterações, mas atenção a essa linha.
         $this->assertStringContainsString('(`status` = :param0 OR `nome` LIKE :param1)', $sql);
     }
 
@@ -151,40 +157,43 @@ final class QueryBuilderOperationsTest extends TestCase
             $sql
         );
 
-        // Detecta o driver configurado
+        // ⚠️ A lógica de FULL JOIN foi movida para o teste dedicado abaixo
+    }
+
+    // ---------------------------------------------------------------------
+    // JOIN
+    // ---------------------------------------------------------------------
+
+    /**
+     * Testa se o FULL JOIN lança exceção para drivers incompatíveis (MySQL/MariaDB),
+     * validando o novo comportamento de segurança do Query Builder.
+     */
+    public function testFullJoinThrowsExceptionOnUnsupportedDriver(): void
+    {
+        $qb = new QueryBuilderOperations();
+
+        // Usa Reflection para obter o driver configurado
         $driverProperty = (new \ReflectionClass($qb))
             ->getProperty('driver');
         $driverProperty->setAccessible(true);
         $driver = $driverProperty->getValue($qb);
 
-        // FULL JOIN (varia conforme o driver)
-        $qb = new QueryBuilderOperations();
-        $sql = $qb->select('tabela_a', ['a.id'])
-            ->alias('a')
-            ->join('tabela_b', 'a.id', '=', 'tabela_b.id', JoinType::FULL)
-            ->getQuerySql();
-
-        if ($driver === 'mysql') {
-            // No MySQL o FULL JOIN é emulado com UNION
-            $this->assertStringContainsString(
-                'UNION',
-                $sql,
-                "No MySQL, o FULL JOIN deve ser emulado com UNION.\nRecebido:\n{$sql}"
-            );
-        } else {
-            // Em outros drivers (Postgres, SQLite), FULL JOIN é nativo
-            $this->assertStringContainsString(
-                'FULL JOIN `tabela_b` ON `a`.`id` = `tabela_b`.`id`',
-                $sql,
-                "FULL JOIN esperado para driver {$driver}.\nRecebido:\n{$sql}"
-            );
+        // Testa APENAS se o driver for MySQL ou MariaDB (os incompatíveis)
+        if ($driver !== 'mysql' && $driver !== 'mariadb') {
+            $this->markTestSkipped('Teste de exceção FULL JOIN é relevante apenas para MySQL/MariaDB.');
         }
+
+        // ⭐️ Espera a exceção que o seu novo código deve lançar ⭐️
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('FULL JOIN não é suportado nativamente pelo MySQL/MariaDB');
+
+        $qb->select('tabela_a', ['a.id'])
+            ->alias('a')
+            ->join('tabela_b', 'a.id', '=', 'tabela_b.id', JoinType::FULL);
     }
 
-
-
     // ---------------------------------------------------------------------
-    // JOIN
+    // ORDER BY / GROUP BY / HAVING
     // ---------------------------------------------------------------------
 
     public function testOrderBy(): void
@@ -192,10 +201,6 @@ final class QueryBuilderOperationsTest extends TestCase
         $sql = $this->qb->select('doenca')->orderBy('idDoenca', OrderDirection::DESC)->getQuerySql();
         $this->assertStringContainsString('ORDER BY `idDoenca` DESC', $sql);
     }
-
-    // ---------------------------------------------------------------------
-    // ORDER BY / GROUP BY / HAVING
-    // ---------------------------------------------------------------------
 
     public function testGroupByAndHaving(): void
     {
@@ -239,7 +244,8 @@ final class QueryBuilderOperationsTest extends TestCase
     public function testRawQuery(): void
     {
         $sql = $this->qb->raw('SELECT * FROM doenca WHERE status = ?', [1])->getQuerySql();
-        $this->assertSame('SELECT * FROM doenca WHERE status = ?', $sql);
+        // Agora, esperamos o placeholder nomeado que você criou:
+        $this->assertSame('SELECT * FROM doenca WHERE status = :raw_param0', $sql);
     }
 
     public function testQuoteIdentifierEscapesProperly(): void

@@ -20,6 +20,11 @@ trait QueryBuilderCacheTrait
      */
     private string $cacheKey;
 
+    /**
+     * @var string
+     */
+    private string $cachePrefix = 'qb';
+
 
     /**
      * @param int $ttl
@@ -44,17 +49,23 @@ trait QueryBuilderCacheTrait
             return;
         }
 
-        $data = is_iterable($result->data)
-            ? iterator_to_array($result->data, false)
-            : $result->data;
+        try {
+            $data = is_iterable($result->data)
+                ? iterator_to_array($result->data, false)
+                : $result->data;
 
-        $cachedPayload = [
-            'data' => $data,
-            'count' => $result->count,
-            'pagination' => $result->pagination,
-        ];
+            $cachedPayload = [
+                'data' => $data,
+                'count' => $result->count,
+                'pagination' => $result->pagination,
+                'cached_at' => time(),
+                'ttl' => $this->cacheTtl
+            ];
 
-        $this->cache->set($this->cacheKey, $cachedPayload, $this->cacheTtl);
+            $this->cache->set($this->cacheKey, $cachedPayload, $this->cacheTtl);
+        } catch (\Throwable $e) {
+            error_log("Cache save failed: " . $e->getMessage());
+        }
     }
 
     /**
@@ -70,18 +81,22 @@ trait QueryBuilderCacheTrait
 
         $this->cacheKey = $this->generateCacheKey();
 
-        if ($this->cache->has($this->cacheKey)) {
-            $cachedResult = $this->cache->get($this->cacheKey);
+        try {
+            if ($this->cache->has($this->cacheKey)) {
+                $cachedResult = $this->cache->get($this->cacheKey);
 
-            if (!is_array($cachedResult) || !isset($cachedResult['data'])) {
-                return null; // evita erros se o cache estiver corrompido
+                if (!is_array($cachedResult) || !isset($cachedResult['data'])) {
+                    return null;
+                }
+
+                return new QueryResultDTO(
+                    data: $cachedResult['data'],
+                    count: $cachedResult['count'] ?? count($cachedResult['data']),
+                    pagination: $cachedResult['pagination'] ?? null
+                );
             }
-
-            return new QueryResultDTO(
-                data: $cachedResult['data'],
-                count: $cachedResult['count'] ?? count($cachedResult['data']),
-                pagination: $cachedResult['pagination'] ?? null
-            );
+        } catch (\Throwable $e) {
+            error_log("Cache retrieval failed: " . $e->getMessage());
         }
 
         return null;
@@ -93,6 +108,17 @@ trait QueryBuilderCacheTrait
     private function generateCacheKey(): string
     {
         $sql = implode(' ', $this->sql);
-        return md5($sql . serialize($this->params));
+        $paramsHash = md5(serialize($this->params));
+        $sqlHash = md5($sql);
+
+        // Formato: prefix:table:sqlhash:paramshash
+        $parts = [
+            $this->cachePrefix,
+            $this->table ?? 'raw',
+            $sqlHash,
+            $paramsHash
+        ];
+
+        return implode(':', $parts);
     }
 }

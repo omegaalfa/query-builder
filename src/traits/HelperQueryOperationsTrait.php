@@ -80,7 +80,7 @@ trait HelperQueryOperationsTrait
      * @param string $identifier
      * @return string
      */
-    private function quoteIdentifier(string $identifier): string
+    protected function quoteIdentifier(string $identifier): string
     {
         static $cache = [];
 

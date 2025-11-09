@@ -68,6 +68,21 @@ class QueryBuilderCacheTest extends TestCase
             {
                 // TODO: Implement delete() method.
             }
+
+            public function deletePattern(string $pattern): bool
+            {
+                // TODO: Implement deletePattern() method.
+            }
+
+            public function clear(): bool
+            {
+                // TODO: Implement clear() method.
+            }
+
+            public function getMultiple(array $keys): array
+            {
+                // TODO: Implement getMultiple() method.
+            }
         };
 
         // 🔹 Cria o QueryBuilder

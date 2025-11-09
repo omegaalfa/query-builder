@@ -10,6 +10,7 @@ use Omegaalfa\QueryBuilder\exceptions\QueryException;
 use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
 use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
 use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\interfaces\QueryLoggerInterface;
 use Omegaalfa\QueryBuilder\traits\QueryBuilderCacheTrait;
 use PDO;
 use PDOException;
@@ -28,11 +29,13 @@ final class QueryBuilder extends QueryBuilderOperations
      * @param ConnectionInterface $connection
      * @param PaginatorInterface $paginator
      * @param CacheInterface|null $cache
+     * @param QueryLoggerInterface|null $logger
      */
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly PaginatorInterface  $paginator,
-        private readonly ?CacheInterface     $cache = null
+        private readonly ConnectionInterface   $connection,
+        private readonly PaginatorInterface    $paginator,
+        private readonly ?CacheInterface       $cache = null,
+        private readonly ?QueryLoggerInterface $logger = null
     )
     {
         $this->setDriver($this->connection->getDriver());
@@ -63,63 +66,76 @@ final class QueryBuilder extends QueryBuilderOperations
     }
 
     /**
-     * Executa a query atual e retorna um PDOStatement.
-     *
-     * @param bool $bufferedQuery
-     * @return PDOStatement
-     * @throws DatabaseException
+     * Retorna SQL formatado para debug
      */
-    private function prepareAndExecute(bool $bufferedQuery = true): PDOStatement
+    public function toSql(bool $withParams = false): string
     {
-        $pdo = $this->connection->pdo($bufferedQuery);
-        $stmt = $pdo->prepare($this->getQuerySql());
+        $sql = $this->getQuerySql();
 
-        foreach ($this->params as $param => $value) {
-            // 🔸 Nulos
-            if ($value === null) {
-                $stmt->bindValue($param, null, PDO::PARAM_NULL);
-                continue;
-            }
-
-            // 🔸 Arrays (não são suportados diretamente)
-            if (is_array($value)) {
-                throw new DatabaseException("Invalid binding for {$param}: arrays are not supported here.");
-            }
-
-            // 🔸 DateTime → converte para string compatível com SQL
-            if ($value instanceof \DateTimeInterface) {
-                $stmt->bindValue($param, $value->format('Y-m-d H:i:s'));
-                continue;
-            }
-
-            // 🔸 Inteiros
-            if (is_int($value)) {
-                $stmt->bindValue($param, $value, PDO::PARAM_INT);
-                continue;
-            }
-
-            // 🔸 Booleanos
-            if (is_bool($value)) {
-                $stmt->bindValue($param, (int)$value, PDO::PARAM_INT);
-                continue;
-            }
-
-            // 🔸 Recursos (arquivos, streams, blobs)
-            if (is_resource($value)) {
-                $stmt->bindParam($param, $value, PDO::PARAM_LOB);
-                continue;
-            }
-
-            // 🔸 Qualquer outro tipo (string, float, double, etc)
-            $stmt->bindValue($param, (string)$value);
+        if (!$withParams || empty($this->params)) {
+            return $sql;
         }
 
-        $stmt->execute();
-        $this->insertId = $pdo->lastInsertId();
+        // Substitui placeholders por valores (APENAS PARA DEBUG!)
+        $debugSql = $sql;
+        foreach ($this->params as $param => $value) {
+            $replace = match (true) {
+                is_null($value) => 'NULL',
+                is_bool($value) => $value ? '1' : '0',
+                is_int($value) || is_float($value) => (string)$value,
+                $value instanceof \DateTimeInterface => "'" . $value->format('Y-m-d H:i:s') . "'",
+                default => "'" . addslashes((string)$value) . "'"
+            };
 
-        $this->resetOperationsState();
+            $debugSql = str_replace($param, $replace, $debugSql);
+        }
 
-        return $stmt;
+        return $debugSql;
+    }
+
+    /**
+     * Executa EXPLAIN na query atual para análise de performance
+     *
+     * @return array
+     * @throws DatabaseException
+     */
+    public function explain(): array
+    {
+        $sql = $this->getQuerySql();
+
+        // Adiciona EXPLAIN conforme o driver
+        $explainSql = match ($this->driver) {
+            'pgsql' => "EXPLAIN (FORMAT JSON, ANALYZE) $sql",
+            'sqlite' => "EXPLAIN QUERY PLAN $sql",
+            default => "EXPLAIN $sql"
+        };
+
+        try {
+            $pdo = $this->connection->pdo(true);
+            $stmt = $pdo->prepare($explainSql);
+
+            foreach ($this->params as $param => $value) {
+                if ($value instanceof \DateTimeInterface) {
+                    $stmt->bindValue($param, $value->format('Y-m-d H:i:s'));
+                } elseif (is_int($value)) {
+                    $stmt->bindValue($param, $value, PDO::PARAM_INT);
+                } elseif (is_bool($value)) {
+                    $stmt->bindValue($param, (int)$value, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue($param, (string)$value);
+                }
+            }
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (\PDOException $e) {
+            throw new DatabaseException(
+                "EXPLAIN failed: {$e->getMessage()}",
+                (int)$e->getCode(),
+                $e
+            );
+        }
     }
 
     /**
@@ -170,6 +186,78 @@ final class QueryBuilder extends QueryBuilderOperations
     }
 
     /**
+     * Executa a query atual e retorna um PDOStatement.
+     *
+     * @param bool $bufferedQuery
+     * @return PDOStatement
+     * @throws DatabaseException
+     */
+    private function prepareAndExecute(bool $bufferedQuery = true): PDOStatement
+    {
+        $startTime = microtime(true);
+        $sql = $this->getQuerySql();
+        try {
+            $pdo = $this->connection->pdo($bufferedQuery);
+            $stmt = $pdo->prepare($sql);
+            foreach ($this->params as $param => $value) {
+                // 🔸 Nulos
+                if ($value === null) {
+                    $stmt->bindValue($param, null, PDO::PARAM_NULL);
+                    continue;
+                }
+
+                // 🔸 Arrays (não são suportados diretamente)
+                if (is_array($value)) {
+                    throw new DatabaseException("Invalid binding for {$param}: arrays are not supported here.");
+                }
+
+                // 🔸 DateTime → converte para string compatível com SQL
+                if ($value instanceof \DateTimeInterface) {
+                    $stmt->bindValue($param, $value->format('Y-m-d H:i:s'));
+                    continue;
+                }
+
+                // 🔸 Inteiros
+                if (is_int($value)) {
+                    $stmt->bindValue($param, $value, PDO::PARAM_INT);
+                    continue;
+                }
+
+                // 🔸 Booleanos
+                if (is_bool($value)) {
+                    $stmt->bindValue($param, (int)$value, PDO::PARAM_INT);
+                    continue;
+                }
+
+                // 🔸 Recursos (arquivos, streams, blobs)
+                if (is_resource($value)) {
+                    $stmt->bindParam($param, $value, PDO::PARAM_LOB);
+                    continue;
+                }
+
+                // 🔸 Qualquer outro tipo (string, float, double, etc)
+                $stmt->bindValue($param, (string)$value);
+            }
+
+            $stmt->execute();
+            $this->insertId = $pdo->lastInsertId();
+
+            if ($this->logger) {
+                $duration = microtime(true) - $startTime;
+                $this->logger->logQuery($sql, $this->params, $duration, $stmt->rowCount());
+            }
+
+            $this->resetOperationsState();
+
+            return $stmt;
+        } catch (\PDOException $e) {
+            $this->logger?->logError($sql, $this->params, $e);
+            throw $e;
+        }
+
+    }
+
+    /**
      * Obtém total para paginação.
      *
      * @return int
@@ -194,29 +282,134 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     private function streamData(PDOStatement $stmt): iterable
     {
-        $threshold = 10000;
-        $rowCount = $stmt->rowCount();
-        if ($rowCount > 0 && $rowCount <= $threshold) {
-            yield from $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        // 🔹 Streaming real acima disso (memória constante)
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            yield $row;
+        try {
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                yield $row;
+            }
+        } finally {
+            $stmt->closeCursor();
         }
     }
 
     /**
-     * @param array $items
-     * @param int $size
-     * @return iterable
+     * Retorna soma de uma coluna
+     *
+     * @param string $column
+     * @return float
+     * @throws DatabaseException
+     * @throws QueryException
      */
-    private function chunk(array $items, int $size): iterable
+    public function sum(string $column): float
     {
-        for ($i = 0, $iMax = count($items); $i < $iMax; $i += $size) {
-            yield array_slice($items, $i, $size);
+        $originalSql = $this->sql;
+        $this->sql[1] = "SUM({$this->quoteIdentifier($column)}) as total";
+
+        try {
+            $result = $this->execute();
+            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
+            return (float)($data[0]['total'] ?? 0);
+        } finally {
+            $this->sql = $originalSql;
         }
     }
 
+    /**
+     * Retorna média de uma coluna
+     *
+     * @param string $column
+     * @return float
+     * @throws DatabaseException
+     * @throws QueryException
+     */
+    public function avg(string $column): float
+    {
+        $originalSql = $this->sql;
+        $this->sql[1] = "AVG({$this->quoteIdentifier($column)}) as average";
 
+        try {
+            $result = $this->execute();
+            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
+            return (float)($data[0]['average'] ?? 0);
+        } finally {
+            $this->sql = $originalSql;
+        }
+    }
+
+    /**
+     * Retorna valor máximo
+     *
+     * @param string $column
+     * @return mixed
+     * @throws DatabaseException
+     * @throws QueryException
+     */
+    public function max(string $column): mixed
+    {
+        $originalSql = $this->sql;
+        $this->sql[1] = "MAX({$this->quoteIdentifier($column)}) as maximum";
+
+        try {
+            $result = $this->execute();
+            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
+            return $data[0]['maximum'] ?? null;
+        } finally {
+            $this->sql = $originalSql;
+        }
+    }
+
+    /**
+     * Retorna valor mínimo
+     *
+     * @param string $column
+     * @return mixed
+     * @throws DatabaseException
+     * @throws QueryException
+     */
+    public function min(string $column): mixed
+    {
+        $originalSql = $this->sql;
+        $this->sql[1] = "MIN({$this->quoteIdentifier($column)}) as minimum";
+
+        try {
+            $result = $this->execute();
+            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
+            return $data[0]['minimum'] ?? null;
+        } finally {
+            $this->sql = $originalSql;
+        }
+    }
+
+    /**
+     * Verifica se existe algum registro
+     *
+     * @return bool
+     * @throws DatabaseException
+     * @throws QueryException
+     */
+    public function exists(): bool
+    {
+        return $this->count() > 0;
+    }
+
+    /**
+     * Retorna contagem de registros
+     *
+     * @param string $column
+     * @return int
+     * @throws DatabaseException
+     * @throws QueryException
+     */
+    public function count(string $column = '*'): int
+    {
+        $originalSql = $this->sql;
+        $this->sql[1] = "COUNT({$this->quoteIdentifier($column)}) as total";
+
+        try {
+            $result = $this->execute();
+            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
+            return (int)($data[0]['total'] ?? 0);
+        } finally {
+            $this->sql = $originalSql;
+        }
+    }
 }

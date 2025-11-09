@@ -7,6 +7,7 @@ namespace Omegaalfa\QueryBuilder\interfaces;
 use Omegaalfa\QueryBuilder\enums\JoinType;
 use Omegaalfa\QueryBuilder\enums\OrderDirection;
 use Omegaalfa\QueryBuilder\enums\SqlOperator;
+use Omegaalfa\QueryBuilder\exceptions\QueryException;
 
 /**
  * Interface base para o construtor de consultas SQL fluente.
@@ -227,4 +228,15 @@ interface QueryBuilderInterface
      * @return string Consulta SQL gerada.
      */
     public function getQuerySql(): string;
+
+
+    /**
+     * Insere múltiplos registros de uma vez (bulk insert)
+     *
+     * @param string $table
+     * @param array $data Array de arrays associativos
+     * @return $this
+     * @throws QueryException
+     */
+    public function insertBatch(string $table, array $data): self;
 }
