@@ -38,7 +38,7 @@ final class PDOConnection implements ConnectionInterface
      */
     public function transaction(callable $callback): mixed
     {
-        $pdo = $this->connect();
+        $pdo = $this->connect(true);
 
         try {
             $pdo->beginTransaction();
@@ -64,15 +64,20 @@ final class PDOConnection implements ConnectionInterface
     /**
      * Conecta apenas quando necessário.
      *
+     * @param bool $bufferedQuery
      * @return PDO
      * @throws DatabaseException
      */
-    public function connect(): PDO
+    public function connect(bool $bufferedQuery = true): PDO
     {
         if ($this->connection === null) {
             $dsn = $this->config->toDsn();
 
             try {
+                if ($this->config->driver === 'mysql') {
+                    $this->config->options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = $bufferedQuery;
+                }
+
                 $this->connection = new PDO(
                     $dsn,
                     $this->config->username,
@@ -100,13 +105,14 @@ final class PDOConnection implements ConnectionInterface
 
 
     /**
+     * @param bool $bufferedQuery
      * @return PDO
      * @throws DatabaseException
      */
-    public function reconnect(): PDO
+    public function reconnect(bool $bufferedQuery = true): PDO
     {
         $this->disconnect();
-        return $this->connect();
+        return $this->connect($bufferedQuery);
     }
 
     /**
@@ -126,17 +132,16 @@ final class PDOConnection implements ConnectionInterface
     }
 
     /**
-     * Exposição direta do PDO, para casos específicos.
-     *
+     * @param bool $bufferedQuery
      * @return PDO
      * @throws DatabaseException
      */
-    public function pdo(): PDO
+    public function pdo(bool $bufferedQuery = true): PDO
     {
         try {
-            return $this->connect();
+            return $this->connect($bufferedQuery);
         } catch (DatabaseException $e) {
-            return $this->reconnect();
+            return $this->reconnect($bufferedQuery);
         }
     }
 }

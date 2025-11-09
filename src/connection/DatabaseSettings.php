@@ -8,12 +8,12 @@ namespace Omegaalfa\QueryBuilder\connection;
 use InvalidArgumentException;
 use PDO;
 
-final readonly class DatabaseSettings
+final class DatabaseSettings
 {
     /**
      * @var string
      */
-    public string $driver;
+    public readonly string $driver;
 
     /**
      * @param string $driver
@@ -29,11 +29,11 @@ final readonly class DatabaseSettings
      */
     public function __construct(
         string         $driver = 'mysql',
-        public string  $host,
-        public string  $database,
-        public int     $port,
-        public string  $username,
-        public string  $password,
+        public readonly string  $host,
+        public readonly string  $database,
+        public readonly int     $port,
+        public readonly string  $username,
+        public readonly string  $password,
         public array   $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_EMULATE_PREPARES => false

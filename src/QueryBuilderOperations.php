@@ -58,6 +58,12 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     protected array $sql = [];
 
+
+    /**
+     * @var string|null
+     */
+    protected string|null $table = null;
+
     /**
      * Define um alias para a tabela principal da consulta.
      *
@@ -83,7 +89,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function select(string $table, array $fields = ['*']): self
     {
         $this->resetOperationsState();
-        $this->sql = ['SELECT', implode(', ', $fields), 'FROM ' . $this->quoteIdentifier($table)];
+        $this->table = $this->quoteIdentifier($table);
+        $this->sql = ['SELECT', implode(', ', $fields), 'FROM ' . $this->table];
         return $this;
     }
 
@@ -112,10 +119,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function insert(string $table, array $data): self
     {
         $this->resetOperationsState();
+        $this->table = $this->quoteIdentifier($table);
         $fields = array_keys($data);
         $this->sql = [
             'INSERT INTO',
-            $this->quoteIdentifier($table),
+            $this->table,
             '(' . implode(', ', $fields) . ')',
             'VALUES',
             '(' . implode(', ', array_map(static fn($field) => ':' . $field, $fields)) . ')'
@@ -140,14 +148,14 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $this->resetOperationsState();
         $assignments = [];
-
+        $this->table = $this->quoteIdentifier($table);
         foreach ($data as $key => $value) {
             $param = ':' . $key;
             $assignments[] = sprintf('%s = %s', $this->quoteIdentifier($key), $param);
             $this->params[$param] = $value;
         }
 
-        $this->sql = ['UPDATE', $this->quoteIdentifier($table), 'SET', implode(', ', $assignments)];
+        $this->sql = ['UPDATE',  $this->table, 'SET', implode(', ', $assignments)];
         return $this;
     }
 
@@ -160,7 +168,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function delete(string $table): self
     {
         $this->resetOperationsState();
-        $this->sql = ['DELETE FROM', $this->quoteIdentifier($table)];
+        $this->table = $this->quoteIdentifier($table);
+        $this->sql = ['DELETE FROM', $this->table];
         return $this;
     }
 

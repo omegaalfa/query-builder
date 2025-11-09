@@ -65,12 +65,13 @@ final class QueryBuilder extends QueryBuilderOperations
     /**
      * Executa a query atual e retorna um PDOStatement.
      *
+     * @param bool $bufferedQuery
      * @return PDOStatement
      * @throws DatabaseException
      */
-    private function prepareAndExecute(): PDOStatement
+    private function prepareAndExecute(bool $bufferedQuery = true): PDOStatement
     {
-        $pdo = $this->connection->pdo();
+        $pdo = $this->connection->pdo($bufferedQuery);
         $stmt = $pdo->prepare($this->getQuerySql());
 
         foreach ($this->params as $param => $value) {
@@ -124,11 +125,12 @@ final class QueryBuilder extends QueryBuilderOperations
     /**
      * Executa e retorna o resultado formatado (com cache e paginação).
      *
+     * @param bool $bufferedQuery
      * @return QueryResultDTO
+     * @throws DatabaseException
      * @throws QueryException
-     * @throws exceptions\DatabaseException
      */
-    public function execute(): QueryResultDTO
+    public function execute(bool $bufferedQuery = true): QueryResultDTO
     {
         try {
             if ($cached = $this->getFromCache()) {
@@ -136,7 +138,7 @@ final class QueryBuilder extends QueryBuilderOperations
                 return $cached;
             }
 
-            $stmt = $this->prepareAndExecute();
+            $stmt = $this->prepareAndExecute($bufferedQuery);
             $count = $stmt->rowCount();
 
             $pagination = null;
@@ -175,30 +177,14 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     private function getTotalCount(): int
     {
-        // build base SQL without LIMIT
-        $sql = $this->getQuerySql();
-        // remove LIMIT clause if present
-        $sql = preg_replace('/\s+LIMIT\s+\d+\s*,\s*\d+\s*$/i', '', $sql);
-
-        if (!empty($this->groupBy)) {
-            // wrap as subquery to count groups correctly
-            $countSql = "SELECT COUNT(*) as total FROM ({$sql}) AS __omg_count";
-            $pdo = $this->connection->pdo();
-            $stmt = $pdo->prepare($countSql);
-            foreach ($this->params as $k => $v) {
-                $stmt->bindValue($k, $v);
-            }
-            $stmt->execute();
-            return (int)$stmt->fetchColumn();
-        }
-
-        // default simple count
         $countQuery = clone $this;
         $countQuery->sql = ['SELECT', 'COUNT(*) as total', "FROM {$this->table}"];
         $countQuery->orderBy = [];
         $countQuery->limit = null;
-        $stmt = $countQuery->prepareAndExecute();
+
+        $stmt = $countQuery->prepareAndExecute(true);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return (int)($result['total'] ?? 0);
     }
 
@@ -208,8 +194,29 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     private function streamData(PDOStatement $stmt): iterable
     {
+        $threshold = 10000;
+        $rowCount = $stmt->rowCount();
+        if ($rowCount > 0 && $rowCount <= $threshold) {
+            yield from $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        // 🔹 Streaming real acima disso (memória constante)
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             yield $row;
         }
     }
+
+    /**
+     * @param array $items
+     * @param int $size
+     * @return iterable
+     */
+    private function chunk(array $items, int $size): iterable
+    {
+        for ($i = 0, $iMax = count($items); $i < $iMax; $i += $size) {
+            yield array_slice($items, $i, $size);
+        }
+    }
+
+
 }
