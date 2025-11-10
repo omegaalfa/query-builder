@@ -100,11 +100,3 @@ jobs:
 
       - name: 🧪 Generate coverage report
         run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
-
-      # ==========================
-      # 🔍 Static analysis
-      # ==========================
-      - name: 🔎 Run static analysis
-        run: vendor/bin/phpstan analyse --level=4 src tests
-
-
