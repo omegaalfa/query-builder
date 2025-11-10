@@ -3,7 +3,7 @@ name: 🧪 CI
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   pull_request:
 
 jobs:
@@ -12,23 +12,37 @@ jobs:
     strategy:
       matrix:
         php: ["8.4"]
-    name: ⚙️ Running test for PHP ${{ matrix.php }}
+    name: ⚙️ Running tests on PHP ${{ matrix.php }}
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # ==========================
+      # 🔍 Detect commit range
+      # ==========================
       - name: Determine commit range
         id: commit-range
         run: |
           git fetch --prune
-          LAST_COMMIT=$(git rev-parse ${{ github.event.before }} || git rev-parse HEAD~1)
+          LAST_COMMIT=$(git rev-parse ${{ github.event.before }} 2>/dev/null || git rev-parse HEAD~1)
           CURRENT_COMMIT=$(git rev-parse HEAD)
           echo "LAST_COMMIT=$LAST_COMMIT" >> $GITHUB_ENV
           echo "CURRENT_COMMIT=$CURRENT_COMMIT" >> $GITHUB_ENV
           echo "Debug: Commit range $LAST_COMMIT..$CURRENT_COMMIT"
 
+      # ==========================
+      # 🚫 Skip Dependabot commits
+      # ==========================
+      - name: Skip check for Dependabot
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        run: echo "Skipping Conventional Commit check for Dependabot." && exit 0
+
+      # ==========================
+      # 🧩 Check commit messages
+      # ==========================
       - name: Check commit messages
         id: commit-check
         run: |
@@ -46,13 +60,16 @@ jobs:
         run: |
           echo "Debug: Commit check output: '${{ steps.commit-check.outputs.stdout }}'"
           if [ -n "${{ steps.commit-check.outputs.stdout }}" ]; then
-            echo "Commit messages are following Conventional Commits specification."
+            echo "✅ Commit messages follow Conventional Commits specification."
           else
-            echo "Some commit messages do not follow Conventional Commits specification."
+            echo "❌ Some commit messages do not follow Conventional Commits specification."
             git log --format='%s' "${LAST_COMMIT}..${CURRENT_COMMIT}"
             exit 1
           fi
 
+      # ==========================
+      # ⚙️ Setup PHP + Tools
+      # ==========================
       - name: 🧰 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -75,12 +92,35 @@ jobs:
       - name: 📥 Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
+      # ==========================
+      # 🧪 Tests + Coverage
+      # ==========================
       - name: ✅ Run tests
         run: vendor/bin/phpunit --colors=always --testdox
-      
+
       - name: 🧪 Generate coverage report
         run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
-      
+
+      # ==========================
+      # 🔍 Static analysis
+      # ==========================
       - name: 🔎 Run static analysis
         run: vendor/bin/phpstan analyse --level=4 src tests
+
+    # ==========================
+  # 🔁 Auto-review setup
+  # ==========================
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: 🧠 Auto-assign reviewers
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: "🤖 Dependabot PR Auto-Review"
+          message: "Automatically requesting review from maintainers."
+
+      - name: 📝 Assign reviewers
+        uses: kentaro-m/auto-assign-action@v1.2.0
+
 
