@@ -26,7 +26,8 @@
     "php": ">=8.4",
     "ext-pdo": "*",
     "ext-ctype": "*",
-    "ext-redis": "*"
+    "ext-redis": "*",
+    "illuminate/database": "^12.37"
   },
   "autoload": {
     "psr-4": {

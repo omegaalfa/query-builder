@@ -32,10 +32,10 @@ final class QueryBuilderFullTest extends TestCase
 
     public function testSelectInsertUpdateDeleteSQL(): void
     {
-        $this->assertStringContainsString('SELECT id FROM `tabela`', $this->qbOps->select('tabela', ['id'])->getQuerySql());
-        $this->assertStringContainsString('INSERT INTO `tabela`', $this->qbOps->insert('tabela', ['a' => 1])->getQuerySql());
-        $this->assertStringContainsString('UPDATE `tabela` SET `a` = :a', $this->qbOps->update('tabela', ['a' => 1])->getQuerySql());
-        $this->assertSame('DELETE FROM `tabela`', $this->qbOps->delete('tabela')->getQuerySql());
+        $this->assertStringContainsString(/** @lang text */ 'SELECT id FROM `tabela`', $this->qbOps->select('tabela', ['id'])->getQuerySql());
+        $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `tabela`', $this->qbOps->insert('tabela', ['a' => 1])->getQuerySql());
+        $this->assertStringContainsString(/** @lang text */ 'UPDATE `tabela` SET `a` = :a', $this->qbOps->update('tabela', ['a' => 1])->getQuerySql());
+        $this->assertSame(/** @lang text */ 'DELETE FROM `tabela`', $this->qbOps->delete('tabela')->getQuerySql());
     }
 
     public function testInsertBatch(): void
@@ -45,7 +45,7 @@ final class QueryBuilderFullTest extends TestCase
             ['nome' => 'B', 'status' => 20]
         ])->getQuerySql();
 
-        $this->assertStringContainsString('INSERT INTO `doenca` (`nome`, `status`) VALUES', $sql);
+        $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `doenca` (`nome`, `status`) VALUES', $sql);
     }
 
     public function testAllWhereClauses(): void
@@ -106,6 +106,7 @@ final class QueryBuilderFullTest extends TestCase
         $this->assertSame('SELECT NOW()', $sql2);
     }
 
+
     public function testQuoteIdentifier(): void
     {
         $ref = new ReflectionClass($this->qbOps);
@@ -122,7 +123,7 @@ final class QueryBuilderFullTest extends TestCase
         $this->assertTrue(true); // não explode
     }
 
-    public function testInsertBatchGeneratesCorrectSql()
+    public function testInsertBatchGeneratesCorrectSql(): void
     {
         $data = [
             ['name' => 'Alice', 'age' => 30],
@@ -131,12 +132,12 @@ final class QueryBuilderFullTest extends TestCase
 
         $sql = $this->qb->insertBatch('users', $data)->getQuerySql();
 
-        $this->assertStringContainsString('INSERT INTO `users`', $sql);
+        $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `users`', $sql);
         $this->assertStringContainsString('(`name`, `age`)', $sql);
         $this->assertStringContainsString('VALUES (:name_0, :age_0), (:name_1, :age_1)', $sql);
     }
 
-    public function testInsertBatchThrowsOnMismatchedColumns()
+    public function testInsertBatchThrowsOnMismatchedColumns(): void
     {
         $this->expectException(\Omegaalfa\QueryBuilder\exceptions\QueryException::class);
 
@@ -148,7 +149,7 @@ final class QueryBuilderFullTest extends TestCase
         $this->qb->insertBatch('users', $data);
     }
 
-    public function testWhereNotInGeneratesCorrectSql()
+    public function testWhereNotInGeneratesCorrectSql(): void
     {
         $sql = $this->qb->select('products')->whereNotIn('id', [1, 2, 3])->getQuerySql();
 
@@ -156,7 +157,7 @@ final class QueryBuilderFullTest extends TestCase
         $this->assertStringContainsString(':id_notin_0', $sql);
     }
 
-    public function testWhereNotBetweenGeneratesCorrectSql()
+    public function testWhereNotBetweenGeneratesCorrectSql(): void
     {
         $sql = $this->qb->select('sales')->whereNotBetween('amount', [100, 500])->getQuerySql();
 
@@ -165,14 +166,14 @@ final class QueryBuilderFullTest extends TestCase
         $this->assertStringContainsString(':amount_nbt2', $sql);
     }
 
-    public function testWhereNullGeneratesCorrectSql()
+    public function testWhereNullGeneratesCorrectSql(): void
     {
         $sql = $this->qb->select('users')->whereNull('deleted_at')->getQuerySql();
 
         $this->assertStringContainsString('`deleted_at` IS NULL', $sql);
     }
 
-    public function testWhereNotNullGeneratesCorrectSql()
+    public function testWhereNotNullGeneratesCorrectSql(): void
     {
         $sql = $this->qb->select('users')->whereNotNull('email')->getQuerySql();
 
@@ -187,7 +188,7 @@ final class QueryBuilderFullTest extends TestCase
             ['name' => 'Bob', 'email' => 'bob@example.com']
         ])->getQuerySql();
 
-        $this->assertStringContainsString('INSERT INTO `users`', $query);
+        $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `users`', $query);
         $this->assertStringContainsString('(`name`, `email`)', $query);
         $this->assertStringContainsString('VALUES (:name_0, :email_0), (:name_1, :email_1)', $query);
     }
@@ -298,6 +299,4 @@ final class QueryBuilderFullTest extends TestCase
         $this->assertStringContainsString('ORDER BY `p`.`nome` ASC', $sql);
         $this->assertStringContainsString('LIMIT 0 , 10', $sql);
     }
-
-
 }
