@@ -5,7 +5,8 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder\interfaces;
 
-use Omegaalfa\queryBuilder\PaginationDTO;
+
+use Omegaalfa\QueryBuilder\PaginationDTO;
 
 interface PaginatorInterface
 {

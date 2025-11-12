@@ -71,6 +71,20 @@ trait HelperQueryOperationsTrait
     }
 
     /**
+     * @param string $field
+     * @return string
+     */
+    protected function normalizeField(string $field): string
+    {
+        // Se for função/expression (tem parêntesis) ou já tem AS, deixa como está
+        if (str_contains($field, '(') || stripos($field, ' AS ') !== false) {
+            return $field;
+        }
+        return $this->quoteIdentifier($field);
+    }
+
+
+    /**
      * Escapa nomes de tabelas e colunas, suportando alias (ex: "tabela AS t").
      *
      * - "doenca" → `doenca`

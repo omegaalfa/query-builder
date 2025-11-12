@@ -27,6 +27,11 @@ final class PDOConnection implements ConnectionInterface
      */
     private array $savepoints = [];
 
+    /**
+     * @var bool
+     */
+    private bool $bufferedQuery = true;
+
 
     /**
      * @param DatabaseSettings $config
@@ -70,7 +75,7 @@ final class PDOConnection implements ConnectionInterface
         $this->beginTransaction();
 
         try {
-            $result = $callback($this->connect());
+            $result = $callback($this->pdo());
             $this->commit();
             return $result;
         } catch (Throwable $e) {
@@ -89,7 +94,7 @@ final class PDOConnection implements ConnectionInterface
      */
     public function beginTransaction(): bool
     {
-        $pdo = $this->connect();
+        $pdo = $this->pdo();
 
         if ($this->transactionLevel === 0) {
             $result = $pdo->beginTransaction();
@@ -109,20 +114,31 @@ final class PDOConnection implements ConnectionInterface
     }
 
     /**
-     * Conecta apenas quando necessário.
-     *
      * @param bool $bufferedQuery
      * @return PDO
      * @throws DatabaseException
      */
-    public function connect(bool $bufferedQuery = true): PDO
+    public function pdo(bool $bufferedQuery = true): PDO
+    {
+        $this->bufferedQuery = $bufferedQuery;
+        if ($this->connection === null) {
+            $this->connect();
+        }
+        return $this->connection;
+    }
+
+    /**
+     * @return void
+     * @throws DatabaseException
+     */
+    public function connect(): void
     {
         if ($this->connection === null) {
             $dsn = $this->config->toDsn();
 
             try {
                 if ($this->config->driver === 'mysql') {
-                    $this->config->options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = $bufferedQuery;
+                    $this->config->options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = $this->bufferedQuery;
                 }
 
                 $this->connection = new PDO(
@@ -146,8 +162,6 @@ final class PDOConnection implements ConnectionInterface
                 );
             }
         }
-
-        return $this->connection;
     }
 
     /**
@@ -156,7 +170,7 @@ final class PDOConnection implements ConnectionInterface
      */
     public function commit(): bool
     {
-        $pdo = $this->connect();
+        $pdo = $this->pdo();
 
         if ($this->transactionLevel === 0) {
             throw new DatabaseException("No active transaction to commit");
@@ -181,7 +195,7 @@ final class PDOConnection implements ConnectionInterface
      */
     public function rollBack(): bool
     {
-        $pdo = $this->connect();
+        $pdo = $this->pdo();
 
         if ($this->transactionLevel === 0) {
             throw new DatabaseException("No active transaction to rollback");
@@ -214,24 +228,11 @@ final class PDOConnection implements ConnectionInterface
      * @return PDO
      * @throws DatabaseException
      */
-    public function pdo(bool $bufferedQuery = true): PDO
-    {
-        try {
-            return $this->connect($bufferedQuery);
-        } catch (DatabaseException $e) {
-            return $this->reconnect($bufferedQuery);
-        }
-    }
-
-    /**
-     * @param bool $bufferedQuery
-     * @return PDO
-     * @throws DatabaseException
-     */
     public function reconnect(bool $bufferedQuery = true): PDO
     {
         $this->disconnect();
-        return $this->connect($bufferedQuery);
+        $this->connect();
+        return $this->pdo($bufferedQuery);
     }
 
     /**
