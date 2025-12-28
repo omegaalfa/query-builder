@@ -1350,7 +1350,8 @@ Este Query Builder foi desenvolvido com **segurança por design**:
 ✅ **Strict types** habilitado em todos os arquivos  
 ✅ **Validação de operadores** em JOINs  
 ✅ **Enums tipadas** para operadores SQL  
-✅ **Quote automático** de identificadores  
+✅ **Quote automático** de identificadores (Identifier Injection Protection)
+✅ **Isolamento de Cache** por contexto de conexão (Multi-tenant safe)
 
 ### Documentação de Segurança
 
@@ -1368,8 +1369,9 @@ $allowedFields = ['id', 'nome', 'email'];
 $fields = array_intersect($_GET['fields'], $allowedFields);
 $qb->select('usuarios', $fields);
 
-// ❌ INSEGURO - Nunca faça isso!
-$qb->select('usuarios', $_GET['fields']); // SQL Injection risk!
+// ⚠️ CUIDADO - O método select() agora aplica quoteIdentifier automaticamente,
+// mas ainda é recomendado validar input de usuário para evitar erros de lógica.
+$qb->select('usuarios', $_GET['fields']); 
 ```
 
 ### Reportar Vulnerabilidades

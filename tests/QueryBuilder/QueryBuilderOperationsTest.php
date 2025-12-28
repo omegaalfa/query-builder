@@ -32,7 +32,7 @@ final class QueryBuilderOperationsTest extends TestCase
     public function testSelectWithFields(): void
     {
         $sql = $this->qb->select('doenca', ['idDoenca', 'nome'])->getQuerySql();
-        $this->assertSame('SELECT idDoenca, nome FROM `doenca`', $sql);
+        $this->assertSame('SELECT `idDoenca`, `nome` FROM `doenca`', $sql);
     }
 
     public function testInsertGeneratesExpectedSQL(): void

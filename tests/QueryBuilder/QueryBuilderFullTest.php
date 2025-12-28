@@ -32,7 +32,7 @@ final class QueryBuilderFullTest extends TestCase
 
     public function testSelectInsertUpdateDeleteSQL(): void
     {
-        $this->assertStringContainsString(/** @lang text */ 'SELECT id FROM `tabela`', $this->qbOps->select('tabela', ['id'])->getQuerySql());
+        $this->assertStringContainsString(/** @lang text */ 'SELECT `id` FROM `tabela`', $this->qbOps->select('tabela', ['id'])->getQuerySql());
         $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `tabela`', $this->qbOps->insert('tabela', ['a' => 1])->getQuerySql());
         $this->assertStringContainsString(/** @lang text */ 'UPDATE `tabela` SET `a` = :a', $this->qbOps->update('tabela', ['a' => 1])->getQuerySql());
         $this->assertSame(/** @lang text */ 'DELETE FROM `tabela`', $this->qbOps->delete('tabela')->getQuerySql());
@@ -290,7 +290,7 @@ final class QueryBuilderFullTest extends TestCase
             ->limit(10)
             ->getQuerySql();
 
-        $this->assertStringContainsString('SELECT p.idProduto, p.nome, COUNT(v.idVenda) as totalVendas', $sql);
+        $this->assertStringContainsString('SELECT `p`.`idProduto`, `p`.`nome`, COUNT(v.idVenda) as totalVendas', $sql);
         $this->assertStringContainsString('FROM `produtos` AS `p`', $sql);
         $this->assertStringContainsString('LEFT JOIN `vendas` ON `p`.`idProduto` = `vendas`.`idProduto`', $sql);
         $this->assertStringContainsString('WHERE `p`.`status` = :param0', $sql);

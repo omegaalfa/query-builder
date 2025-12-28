@@ -224,6 +224,15 @@ final class PDOConnection implements ConnectionInterface
     }
 
     /**
+     * Retorna as configurações da conexão (útil para contexto de cache).
+     * @return DatabaseSettings
+     */
+    public function getConfig(): DatabaseSettings
+    {
+        return $this->config;
+    }
+
+    /**
      * @param bool $bufferedQuery
      * @return PDO
      * @throws DatabaseException

@@ -111,10 +111,17 @@ trait QueryBuilderCacheTrait
         $paramsHash = md5(serialize($this->params));
         $sqlHash = md5($sql);
 
-        // Formato: prefix:table:sqlhash:paramshash
+        // ✅ SECURITY FIX: Include connection context to prevent cache collision between tenants/drivers
+        // Tenta obter hash da configuração da conexão, ou falha para o driver
+        $contextHash = property_exists($this, 'connection') && method_exists($this->connection, 'getConfig')
+            ? md5(serialize($this->connection->getConfig()))
+            : ($this->driver ?? 'default');
+
+        // Formato: prefix:table:context:sqlhash:paramshash
         $parts = [
             $this->cachePrefix,
             $this->table ?? 'raw',
+            $contextHash,
             $sqlHash,
             $paramsHash
         ];

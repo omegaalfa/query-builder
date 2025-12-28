@@ -117,7 +117,12 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $this->resetOperationsState();
         $this->table = $this->quoteIdentifier($table);
-        $this->sql = ['SELECT', implode(', ', $fields), 'FROM ' . $this->table];
+
+        // ✅ SECURITY FIX: Apply normalization/quoting to fields to prevent identifier injection
+        // Uses normalizeField from HelperQueryOperationsTrait which allows functions/aliases but quotes identifiers
+        $processedFields = array_map([$this, 'normalizeField'], $fields);
+
+        $this->sql = ['SELECT', implode(', ', $processedFields), 'FROM ' . $this->table];
         return $this;
     }
 

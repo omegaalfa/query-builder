@@ -43,7 +43,7 @@ final class QueryBuilderSecurityTest extends TestCase
         $qb = new QueryBuilderOperations();
         $sql = $qb->select('prod', ['p.id', 'p.name'])->getQuerySql();
 
-        $this->assertStringContainsString('p.id', $sql);
-        $this->assertStringContainsString('p.name', $sql);
+        $this->assertStringContainsString('`p`.`id`', $sql);
+        $this->assertStringContainsString('`p`.`name`', $sql);
     }
 }
