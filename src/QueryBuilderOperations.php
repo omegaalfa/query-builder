@@ -92,6 +92,22 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
     /**
      * Inicia uma consulta SELECT.
+     * 
+     * Aceita identificadores de colunas e expressões SQL (funções, aliases).
+     * 
+     * ⚠️ IMPORTANTE: Para campos dinâmicos vindos de usuário, sempre use whitelist:
+     * 
+     * ✅ SEGURO - Campos conhecidos:
+     * ->select('users', ['id', 'name', 'email'])
+     * ->select('orders', ['id', 'COUNT(*) as total'])
+     * 
+     * ✅ SEGURO - Com whitelist:
+     * $allowedFields = ['id', 'name', 'email'];
+     * $fields = array_intersect($userFields, $allowedFields);
+     * ->select('users', $fields)
+     * 
+     * ❌ INSEGURO - Input direto do usuário:
+     * ->select('users', $_GET['fields'])  // NUNCA FAÇA ISSO!
      *
      * @param string $table Nome da tabela ou view.
      * @param array $fields Lista de colunas a selecionar (default: ['*']).
@@ -434,6 +450,15 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function join(string $table, string $key, string $operator, string $refer, JoinType $type = JoinType::INNER): self
     {
+        // Valida operador para prevenir SQL injection via operator
+        $validOperators = ['=', '<>', '!=', '>', '<', '>=', '<='];
+        if (!in_array($operator, $validOperators, true)) {
+            throw new QueryException(
+                "Invalid JOIN operator: {$operator}. " .
+                "Allowed operators: " . implode(', ', $validOperators)
+            );
+        }
+        
         // ⚙️ MySQL não suporta FULL JOIN → usar emulação
         if ($type === JoinType::FULL && in_array($this->driver, ['mysql', 'mariadb'])) {
             throw new QueryException(
@@ -511,8 +536,18 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
     /**
      * Adiciona uma cláusula HAVING em formato bruto.
-     *
-     * Exemplo: ->havingRaw('COUNT(*) > 5')
+     * 
+     * ⚠️ ADVANCED API - Use apenas com SQL confiável!
+     * 
+     * Para condições simples, prefira having() com parâmetros.
+     * Use havingRaw() apenas para expressões SQL complexas.
+     * 
+     * ✅ SEGURO - Expressão estática:
+     * ->havingRaw('COUNT(*) > 5')
+     * ->havingRaw('SUM(price) > AVG(price)')
+     * 
+     * ❌ INSEGURO - Input de usuário:
+     * ->havingRaw($_GET['condition'])  // NUNCA FAÇA ISSO!
      *
      * @param string $condition Condição completa em SQL.
      * @return $this
@@ -545,10 +580,19 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
     /**
      * Define uma consulta SQL manual (raw query), opcionalmente com parâmetros.
+     * 
+     * ⚠️ ADVANCED API - Use apenas com SQL confiável!
+     * 
+     * Este método é um "escape hatch" para queries complexas que não podem
+     * ser expressas com a API fluente (CTEs, window functions, etc).
+     * 
+     * ✅ SEGURO - SQL estático:
+     * ->raw('SELECT * FROM users WHERE created_at > ?', [date('Y-m-d')])
+     * 
+     * ❌ INSEGURO - Input de usuário:
+     * ->raw($_POST['query'])  // NUNCA FAÇA ISSO!
      *
-     * Exemplo: ->raw('SELECT * FROM doenca WHERE status = ?', [1])
-     *
-     * @param string $query SQL completo.
+     * @param string $query SQL completo (use ? ou :name para placeholders).
      * @param array $params Parâmetros para binding.
      * @return $this
      */
