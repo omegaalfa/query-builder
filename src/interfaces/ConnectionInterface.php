@@ -16,10 +16,9 @@ interface ConnectionInterface
     public function connect(): void;
 
     /**
-     * @param bool $bufferedQuery
      * @return PDO
      */
-    public function pdo(bool $bufferedQuery = true) : PDO;
+    public function pdo() : PDO;
 
     /**
      * @return void

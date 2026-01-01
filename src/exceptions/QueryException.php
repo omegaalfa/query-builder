@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace Omegaalfa\QueryBuilder\exceptions;
 
 use Exception;
+use Throwable;
 
 class QueryException extends Exception
 {
@@ -26,14 +27,14 @@ class QueryException extends Exception
 	 * @param  string|null     $sql                Consulta SQL que causou o erro.
 	 * @param  array           $bindings           Parâmetros usados na consulta.
 	 * @param  int             $code               Código da exceção.
-	 * @param  Exception|null  $previousException  Exceção anterior encadeada, se houver.
+	 * @param  Throwable|null  $previousException  Exceção anterior encadeada, se houver.
 	 */
 	public function __construct(
 		string $message,
 		?string $sql = null,
 		array $bindings = [],
 		int $code = 0,
-		?Exception $previousException = null
+		?Throwable $previousException = null
 	) {
 		$this->sql = $sql;
 		$this->bindings = $bindings;

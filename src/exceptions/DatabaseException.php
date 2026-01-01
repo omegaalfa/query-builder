@@ -6,22 +6,23 @@ declare(strict_types=1);
 namespace Omegaalfa\QueryBuilder\exceptions;
 
 use Exception;
+use Throwable;
 
 class DatabaseException extends Exception
 {
 	/**
-	 * @var Exception|null
+	 * @var Throwable|null
 	 */
-	private ?Exception $previousException;
+	private ?Throwable $previousException;
 
 	/**
 	 * Construtor da classe DatabaseException.
 	 *
 	 * @param  string          $message            Mensagem da exceção.
 	 * @param  int             $code               Código da exceção.
-	 * @param  Exception|null  $previousException  Exceção anterior encadeada, se houver.
+	 * @param  Throwable|null  $previousException  Exceção anterior encadeada, se houver.
 	 */
-	public function __construct(string $message, int $code = 0, ?Exception $previousException = null)
+	public function __construct(string $message, int $code = 0, ?Throwable $previousException = null)
 	{
 		$this->previousException = $previousException;
 		parent::__construct($message, $code, $previousException);
@@ -30,9 +31,9 @@ class DatabaseException extends Exception
 	/**
 	 * Retorna a exceção anterior, se existir.
 	 *
-	 * @return Exception|null
+	 * @return Throwable|null
 	 */
-	public function getPreviousException(): ?Exception
+	public function getPreviousException(): ?Throwable
 	{
 		return $this->previousException;
 	}
