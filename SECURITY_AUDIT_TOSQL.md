@@ -301,5 +301,4 @@ ataques SQL Injection reais e demonstrou proteção completa.
 
 ---
 
-**Assinado por**: AI Security Audit System  
-**GitHub Copilot** - Powered by Claude Sonnet 4.5
+**Assinado por**: AI Security Audit System
