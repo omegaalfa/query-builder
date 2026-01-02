@@ -18,6 +18,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
     use HelperQueryOperationsTrait;
 
     /**
+     * @var string
+     */
+    protected string $driver = 'mysql';
+
+    /**
      * @var array
      */
     protected array $joins = [];

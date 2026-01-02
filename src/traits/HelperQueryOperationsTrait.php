@@ -98,8 +98,11 @@ trait HelperQueryOperationsTrait
     {
         static $cache = [];
 
-        if (isset($cache[$identifier])) {
-            return $cache[$identifier];
+        // Include driver in cache key to prevent cross-driver conflicts
+        $cacheKey = $this->driver . ':' . $identifier;
+
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
         }
 
         $identifier = trim(preg_replace('/\s+/', ' ', $identifier));
@@ -113,7 +116,7 @@ trait HelperQueryOperationsTrait
         // Trata alias (ex: "tabela AS t")
         if (stripos($identifier, ' as ') !== false) {
             [$name, $alias] = preg_split('/\s+as\s+/i', $identifier);
-            return $cache[$identifier] = sprintf(
+            return $cache[$cacheKey] = sprintf(
                 '%s AS %s',
                 $this->quoteIdentifier($name),
                 $this->quoteIdentifier($alias)
@@ -128,7 +131,7 @@ trait HelperQueryOperationsTrait
                 : sprintf('%s%s%s', $quoteChar, str_replace($quoteChar, $quoteChar . $quoteChar, $part), $quoteChar);
         }, $parts);
 
-        return $cache[$identifier] = implode('.', $quoted);
+        return $cache[$cacheKey] = implode('.', $quoted);
 
     }
 }

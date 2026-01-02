@@ -240,7 +240,11 @@ final class QueryBuilder extends QueryBuilderOperations
             }
 
             $stmt->execute();
-            $this->insertId = $pdo->lastInsertId();
+
+            // Only capture last insert ID for INSERT queries to avoid PostgreSQL "lastval not yet defined" error
+            if (stripos($sql, 'INSERT') === 0) {
+                $this->insertId = $pdo->lastInsertId();
+            }
 
             if ($this->logger) {
                 $duration = microtime(true) - $startTime;
