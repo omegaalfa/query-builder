@@ -3,18 +3,14 @@
 declare(strict_types=1);
 
 
-namespace Omegaalfa\QueryBuilder\connection;
+namespace Omegaalfa\QueryBuilder;
 
 use InvalidArgumentException;
+use JsonException;
 use PDO;
 
 final class DatabaseSettings
 {
-    /**
-     * @var string
-     */
-    public readonly string $driver;
-
     /**
      * @param string $driver
      * @param string $host
@@ -28,19 +24,19 @@ final class DatabaseSettings
      * @param string|null $prefix
      */
     public function __construct(
-        string         $driver = 'mysql',
-        public readonly string  $host,
-        public readonly string  $database,
-        public readonly int     $port,
-        public readonly string  $username,
-        public readonly string  $password,
-        public array   $options = [
+        public string          $driver,
+        public readonly string $host,
+        public readonly string $database,
+        public readonly int    $port,
+        public readonly string $username,
+        public readonly string $password,
+        public array           $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_EMULATE_PREPARES => false
         ],
-        public string  $charset = 'utf8mb4',
-        public string  $collation = 'utf8mb4_unicode_ci',
-        public ?string $prefix = null,
+        public string          $charset = 'utf8mb4',
+        public string          $collation = 'utf8mb4_unicode_ci',
+        public ?string         $prefix = null,
     )
     {
         $this->driver = $this->normalizeDriver($driver);
@@ -124,4 +120,23 @@ final class DatabaseSettings
     }
 
 
+    /**
+     * @return string
+     * @throws JsonException
+     */
+    public function getCacheKey(): string
+    {
+        $data = json_encode([
+            'driver' => $this->driver,
+            'host' => $this->host,
+            'database' => $this->database,
+            'port' => $this->port,
+            'username' => $this->username,
+            'charset' => $this->charset,
+            'collation' => $this->collation,
+            'prefix' => $this->prefix,
+        ], JSON_THROW_ON_ERROR);
+
+        return hash('sha256', $data);
+    }
 }

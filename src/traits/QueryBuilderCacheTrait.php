@@ -2,130 +2,148 @@
 
 declare(strict_types=1);
 
-
 namespace Omegaalfa\QueryBuilder\traits;
 
-use Omegaalfa\QueryBuilder\QueryBuilder;
+use JsonException;
+use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
 use Omegaalfa\QueryBuilder\QueryResultDTO;
 
+
+/**
+ * Trait QueryBuilderCacheTrait
+ *
+ * @property array $sql
+ * @property array $params
+ * @property CacheInterface|null $cache
+ * @property string|null $table
+ * @property string|null $driver
+ * @property object|null $connection
+ */
 trait QueryBuilderCacheTrait
 {
-    /**
-     * @var int
-     */
-    private int $cacheTtl;
+    private int $cacheTtl = 0;
 
-    /**
-     * @var string
-     */
-    private string $cacheKey;
+    private ?string $cacheKey = null;
 
-    /**
-     * @var string
-     */
     private string $cachePrefix = 'qb';
 
-
     /**
-     * @param int $ttl
-     *
-     * @return QueryBuilderCacheTrait|QueryBuilder
+     * Habilita cache para a query atual.
      */
     public function cache(int $ttl = 3600): self
     {
+        if ($ttl <= 0) {
+            return $this;
+        }
+
         $this->cacheTtl = $ttl;
+
         return $this;
     }
 
     /**
      * Salva o resultado da query no cache.
-     *
-     * @param QueryResultDTO $result
-     * @return void
      */
     private function saveToCache(QueryResultDTO $result): void
     {
-        if (!isset($this->cacheTtl, $this->cacheKey) || is_null($this->cache)) {
+        if ($this->cacheTtl <= 0 || $this->cache === null) {
             return;
         }
 
         try {
+            $this->cacheKey ??= $this->generateCacheKey();
             $data = is_iterable($result->data)
                 ? iterator_to_array($result->data, false)
                 : $result->data;
 
-            $cachedPayload = [
-                'data' => $data,
-                'count' => $result->count,
-                'pagination' => $result->pagination,
-                'cached_at' => time(),
-                'ttl' => $this->cacheTtl
-            ];
-
-            $this->cache->set($this->cacheKey, $cachedPayload, $this->cacheTtl);
+            $this->cache->set(
+                $this->cacheKey,
+                [
+                    'data' => $data,
+                    'count' => $result->count,
+                    'pagination' => $result->pagination,
+                    'cached_at' => time(),
+                    'ttl' => $this->cacheTtl,
+                ],
+                $this->cacheTtl
+            );
         } catch (\Throwable $e) {
-            error_log("Cache save failed: " . $e->getMessage());
+            error_log('[QueryBuilderCache] Save failed: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Recupera o resultado do cache, se existir.
-     *
-     * @return QueryResultDTO|null
-     */
-    private function getFromCache(): ?QueryResultDTO
-    {
-        if (!isset($this->cacheTtl) || is_null($this->cache)) {
-            return null;
-        }
-
-        $this->cacheKey = $this->generateCacheKey();
-
-        try {
-            if ($this->cache->has($this->cacheKey)) {
-                $cachedResult = $this->cache->get($this->cacheKey);
-
-                if (!is_array($cachedResult) || !isset($cachedResult['data'])) {
-                    return null;
-                }
-
-                return new QueryResultDTO(
-                    data: $cachedResult['data'],
-                    count: $cachedResult['count'] ?? count($cachedResult['data']),
-                    pagination: $cachedResult['pagination'] ?? null
-                );
-            }
-        } catch (\Throwable $e) {
-            error_log("Cache retrieval failed: " . $e->getMessage());
-        }
-
-        return null;
     }
 
     /**
      * @return string
+     * @throws JsonException
      */
     private function generateCacheKey(): string
     {
         $sql = implode(' ', $this->sql);
-        $paramsHash = md5(serialize($this->params));
-        $sqlHash = md5($sql);
 
-        // ✅ SECURITY FIX: Include connection context to prevent cache collision between tenants/drivers
-        // Tenta obter hash da configuração da conexão, ou falha para o driver
-        $contextHash = property_exists($this, 'connection') && method_exists($this->connection, 'getConfig')
-            ? md5(serialize($this->connection->getConfig()))
+        $sqlHash = hash('xxh128', $sql);
+
+        $paramsHash = hash(
+            'xxh128',
+            json_encode($this->params, JSON_THROW_ON_ERROR)
+        );
+
+        // Evita colisão entre tenants / conexões
+        $contextHash = (
+            property_exists($this, 'connection') &&
+            $this->connection !== null &&
+            method_exists($this->connection, 'getDbSettings')
+        )
+            ? hash(
+                'xxh128',
+                json_encode(
+                    $this->connection->getDbSettings(),
+                    JSON_THROW_ON_ERROR
+                )
+            )
             : ($this->driver ?? 'default');
 
-        // Formato: prefix:table:context:sqlhash:paramshash
-        $parts = [
+        return implode(':', [
             $this->cachePrefix,
             $this->table ?? 'raw',
             $contextHash,
             $sqlHash,
-            $paramsHash
-        ];
+            $paramsHash,
+        ]);
+    }
 
-        return implode(':', $parts);
+    /**
+     * Recupera o resultado do cache, se existir.
+     */
+    private function getFromCache(): ?QueryResultDTO
+    {
+        if (
+            $this->cacheTtl <= 0 ||
+            $this->cache === null
+        ) {
+            return null;
+        }
+
+        try {
+            $this->cacheKey ??= $this->generateCacheKey();
+
+            if (!$this->cache->has($this->cacheKey)) {
+                return null;
+            }
+
+            $cached = $this->cache->get($this->cacheKey);
+
+            if (!is_array($cached) || !array_key_exists('data', $cached)) {
+                return null;
+            }
+
+            return new QueryResultDTO(
+                data: $cached['data'],
+                count: $cached['count'] ?? count($cached['data']),
+                pagination: $cached['pagination'] ?? null
+            );
+        } catch (\Throwable $e) {
+            error_log('[QueryBuilderCache] Retrieval failed: ' . $e->getMessage());
+            return null;
+        }
     }
 }
