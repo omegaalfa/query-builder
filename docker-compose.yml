@@ -1,0 +1,72 @@
+name: query-builder
+
+services:
+  pgvector:
+    image: pgvector/pgvector:0.8.5-pg17-bookworm@sha256:d2ef61f42ef767baa5a1475393303cc235bcd92febd9d7014eddb48b41f3bad0
+    environment:
+      POSTGRES_DB: ${PGVECTOR_DATABASE:?Define PGVECTOR_DATABASE in .env}
+      POSTGRES_USER: ${PGVECTOR_USERNAME:?Define PGVECTOR_USERNAME in .env}
+      POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD:?Define PGVECTOR_PASSWORD in .env}
+    ports:
+      - "${PGVECTOR_PORT:-54329}:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+    networks:
+      - query_builder
+
+  mysql:
+    image: mysql:8.4.10@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6
+    environment:
+      MYSQL_DATABASE: ${DOCKER_MYSQL_DATABASE:?Define DOCKER_MYSQL_DATABASE in .env}
+      MYSQL_USER: ${DOCKER_MYSQL_USERNAME:?Define DOCKER_MYSQL_USERNAME in .env}
+      MYSQL_PASSWORD: ${DOCKER_MYSQL_PASSWORD:?Define DOCKER_MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${DOCKER_MYSQL_ROOT_PASSWORD:?Define DOCKER_MYSQL_ROOT_PASSWORD in .env}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${DOCKER_MYSQL_PORT:-33069}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - query_builder
+
+  redis:
+    image: redis:7.4.10-alpine3.21@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+    environment:
+      REDIS_PASSWORD: ${DOCKER_REDIS_PASSWORD:?Define DOCKER_REDIS_PASSWORD in .env}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    ports:
+      - "${DOCKER_REDIS_PORT:-63799}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS_PASSWORD}\" redis-cli ping | grep -q PONG"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+    networks:
+      - query_builder
+
+networks:
+  query_builder:
+    driver: bridge
+
+volumes:
+  pgvector_data:
+  mysql_data:
+  redis_data:

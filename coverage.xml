@@ -1,0 +1,1605 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1785210281">
+  <project timestamp="1785210281" name="Clover Coverage">
+    <package name="Omegaalfa\QueryBuilder\Cache">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Cache/RedisCache.php">
+        <class name="Omegaalfa\QueryBuilder\Cache\RedisCache" namespace="Omegaalfa\QueryBuilder\Cache">
+          <metrics complexity="32" methods="9" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="50" coveredstatements="6" elements="59" coveredelements="6"/>
+        </class>
+        <line num="36" type="method" name="__construct" visibility="public" complexity="12" crap="47.16" count="4"/>
+        <line num="44" type="stmt" count="4"/>
+        <line num="45" type="stmt" count="2"/>
+        <line num="47" type="stmt" count="2"/>
+        <line num="48" type="stmt" count="1"/>
+        <line num="50" type="stmt" count="1"/>
+        <line num="51" type="stmt" count="1"/>
+        <line num="54" type="stmt" count="0"/>
+        <line num="55" type="stmt" count="0"/>
+        <line num="57" type="stmt" count="0"/>
+        <line num="58" type="stmt" count="0"/>
+        <line num="60" type="stmt" count="0"/>
+        <line num="61" type="stmt" count="0"/>
+        <line num="63" type="stmt" count="0"/>
+        <line num="64" type="stmt" count="0"/>
+        <line num="66" type="stmt" count="0"/>
+        <line num="67" type="stmt" count="0"/>
+        <line num="76" type="method" name="has" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="79" type="stmt" count="0"/>
+        <line num="80" type="stmt" count="0"/>
+        <line num="81" type="stmt" count="0"/>
+        <line num="85" type="method" name="prefixKey" visibility="private" complexity="1" crap="2" count="0"/>
+        <line num="87" type="stmt" count="0"/>
+        <line num="97" type="method" name="set" visibility="public" complexity="4" crap="20" count="0"/>
+        <line num="100" type="stmt" count="0"/>
+        <line num="102" type="stmt" count="0"/>
+        <line num="103" type="stmt" count="0"/>
+        <line num="105" type="stmt" count="0"/>
+        <line num="106" type="stmt" count="0"/>
+        <line num="107" type="stmt" count="0"/>
+        <line num="108" type="stmt" count="0"/>
+        <line num="117" type="method" name="delete" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="120" type="stmt" count="0"/>
+        <line num="121" type="stmt" count="0"/>
+        <line num="122" type="stmt" count="0"/>
+        <line num="130" type="method" name="deletePattern" visibility="public" complexity="3" crap="12" count="0"/>
+        <line num="133" type="stmt" count="0"/>
+        <line num="134" type="stmt" count="0"/>
+        <line num="135" type="stmt" count="0"/>
+        <line num="137" type="stmt" count="0"/>
+        <line num="138" type="stmt" count="0"/>
+        <line num="139" type="stmt" count="0"/>
+        <line num="146" type="method" name="clear" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="148" type="stmt" count="0"/>
+        <line num="155" type="method" name="getMultiple" visibility="public" complexity="3" crap="12" count="0"/>
+        <line num="157" type="stmt" count="0"/>
+        <line num="158" type="stmt" count="0"/>
+        <line num="159" type="stmt" count="0"/>
+        <line num="160" type="stmt" count="0"/>
+        <line num="163" type="stmt" count="0"/>
+        <line num="171" type="method" name="get" visibility="public" complexity="4" crap="20" count="0"/>
+        <line num="174" type="stmt" count="0"/>
+        <line num="176" type="stmt" count="0"/>
+        <line num="177" type="stmt" count="0"/>
+        <line num="180" type="stmt" count="0"/>
+        <line num="181" type="stmt" count="0"/>
+        <line num="182" type="stmt" count="0"/>
+        <line num="183" type="stmt" count="0"/>
+        <line num="184" type="stmt" count="0"/>
+        <metrics loc="188" ncloc="141" classes="1" methods="9" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="50" coveredstatements="6" elements="59" coveredelements="6"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\Connection">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Connection/Connection.php">
+        <class name="Omegaalfa\QueryBuilder\Connection\Connection" namespace="Omegaalfa\QueryBuilder\Connection">
+          <metrics complexity="6" methods="4" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="19" coveredstatements="0" elements="23" coveredelements="0"/>
+        </class>
+        <line num="29" type="method" name="create" visibility="public" complexity="3" crap="12" count="0"/>
+        <line num="31" type="stmt" count="0"/>
+        <line num="32" type="stmt" count="0"/>
+        <line num="34" type="stmt" count="0"/>
+        <line num="35" type="stmt" count="0"/>
+        <line num="37" type="stmt" count="0"/>
+        <line num="38" type="stmt" count="0"/>
+        <line num="39" type="stmt" count="0"/>
+        <line num="40" type="stmt" count="0"/>
+        <line num="41" type="stmt" count="0"/>
+        <line num="42" type="stmt" count="0"/>
+        <line num="43" type="stmt" count="0"/>
+        <line num="44" type="stmt" count="0"/>
+        <line num="45" type="stmt" count="0"/>
+        <line num="46" type="stmt" count="0"/>
+        <line num="50" type="stmt" count="0"/>
+        <line num="58" type="method" name="remove" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="60" type="stmt" count="0"/>
+        <line num="61" type="stmt" count="0"/>
+        <line num="69" type="method" name="clearCache" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="71" type="stmt" count="0"/>
+        <line num="77" type="method" name="count" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="79" type="stmt" count="0"/>
+        <metrics loc="83" ncloc="58" classes="1" methods="4" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="19" coveredstatements="0" elements="23" coveredelements="0"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Connection/PDOConnection.php">
+        <class name="Omegaalfa\QueryBuilder\Connection\PDOConnection" namespace="Omegaalfa\QueryBuilder\Connection">
+          <metrics complexity="85" methods="29" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="269" coveredstatements="42" elements="298" coveredelements="45"/>
+        </class>
+        <line num="72" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="74" type="stmt" count="1"/>
+        <line num="81" type="method" name="getReconnectAttempts" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="83" type="stmt" count="0"/>
+        <line num="91" type="method" name="getTransactionLevel" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="93" type="stmt" count="0"/>
+        <line num="99" type="method" name="inTransaction" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="101" type="stmt" count="0"/>
+        <line num="113" type="method" name="transaction" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="115" type="stmt" count="0"/>
+        <line num="116" type="stmt" count="0"/>
+        <line num="119" type="stmt" count="0"/>
+        <line num="120" type="stmt" count="0"/>
+        <line num="121" type="stmt" count="0"/>
+        <line num="122" type="stmt" count="0"/>
+        <line num="123" type="stmt" count="0"/>
+        <line num="124" type="stmt" count="0"/>
+        <line num="125" type="stmt" count="0"/>
+        <line num="126" type="stmt" count="0"/>
+        <line num="127" type="stmt" count="0"/>
+        <line num="128" type="stmt" count="0"/>
+        <line num="138" type="method" name="ensureConnection" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="140" type="stmt" count="0"/>
+        <line num="141" type="stmt" count="0"/>
+        <line num="153" type="method" name="isAlive" visibility="public" complexity="3" crap="12" count="0"/>
+        <line num="155" type="stmt" count="0"/>
+        <line num="156" type="stmt" count="0"/>
+        <line num="161" type="stmt" count="0"/>
+        <line num="162" type="stmt" count="0"/>
+        <line num="163" type="stmt" count="0"/>
+        <line num="164" type="stmt" count="0"/>
+        <line num="173" type="method" name="handleDeadConnection" visibility="private" complexity="4" crap="20" count="0"/>
+        <line num="175" type="stmt" count="0"/>
+        <line num="177" type="stmt" count="0"/>
+        <line num="179" type="stmt" count="0"/>
+        <line num="180" type="stmt" count="0"/>
+        <line num="181" type="stmt" count="0"/>
+        <line num="182" type="stmt" count="0"/>
+        <line num="183" type="stmt" count="0"/>
+        <line num="185" type="stmt" count="0"/>
+        <line num="186" type="stmt" count="0"/>
+        <line num="187" type="stmt" count="0"/>
+        <line num="188" type="stmt" count="0"/>
+        <line num="189" type="stmt" count="0"/>
+        <line num="190" type="stmt" count="0"/>
+        <line num="194" type="stmt" count="0"/>
+        <line num="204" type="method" name="disconnect" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="206" type="stmt" count="0"/>
+        <line num="207" type="stmt" count="0"/>
+        <line num="208" type="stmt" count="0"/>
+        <line num="209" type="stmt" count="0"/>
+        <line num="210" type="stmt" count="0"/>
+        <line num="213" type="stmt" count="0"/>
+        <line num="214" type="stmt" count="0"/>
+        <line num="215" type="stmt" count="0"/>
+        <line num="226" type="method" name="connect" visibility="public" complexity="5" crap="8.79" count="1"/>
+        <line num="228" type="stmt" count="1"/>
+        <line num="229" type="stmt" count="0"/>
+        <line num="232" type="stmt" count="1"/>
+        <line num="233" type="stmt" count="1"/>
+        <line num="236" type="stmt" count="1"/>
+        <line num="237" type="stmt" count="1"/>
+        <line num="238" type="stmt" count="1"/>
+        <line num="239" type="stmt" count="1"/>
+        <line num="240" type="stmt" count="1"/>
+        <line num="241" type="stmt" count="1"/>
+        <line num="244" type="stmt" count="1"/>
+        <line num="247" type="stmt" count="1"/>
+        <line num="248" type="stmt" count="1"/>
+        <line num="251" type="stmt" count="1"/>
+        <line num="252" type="stmt" count="0"/>
+        <line num="255" type="stmt" count="1"/>
+        <line num="257" type="stmt" count="0"/>
+        <line num="258" type="stmt" count="0"/>
+        <line num="259" type="stmt" count="0"/>
+        <line num="260" type="stmt" count="0"/>
+        <line num="261" type="stmt" count="0"/>
+        <line num="262" type="stmt" count="0"/>
+        <line num="263" type="stmt" count="0"/>
+        <line num="264" type="stmt" count="0"/>
+        <line num="265" type="stmt" count="0"/>
+        <line num="266" type="stmt" count="0"/>
+        <line num="267" type="stmt" count="0"/>
+        <line num="268" type="stmt" count="0"/>
+        <line num="269" type="stmt" count="0"/>
+        <line num="270" type="stmt" count="0"/>
+        <line num="279" type="method" name="buildConnectionOptions" visibility="private" complexity="5" crap="8.79" count="1"/>
+        <line num="281" type="stmt" count="1"/>
+        <line num="284" type="stmt" count="1"/>
+        <line num="285" type="stmt" count="0"/>
+        <line num="286" type="stmt" count="0"/>
+        <line num="289" type="stmt" count="0"/>
+        <line num="290" type="stmt" count="0"/>
+        <line num="294" type="stmt" count="0"/>
+        <line num="297" type="stmt" count="0"/>
+        <line num="301" type="stmt" count="1"/>
+        <line num="302" type="stmt" count="1"/>
+        <line num="303" type="stmt" count="1"/>
+        <line num="307" type="stmt" count="1"/>
+        <line num="308" type="stmt" count="0"/>
+        <line num="309" type="stmt" count="0"/>
+        <line num="312" type="stmt" count="1"/>
+        <line num="321" type="method" name="applyPostConnectionSettings" visibility="private" complexity="5" crap="8.12" count="1"/>
+        <line num="323" type="stmt" count="1"/>
+        <line num="324" type="stmt" count="0"/>
+        <line num="325" type="stmt" count="1"/>
+        <line num="326" type="stmt" count="0"/>
+        <line num="327" type="stmt" count="0"/>
+        <line num="328" type="stmt" count="1"/>
+        <line num="337" type="method" name="applyMySQLSettings" visibility="private" complexity="8" crap="72" count="0"/>
+        <line num="339" type="stmt" count="0"/>
+        <line num="340" type="stmt" count="0"/>
+        <line num="343" type="stmt" count="0"/>
+        <line num="344" type="stmt" count="0"/>
+        <line num="347" type="stmt" count="0"/>
+        <line num="348" type="stmt" count="0"/>
+        <line num="349" type="stmt" count="0"/>
+        <line num="353" type="stmt" count="0"/>
+        <line num="354" type="stmt" count="0"/>
+        <line num="355" type="stmt" count="0"/>
+        <line num="356" type="stmt" count="0"/>
+        <line num="360" type="stmt" count="0"/>
+        <line num="363" type="stmt" count="0"/>
+        <line num="364" type="stmt" count="0"/>
+        <line num="367" type="stmt" count="0"/>
+        <line num="368" type="stmt" count="0"/>
+        <line num="371" type="stmt" count="0"/>
+        <line num="372" type="stmt" count="0"/>
+        <line num="373" type="stmt" count="0"/>
+        <line num="374" type="stmt" count="0"/>
+        <line num="375" type="stmt" count="0"/>
+        <line num="376" type="stmt" count="0"/>
+        <line num="386" type="method" name="hasCapability" visibility="private" complexity="1" crap="1" count="1"/>
+        <line num="388" type="stmt" count="1"/>
+        <line num="397" type="method" name="applyPostgreSQLSettings" visibility="private" complexity="7" crap="11.03" count="1"/>
+        <line num="399" type="stmt" count="1"/>
+        <line num="400" type="stmt" count="0"/>
+        <line num="403" type="stmt" count="1"/>
+        <line num="406" type="stmt" count="1"/>
+        <line num="407" type="stmt" count="1"/>
+        <line num="408" type="stmt" count="1"/>
+        <line num="409" type="stmt" count="1"/>
+        <line num="410" type="stmt" count="1"/>
+        <line num="412" type="stmt" count="1"/>
+        <line num="414" type="stmt" count="0"/>
+        <line num="415" type="stmt" count="0"/>
+        <line num="418" type="stmt" count="0"/>
+        <line num="422" type="stmt" count="1"/>
+        <line num="425" type="stmt" count="1"/>
+        <line num="426" type="stmt" count="1"/>
+        <line num="429" type="stmt" count="1"/>
+        <line num="430" type="stmt" count="1"/>
+        <line num="433" type="stmt" count="0"/>
+        <line num="434" type="stmt" count="0"/>
+        <line num="435" type="stmt" count="0"/>
+        <line num="436" type="stmt" count="0"/>
+        <line num="437" type="stmt" count="0"/>
+        <line num="438" type="stmt" count="0"/>
+        <line num="448" type="method" name="applySQLiteSettings" visibility="private" complexity="5" crap="30" count="0"/>
+        <line num="452" type="stmt" count="0"/>
+        <line num="453" type="stmt" count="0"/>
+        <line num="456" type="stmt" count="0"/>
+        <line num="457" type="stmt" count="0"/>
+        <line num="458" type="stmt" count="0"/>
+        <line num="459" type="stmt" count="0"/>
+        <line num="460" type="stmt" count="0"/>
+        <line num="461" type="stmt" count="0"/>
+        <line num="466" type="stmt" count="0"/>
+        <line num="467" type="stmt" count="0"/>
+        <line num="471" type="stmt" count="0"/>
+        <line num="474" type="stmt" count="0"/>
+        <line num="477" type="stmt" count="0"/>
+        <line num="479" type="stmt" count="0"/>
+        <line num="480" type="stmt" count="0"/>
+        <line num="481" type="stmt" count="0"/>
+        <line num="482" type="stmt" count="0"/>
+        <line num="483" type="stmt" count="0"/>
+        <line num="484" type="stmt" count="0"/>
+        <line num="494" type="method" name="beginTransaction" visibility="public" complexity="6" crap="42" count="0"/>
+        <line num="496" type="stmt" count="0"/>
+        <line num="498" type="stmt" count="0"/>
+        <line num="500" type="stmt" count="0"/>
+        <line num="501" type="stmt" count="0"/>
+        <line num="502" type="stmt" count="0"/>
+        <line num="504" type="stmt" count="0"/>
+        <line num="505" type="stmt" count="0"/>
+        <line num="506" type="stmt" count="0"/>
+        <line num="507" type="stmt" count="0"/>
+        <line num="508" type="stmt" count="0"/>
+        <line num="509" type="stmt" count="0"/>
+        <line num="510" type="stmt" count="0"/>
+        <line num="514" type="stmt" count="0"/>
+        <line num="515" type="stmt" count="0"/>
+        <line num="516" type="stmt" count="0"/>
+        <line num="517" type="stmt" count="0"/>
+        <line num="520" type="stmt" count="0"/>
+        <line num="523" type="stmt" count="0"/>
+        <line num="524" type="stmt" count="0"/>
+        <line num="525" type="stmt" count="0"/>
+        <line num="526" type="stmt" count="0"/>
+        <line num="527" type="stmt" count="0"/>
+        <line num="528" type="stmt" count="0"/>
+        <line num="529" type="stmt" count="0"/>
+        <line num="530" type="stmt" count="0"/>
+        <line num="531" type="stmt" count="0"/>
+        <line num="534" type="stmt" count="0"/>
+        <line num="546" type="method" name="pdo" visibility="public" complexity="2" crap="2.15" count="1"/>
+        <line num="548" type="stmt" count="1"/>
+        <line num="549" type="stmt" count="0"/>
+        <line num="551" type="stmt" count="1"/>
+        <line num="561" type="method" name="supportsSavepoints" visibility="private" complexity="1" crap="2" count="0"/>
+        <line num="563" type="stmt" count="0"/>
+        <line num="572" type="method" name="commit" visibility="public" complexity="5" crap="30" count="0"/>
+        <line num="574" type="stmt" count="0"/>
+        <line num="575" type="stmt" count="0"/>
+        <line num="578" type="stmt" count="0"/>
+        <line num="579" type="stmt" count="0"/>
+        <line num="580" type="stmt" count="0"/>
+        <line num="583" type="stmt" count="0"/>
+        <line num="586" type="stmt" count="0"/>
+        <line num="587" type="stmt" count="0"/>
+        <line num="590" type="stmt" count="0"/>
+        <line num="591" type="stmt" count="0"/>
+        <line num="593" type="stmt" count="0"/>
+        <line num="594" type="stmt" count="0"/>
+        <line num="595" type="stmt" count="0"/>
+        <line num="596" type="stmt" count="0"/>
+        <line num="597" type="stmt" count="0"/>
+        <line num="598" type="stmt" count="0"/>
+        <line num="601" type="stmt" count="0"/>
+        <line num="610" type="method" name="rollBack" visibility="public" complexity="5" crap="30" count="0"/>
+        <line num="612" type="stmt" count="0"/>
+        <line num="613" type="stmt" count="0"/>
+        <line num="616" type="stmt" count="0"/>
+        <line num="617" type="stmt" count="0"/>
+        <line num="618" type="stmt" count="0"/>
+        <line num="621" type="stmt" count="0"/>
+        <line num="624" type="stmt" count="0"/>
+        <line num="625" type="stmt" count="0"/>
+        <line num="626" type="stmt" count="0"/>
+        <line num="629" type="stmt" count="0"/>
+        <line num="630" type="stmt" count="0"/>
+        <line num="632" type="stmt" count="0"/>
+        <line num="633" type="stmt" count="0"/>
+        <line num="634" type="stmt" count="0"/>
+        <line num="635" type="stmt" count="0"/>
+        <line num="636" type="stmt" count="0"/>
+        <line num="637" type="stmt" count="0"/>
+        <line num="640" type="stmt" count="0"/>
+        <line num="653" type="method" name="setBufferedQuery" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="655" type="stmt" count="0"/>
+        <line num="656" type="stmt" count="0"/>
+        <line num="657" type="stmt" count="0"/>
+        <line num="658" type="stmt" count="0"/>
+        <line num="660" type="stmt" count="0"/>
+        <line num="661" type="stmt" count="0"/>
+        <line num="667" type="method" name="getDriver" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="669" type="stmt" count="1"/>
+        <line num="675" type="method" name="getDbSettings" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="677" type="stmt" count="0"/>
+        <line num="687" type="method" name="reconnect" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="689" type="stmt" count="0"/>
+        <line num="690" type="stmt" count="0"/>
+        <line num="691" type="stmt" count="0"/>
+        <line num="692" type="stmt" count="0"/>
+        <line num="700" type="method" name="getStats" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="702" type="stmt" count="0"/>
+        <line num="703" type="stmt" count="0"/>
+        <line num="704" type="stmt" count="0"/>
+        <line num="705" type="stmt" count="0"/>
+        <line num="706" type="stmt" count="0"/>
+        <line num="707" type="stmt" count="0"/>
+        <line num="708" type="stmt" count="0"/>
+        <line num="709" type="stmt" count="0"/>
+        <line num="710" type="stmt" count="0"/>
+        <line num="719" type="method" name="isConnected" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="721" type="stmt" count="0"/>
+        <line num="734" type="method" name="execute" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="736" type="stmt" count="0"/>
+        <line num="739" type="stmt" count="0"/>
+        <line num="740" type="stmt" count="0"/>
+        <line num="741" type="stmt" count="0"/>
+        <line num="742" type="stmt" count="0"/>
+        <line num="743" type="stmt" count="0"/>
+        <line num="744" type="stmt" count="0"/>
+        <line num="745" type="stmt" count="0"/>
+        <line num="746" type="stmt" count="0"/>
+        <line num="747" type="stmt" count="0"/>
+        <line num="757" type="method" name="__destruct" visibility="public" complexity="4" crap="20" count="0"/>
+        <line num="759" type="stmt" count="0"/>
+        <line num="760" type="stmt" count="0"/>
+        <line num="761" type="stmt" count="0"/>
+        <line num="762" type="stmt" count="0"/>
+        <line num="763" type="stmt" count="0"/>
+        <line num="766" type="stmt" count="0"/>
+        <line num="767" type="stmt" count="0"/>
+        <line num="769" type="stmt" count="0"/>
+        <line num="771" type="stmt" count="0"/>
+        <metrics loc="775" ncloc="547" classes="1" methods="29" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="269" coveredstatements="42" elements="298" coveredelements="45"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/DatabaseFactory.php">
+        <class name="Omegaalfa\QueryBuilder\DatabaseFactory" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="1" methods="1" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="16" coveredstatements="0" elements="17" coveredelements="0"/>
+        </class>
+        <line num="22" type="method" name="create" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="24" type="stmt" count="0"/>
+        <line num="25" type="stmt" count="0"/>
+        <line num="26" type="stmt" count="0"/>
+        <line num="27" type="stmt" count="0"/>
+        <line num="28" type="stmt" count="0"/>
+        <line num="29" type="stmt" count="0"/>
+        <line num="30" type="stmt" count="0"/>
+        <line num="31" type="stmt" count="0"/>
+        <line num="32" type="stmt" count="0"/>
+        <line num="33" type="stmt" count="0"/>
+        <line num="34" type="stmt" count="0"/>
+        <line num="35" type="stmt" count="0"/>
+        <line num="36" type="stmt" count="0"/>
+        <line num="37" type="stmt" count="0"/>
+        <line num="38" type="stmt" count="0"/>
+        <line num="39" type="stmt" count="0"/>
+        <metrics loc="42" ncloc="37" classes="1" methods="1" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="16" coveredstatements="0" elements="17" coveredelements="0"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/DatabaseSettings.php">
+        <class name="Omegaalfa\QueryBuilder\DatabaseSettings" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="21" methods="6" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="49" coveredstatements="25" elements="55" coveredelements="26"/>
+        </class>
+        <line num="26" type="method" name="__construct" visibility="public" complexity="5" crap="5" count="3"/>
+        <line num="42" type="stmt" count="3"/>
+        <line num="43" type="stmt" count="3"/>
+        <line num="44" type="stmt" count="1"/>
+        <line num="45" type="stmt" count="2"/>
+        <line num="46" type="stmt" count="1"/>
+        <line num="47" type="stmt" count="2"/>
+        <line num="48" type="stmt" count="2"/>
+        <line num="49" type="stmt" count="2"/>
+        <line num="50" type="stmt" count="3"/>
+        <line num="59" type="method" name="normalizeDriver" visibility="private" complexity="2" crap="2.06" count="3"/>
+        <line num="61" type="stmt" count="3"/>
+        <line num="63" type="stmt" count="3"/>
+        <line num="64" type="stmt" count="0"/>
+        <line num="67" type="stmt" count="3"/>
+        <line num="75" type="method" name="validate" visibility="private" complexity="7" crap="10.86" count="3"/>
+        <line num="77" type="stmt" count="3"/>
+        <line num="78" type="stmt" count="3"/>
+        <line num="79" type="stmt" count="0"/>
+        <line num="82" type="stmt" count="3"/>
+        <line num="83" type="stmt" count="0"/>
+        <line num="87" type="stmt" count="3"/>
+        <line num="88" type="stmt" count="0"/>
+        <line num="97" type="method" name="toDsn" visibility="public" complexity="5" crap="7.61" count="1"/>
+        <line num="99" type="stmt" count="1"/>
+        <line num="100" type="stmt" count="0"/>
+        <line num="101" type="stmt" count="0"/>
+        <line num="102" type="stmt" count="0"/>
+        <line num="103" type="stmt" count="0"/>
+        <line num="104" type="stmt" count="0"/>
+        <line num="105" type="stmt" count="0"/>
+        <line num="106" type="stmt" count="0"/>
+        <line num="108" type="stmt" count="1"/>
+        <line num="109" type="stmt" count="1"/>
+        <line num="110" type="stmt" count="1"/>
+        <line num="111" type="stmt" count="1"/>
+        <line num="112" type="stmt" count="1"/>
+        <line num="113" type="stmt" count="1"/>
+        <line num="115" type="stmt" count="0"/>
+        <line num="117" type="stmt" count="1"/>
+        <line num="118" type="stmt" count="1"/>
+        <line num="124" type="method" name="getDriver" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="126" type="stmt" count="0"/>
+        <line num="134" type="method" name="getCacheKey" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="136" type="stmt" count="0"/>
+        <line num="137" type="stmt" count="0"/>
+        <line num="138" type="stmt" count="0"/>
+        <line num="139" type="stmt" count="0"/>
+        <line num="140" type="stmt" count="0"/>
+        <line num="141" type="stmt" count="0"/>
+        <line num="142" type="stmt" count="0"/>
+        <line num="143" type="stmt" count="0"/>
+        <line num="144" type="stmt" count="0"/>
+        <line num="145" type="stmt" count="0"/>
+        <line num="147" type="stmt" count="0"/>
+        <metrics loc="150" ncloc="115" classes="1" methods="6" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="49" coveredstatements="25" elements="55" coveredelements="26"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/PaginationDTO.php">
+        <class name="Omegaalfa\QueryBuilder\PaginationDTO" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+        </class>
+        <line num="16" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="2"/>
+        <line num="21" type="stmt" count="2"/>
+        <metrics loc="23" ncloc="17" classes="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Paginator.php">
+        <class name="Omegaalfa\QueryBuilder\Paginator" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="7" coveredstatements="7" elements="8" coveredelements="8"/>
+        </class>
+        <line num="21" type="method" name="paginate" visibility="public" complexity="1" crap="1" count="2"/>
+        <line num="23" type="stmt" count="2"/>
+        <line num="25" type="stmt" count="2"/>
+        <line num="26" type="stmt" count="2"/>
+        <line num="27" type="stmt" count="2"/>
+        <line num="28" type="stmt" count="2"/>
+        <line num="29" type="stmt" count="2"/>
+        <line num="30" type="stmt" count="2"/>
+        <metrics loc="33" ncloc="26" classes="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="7" coveredstatements="7" elements="8" coveredelements="8"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/QueryBuilder.php">
+        <class name="Omegaalfa\QueryBuilder\QueryBuilder" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="57" methods="15" coveredmethods="10" conditionals="0" coveredconditionals="0" statements="162" coveredstatements="136" elements="177" coveredelements="146"/>
+        </class>
+        <line num="35" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="72"/>
+        <line num="42" type="stmt" count="72"/>
+        <line num="50" type="method" name="getInsertId" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="52" type="stmt" count="0"/>
+        <line num="62" type="method" name="transactional" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="64" type="stmt" count="1"/>
+        <line num="65" type="stmt" count="1"/>
+        <line num="66" type="stmt" count="1"/>
+        <line num="72" type="method" name="toSql" visibility="public" complexity="12" crap="12.04" count="23"/>
+        <line num="74" type="stmt" count="23"/>
+        <line num="76" type="stmt" count="23"/>
+        <line num="77" type="stmt" count="15"/>
+        <line num="81" type="stmt" count="21"/>
+        <line num="82" type="stmt" count="21"/>
+        <line num="83" type="stmt" count="21"/>
+        <line num="84" type="stmt" count="0"/>
+        <line num="86" type="stmt" count="21"/>
+        <line num="87" type="stmt" count="21"/>
+        <line num="88" type="stmt" count="20"/>
+        <line num="89" type="stmt" count="19"/>
+        <line num="90" type="stmt" count="18"/>
+        <line num="91" type="stmt" count="17"/>
+        <line num="92" type="stmt" count="21"/>
+        <line num="94" type="stmt" count="21"/>
+        <line num="97" type="stmt" count="21"/>
+        <line num="106" type="method" name="explain" visibility="public" complexity="10" crap="27.15" count="1"/>
+        <line num="108" type="stmt" count="1"/>
+        <line num="111" type="stmt" count="1"/>
+        <line num="112" type="stmt" count="1"/>
+        <line num="113" type="stmt" count="0"/>
+        <line num="114" type="stmt" count="0"/>
+        <line num="115" type="stmt" count="1"/>
+        <line num="118" type="stmt" count="1"/>
+        <line num="119" type="stmt" count="1"/>
+        <line num="121" type="stmt" count="1"/>
+        <line num="122" type="stmt" count="1"/>
+        <line num="123" type="stmt" count="1"/>
+        <line num="124" type="stmt" count="1"/>
+        <line num="126" type="stmt" count="0"/>
+        <line num="127" type="stmt" count="0"/>
+        <line num="128" type="stmt" count="0"/>
+        <line num="129" type="stmt" count="0"/>
+        <line num="130" type="stmt" count="0"/>
+        <line num="131" type="stmt" count="0"/>
+        <line num="133" type="stmt" count="0"/>
+        <line num="137" type="stmt" count="1"/>
+        <line num="138" type="stmt" count="1"/>
+        <line num="140" type="stmt" count="0"/>
+        <line num="141" type="stmt" count="0"/>
+        <line num="142" type="stmt" count="0"/>
+        <line num="143" type="stmt" count="0"/>
+        <line num="144" type="stmt" count="0"/>
+        <line num="145" type="stmt" count="0"/>
+        <line num="157" type="method" name="execute" visibility="public" complexity="6" crap="6.23" count="16"/>
+        <line num="160" type="stmt" count="16"/>
+        <line num="161" type="stmt" count="1"/>
+        <line num="162" type="stmt" count="1"/>
+        <line num="165" type="stmt" count="16"/>
+        <line num="166" type="stmt" count="16"/>
+        <line num="167" type="stmt" count="2"/>
+        <line num="168" type="stmt" count="2"/>
+        <line num="169" type="stmt" count="2"/>
+        <line num="170" type="stmt" count="2"/>
+        <line num="171" type="stmt" count="2"/>
+        <line num="172" type="stmt" count="2"/>
+        <line num="173" type="stmt" count="2"/>
+        <line num="176" type="stmt" count="16"/>
+        <line num="177" type="stmt" count="15"/>
+        <line num="179" type="stmt" count="15"/>
+        <line num="180" type="stmt" count="15"/>
+        <line num="181" type="stmt" count="15"/>
+        <line num="182" type="stmt" count="1"/>
+        <line num="183" type="stmt" count="1"/>
+        <line num="184" type="stmt" count="1"/>
+        <line num="187" type="stmt" count="14"/>
+        <line num="188" type="stmt" count="1"/>
+        <line num="189" type="stmt" count="0"/>
+        <line num="190" type="stmt" count="0"/>
+        <line num="191" type="stmt" count="0"/>
+        <line num="192" type="stmt" count="0"/>
+        <line num="193" type="stmt" count="0"/>
+        <line num="204" type="method" name="prepareAndExecute" visibility="private" complexity="12" crap="12.18" count="16"/>
+        <line num="206" type="stmt" count="16"/>
+        <line num="207" type="stmt" count="16"/>
+        <line num="209" type="stmt" count="16"/>
+        <line num="210" type="stmt" count="16"/>
+        <line num="211" type="stmt" count="16"/>
+        <line num="212" type="stmt" count="7"/>
+        <line num="213" type="stmt" count="1"/>
+        <line num="214" type="stmt" count="1"/>
+        <line num="217" type="stmt" count="7"/>
+        <line num="218" type="stmt" count="1"/>
+        <line num="219" type="stmt" count="1"/>
+        <line num="223" type="stmt" count="6"/>
+        <line num="224" type="stmt" count="1"/>
+        <line num="228" type="stmt" count="5"/>
+        <line num="229" type="stmt" count="1"/>
+        <line num="230" type="stmt" count="1"/>
+        <line num="234" type="stmt" count="4"/>
+        <line num="235" type="stmt" count="2"/>
+        <line num="236" type="stmt" count="2"/>
+        <line num="240" type="stmt" count="3"/>
+        <line num="241" type="stmt" count="1"/>
+        <line num="242" type="stmt" count="1"/>
+        <line num="246" type="stmt" count="2"/>
+        <line num="247" type="stmt" count="1"/>
+        <line num="248" type="stmt" count="1"/>
+        <line num="252" type="stmt" count="1"/>
+        <line num="255" type="stmt" count="15"/>
+        <line num="258" type="stmt" count="15"/>
+        <line num="259" type="stmt" count="1"/>
+        <line num="262" type="stmt" count="15"/>
+        <line num="263" type="stmt" count="0"/>
+        <line num="264" type="stmt" count="0"/>
+        <line num="267" type="stmt" count="15"/>
+        <line num="269" type="stmt" count="15"/>
+        <line num="270" type="stmt" count="1"/>
+        <line num="271" type="stmt" count="0"/>
+        <line num="272" type="stmt" count="0"/>
+        <line num="283" type="method" name="getTotalCount" visibility="private" complexity="1" crap="1" count="2"/>
+        <line num="285" type="stmt" count="2"/>
+        <line num="286" type="stmt" count="2"/>
+        <line num="287" type="stmt" count="2"/>
+        <line num="288" type="stmt" count="2"/>
+        <line num="290" type="stmt" count="2"/>
+        <line num="291" type="stmt" count="2"/>
+        <line num="292" type="stmt" count="2"/>
+        <line num="293" type="stmt" count="2"/>
+        <line num="294" type="stmt" count="2"/>
+        <line num="295" type="stmt" count="2"/>
+        <line num="296" type="stmt" count="2"/>
+        <line num="297" type="stmt" count="2"/>
+        <line num="298" type="stmt" count="2"/>
+        <line num="300" type="stmt" count="2"/>
+        <line num="301" type="stmt" count="2"/>
+        <line num="303" type="stmt" count="2"/>
+        <line num="310" type="method" name="streamData" visibility="private" complexity="2" crap="2" count="9"/>
+        <line num="313" type="stmt" count="9"/>
+        <line num="314" type="stmt" count="9"/>
+        <line num="317" type="stmt" count="9"/>
+        <line num="329" type="method" name="sum" visibility="public" complexity="2" crap="2" count="2"/>
+        <line num="331" type="stmt" count="2"/>
+        <line num="332" type="stmt" count="2"/>
+        <line num="335" type="stmt" count="2"/>
+        <line num="336" type="stmt" count="2"/>
+        <line num="337" type="stmt" count="2"/>
+        <line num="339" type="stmt" count="2"/>
+        <line num="351" type="method" name="avg" visibility="public" complexity="2" crap="2" count="1"/>
+        <line num="353" type="stmt" count="1"/>
+        <line num="354" type="stmt" count="1"/>
+        <line num="357" type="stmt" count="1"/>
+        <line num="358" type="stmt" count="1"/>
+        <line num="359" type="stmt" count="1"/>
+        <line num="361" type="stmt" count="1"/>
+        <line num="373" type="method" name="max" visibility="public" complexity="2" crap="2" count="1"/>
+        <line num="375" type="stmt" count="1"/>
+        <line num="376" type="stmt" count="1"/>
+        <line num="379" type="stmt" count="1"/>
+        <line num="380" type="stmt" count="1"/>
+        <line num="381" type="stmt" count="1"/>
+        <line num="383" type="stmt" count="1"/>
+        <line num="395" type="method" name="min" visibility="public" complexity="2" crap="2" count="1"/>
+        <line num="397" type="stmt" count="1"/>
+        <line num="398" type="stmt" count="1"/>
+        <line num="401" type="stmt" count="1"/>
+        <line num="402" type="stmt" count="1"/>
+        <line num="403" type="stmt" count="1"/>
+        <line num="405" type="stmt" count="1"/>
+        <line num="416" type="method" name="exists" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="418" type="stmt" count="1"/>
+        <line num="429" type="method" name="count" visibility="public" complexity="2" crap="2" count="3"/>
+        <line num="431" type="stmt" count="3"/>
+        <line num="432" type="stmt" count="3"/>
+        <line num="435" type="stmt" count="3"/>
+        <line num="436" type="stmt" count="3"/>
+        <line num="437" type="stmt" count="3"/>
+        <line num="439" type="stmt" count="3"/>
+        <metrics loc="443" ncloc="331" classes="1" methods="15" coveredmethods="10" conditionals="0" coveredconditionals="0" statements="162" coveredstatements="136" elements="177" coveredelements="146"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/QueryBuilderOperations.php">
+        <class name="Omegaalfa\QueryBuilder\QueryBuilderOperations" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="71" methods="28" coveredmethods="17" conditionals="0" coveredconditionals="0" statements="237" coveredstatements="219" elements="265" coveredelements="236"/>
+        </class>
+        <line num="92" type="method" name="__clone" visibility="public" complexity="1" crap="1" count="2"/>
+        <line num="94" type="stmt" count="2"/>
+        <line num="95" type="stmt" count="2"/>
+        <line num="96" type="stmt" count="2"/>
+        <line num="97" type="stmt" count="2"/>
+        <line num="108" type="method" name="alias" visibility="public" complexity="1" crap="1" count="7"/>
+        <line num="110" type="stmt" count="7"/>
+        <line num="111" type="stmt" count="7"/>
+        <line num="138" type="method" name="select" visibility="public" complexity="2" crap="2" count="90"/>
+        <line num="140" type="stmt" count="90"/>
+        <line num="141" type="stmt" count="90"/>
+        <line num="145" type="stmt" count="90"/>
+        <line num="146" type="stmt" count="90"/>
+        <line num="147" type="stmt" count="1"/>
+        <line num="148" type="stmt" count="90"/>
+        <line num="149" type="stmt" count="90"/>
+        <line num="150" type="stmt" count="90"/>
+        <line num="152" type="stmt" count="90"/>
+        <line num="153" type="stmt" count="90"/>
+        <line num="159" type="method" name="resetOperationsState" visibility="protected" complexity="3" crap="3" count="100"/>
+        <line num="161" type="stmt" count="100"/>
+        <line num="162" type="stmt" count="100"/>
+        <line num="163" type="stmt" count="100"/>
+        <line num="164" type="stmt" count="100"/>
+        <line num="165" type="stmt" count="100"/>
+        <line num="166" type="stmt" count="100"/>
+        <line num="167" type="stmt" count="100"/>
+        <line num="168" type="stmt" count="100"/>
+        <line num="169" type="stmt" count="100"/>
+        <line num="170" type="stmt" count="100"/>
+        <line num="171" type="stmt" count="100"/>
+        <line num="172" type="stmt" count="100"/>
+        <line num="173" type="stmt" count="100"/>
+        <line num="174" type="stmt" count="50"/>
+        <line num="185" type="method" name="insert" visibility="public" complexity="2" crap="2" count="4"/>
+        <line num="187" type="stmt" count="4"/>
+        <line num="188" type="stmt" count="4"/>
+        <line num="189" type="stmt" count="4"/>
+        <line num="190" type="stmt" count="4"/>
+        <line num="191" type="stmt" count="4"/>
+        <line num="192" type="stmt" count="4"/>
+        <line num="193" type="stmt" count="4"/>
+        <line num="194" type="stmt" count="4"/>
+        <line num="195" type="stmt" count="4"/>
+        <line num="196" type="stmt" count="4"/>
+        <line num="198" type="stmt" count="4"/>
+        <line num="199" type="stmt" count="4"/>
+        <line num="200" type="stmt" count="4"/>
+        <line num="203" type="stmt" count="4"/>
+        <line num="215" type="method" name="insertBatch" visibility="public" complexity="6" crap="6" count="5"/>
+        <line num="217" type="stmt" count="5"/>
+        <line num="218" type="stmt" count="0"/>
+        <line num="221" type="stmt" count="5"/>
+        <line num="222" type="stmt" count="5"/>
+        <line num="225" type="stmt" count="5"/>
+        <line num="226" type="stmt" count="5"/>
+        <line num="229" type="stmt" count="5"/>
+        <line num="230" type="stmt" count="5"/>
+        <line num="231" type="stmt" count="2"/>
+        <line num="235" type="stmt" count="3"/>
+        <line num="238" type="stmt" count="3"/>
+        <line num="239" type="stmt" count="3"/>
+        <line num="240" type="stmt" count="3"/>
+        <line num="241" type="stmt" count="3"/>
+        <line num="242" type="stmt" count="3"/>
+        <line num="243" type="stmt" count="3"/>
+        <line num="244" type="stmt" count="3"/>
+        <line num="246" type="stmt" count="3"/>
+        <line num="249" type="stmt" count="3"/>
+        <line num="250" type="stmt" count="3"/>
+        <line num="251" type="stmt" count="3"/>
+        <line num="252" type="stmt" count="3"/>
+        <line num="253" type="stmt" count="3"/>
+        <line num="254" type="stmt" count="3"/>
+        <line num="255" type="stmt" count="3"/>
+        <line num="257" type="stmt" count="3"/>
+        <line num="267" type="method" name="update" visibility="public" complexity="2" crap="2" count="4"/>
+        <line num="269" type="stmt" count="4"/>
+        <line num="270" type="stmt" count="4"/>
+        <line num="271" type="stmt" count="4"/>
+        <line num="272" type="stmt" count="4"/>
+        <line num="273" type="stmt" count="4"/>
+        <line num="274" type="stmt" count="4"/>
+        <line num="275" type="stmt" count="4"/>
+        <line num="278" type="stmt" count="4"/>
+        <line num="279" type="stmt" count="4"/>
+        <line num="288" type="method" name="delete" visibility="public" complexity="1" crap="1" count="2"/>
+        <line num="290" type="stmt" count="2"/>
+        <line num="291" type="stmt" count="2"/>
+        <line num="292" type="stmt" count="2"/>
+        <line num="293" type="stmt" count="2"/>
+        <line num="307" type="method" name="where" visibility="public" complexity="2" crap="2.15" count="38"/>
+        <line num="309" type="stmt" count="38"/>
+        <line num="310" type="stmt" count="0"/>
+        <line num="311" type="stmt" count="0"/>
+        <line num="312" type="stmt" count="0"/>
+        <line num="315" type="stmt" count="38"/>
+        <line num="316" type="stmt" count="38"/>
+        <line num="317" type="stmt" count="38"/>
+        <line num="318" type="stmt" count="38"/>
+        <line num="320" type="stmt" count="38"/>
+        <line num="334" type="method" name="orWhere" visibility="public" complexity="3" crap="3" count="2"/>
+        <line num="336" type="stmt" count="2"/>
+        <line num="337" type="stmt" count="2"/>
+        <line num="338" type="stmt" count="2"/>
+        <line num="339" type="stmt" count="2"/>
+        <line num="342" type="stmt" count="2"/>
+        <line num="343" type="stmt" count="2"/>
+        <line num="344" type="stmt" count="2"/>
+        <line num="347" type="stmt" count="2"/>
+        <line num="349" type="stmt" count="2"/>
+        <line num="362" type="method" name="whereIn" visibility="public" complexity="3" crap="3.01" count="3"/>
+        <line num="364" type="stmt" count="3"/>
+        <line num="365" type="stmt" count="0"/>
+        <line num="368" type="stmt" count="3"/>
+        <line num="369" type="stmt" count="3"/>
+        <line num="370" type="stmt" count="3"/>
+        <line num="371" type="stmt" count="3"/>
+        <line num="372" type="stmt" count="3"/>
+        <line num="375" type="stmt" count="3"/>
+        <line num="376" type="stmt" count="3"/>
+        <line num="387" type="method" name="whereNotIn" visibility="public" complexity="3" crap="3.01" count="4"/>
+        <line num="389" type="stmt" count="4"/>
+        <line num="390" type="stmt" count="0"/>
+        <line num="393" type="stmt" count="4"/>
+        <line num="394" type="stmt" count="4"/>
+        <line num="395" type="stmt" count="4"/>
+        <line num="396" type="stmt" count="4"/>
+        <line num="397" type="stmt" count="4"/>
+        <line num="400" type="stmt" count="4"/>
+        <line num="401" type="stmt" count="4"/>
+        <line num="412" type="method" name="whereBetween" visibility="public" complexity="2" crap="2.01" count="3"/>
+        <line num="414" type="stmt" count="3"/>
+        <line num="415" type="stmt" count="0"/>
+        <line num="417" type="stmt" count="3"/>
+        <line num="418" type="stmt" count="3"/>
+        <line num="420" type="stmt" count="3"/>
+        <line num="421" type="stmt" count="3"/>
+        <line num="422" type="stmt" count="3"/>
+        <line num="424" type="stmt" count="3"/>
+        <line num="435" type="method" name="whereNotBetween" visibility="public" complexity="2" crap="2.01" count="4"/>
+        <line num="437" type="stmt" count="4"/>
+        <line num="438" type="stmt" count="0"/>
+        <line num="440" type="stmt" count="4"/>
+        <line num="441" type="stmt" count="4"/>
+        <line num="443" type="stmt" count="4"/>
+        <line num="444" type="stmt" count="4"/>
+        <line num="445" type="stmt" count="4"/>
+        <line num="447" type="stmt" count="4"/>
+        <line num="456" type="method" name="whereNull" visibility="public" complexity="1" crap="1" count="4"/>
+        <line num="458" type="stmt" count="4"/>
+        <line num="459" type="stmt" count="4"/>
+        <line num="468" type="method" name="whereNotNull" visibility="public" complexity="1" crap="1" count="4"/>
+        <line num="470" type="stmt" count="4"/>
+        <line num="471" type="stmt" count="4"/>
+        <line num="487" type="method" name="join" visibility="public" complexity="4" crap="4.13" count="5"/>
+        <line num="490" type="stmt" count="5"/>
+        <line num="491" type="stmt" count="5"/>
+        <line num="492" type="stmt" count="0"/>
+        <line num="493" type="stmt" count="0"/>
+        <line num="494" type="stmt" count="0"/>
+        <line num="495" type="stmt" count="0"/>
+        <line num="499" type="stmt" count="5"/>
+        <line num="500" type="stmt" count="2"/>
+        <line num="501" type="stmt" count="2"/>
+        <line num="502" type="stmt" count="2"/>
+        <line num="503" type="stmt" count="2"/>
+        <line num="507" type="stmt" count="3"/>
+        <line num="508" type="stmt" count="3"/>
+        <line num="509" type="stmt" count="3"/>
+        <line num="510" type="stmt" count="3"/>
+        <line num="511" type="stmt" count="3"/>
+        <line num="512" type="stmt" count="3"/>
+        <line num="513" type="stmt" count="3"/>
+        <line num="514" type="stmt" count="3"/>
+        <line num="516" type="stmt" count="3"/>
+        <line num="528" type="method" name="orderBy" visibility="public" complexity="1" crap="1" count="2"/>
+        <line num="530" type="stmt" count="2"/>
+        <line num="531" type="stmt" count="2"/>
+        <line num="534" type="method" name="orderByExpression" visibility="public" complexity="1" crap="1" count="9"/>
+        <line num="538" type="stmt" count="9"/>
+        <line num="539" type="stmt" count="9"/>
+        <line num="543" type="method" name="nearestNeighbors" visibility="public" complexity="1" crap="1" count="9"/>
+        <line num="550" type="stmt" count="9"/>
+        <line num="551" type="stmt" count="9"/>
+        <line num="552" type="stmt" count="9"/>
+        <line num="553" type="stmt" count="8"/>
+        <line num="556" type="method" name="compilationContext" visibility="protected" complexity="1" crap="1" count="10"/>
+        <line num="558" type="stmt" count="10"/>
+        <line num="559" type="stmt" count="10"/>
+        <line num="560" type="stmt" count="10"/>
+        <line num="561" type="stmt" count="10"/>
+        <line num="562" type="stmt" count="10"/>
+        <line num="565" type="method" name="valueSql" visibility="protected" complexity="4" crap="4.84" count="5"/>
+        <line num="567" type="stmt" count="5"/>
+        <line num="568" type="stmt" count="4"/>
+        <line num="570" type="stmt" count="2"/>
+        <line num="571" type="stmt" count="0"/>
+        <line num="572" type="stmt" count="0"/>
+        <line num="573" type="stmt" count="0"/>
+        <line num="575" type="stmt" count="2"/>
+        <line num="576" type="stmt" count="2"/>
+        <line num="585" type="method" name="groupBy" visibility="public" complexity="1" crap="1" count="6"/>
+        <line num="587" type="stmt" count="6"/>
+        <line num="588" type="stmt" count="6"/>
+        <line num="604" type="method" name="having" visibility="public" complexity="2" crap="2" count="6"/>
+        <line num="606" type="stmt" count="6"/>
+        <line num="607" type="stmt" count="2"/>
+        <line num="611" type="stmt" count="4"/>
+        <line num="612" type="stmt" count="4"/>
+        <line num="613" type="stmt" count="4"/>
+        <line num="615" type="stmt" count="4"/>
+        <line num="637" type="method" name="havingRaw" visibility="public" complexity="2" crap="2.06" count="3"/>
+        <line num="639" type="stmt" count="3"/>
+        <line num="640" type="stmt" count="0"/>
+        <line num="642" type="stmt" count="3"/>
+        <line num="643" type="stmt" count="3"/>
+        <line num="655" type="method" name="limit" visibility="public" complexity="1" crap="1" count="12"/>
+        <line num="657" type="stmt" count="12"/>
+        <line num="659" type="stmt" count="12"/>
+        <line num="680" type="method" name="raw" visibility="public" complexity="3" crap="3.00" count="2"/>
+        <line num="682" type="stmt" count="2"/>
+        <line num="683" type="stmt" count="2"/>
+        <line num="686" type="stmt" count="2"/>
+        <line num="687" type="stmt" count="1"/>
+        <line num="690" type="stmt" count="1"/>
+        <line num="692" type="stmt" count="1"/>
+        <line num="693" type="stmt" count="1"/>
+        <line num="694" type="stmt" count="1"/>
+        <line num="695" type="stmt" count="1"/>
+        <line num="696" type="stmt" count="1"/>
+        <line num="697" type="stmt" count="1"/>
+        <line num="698" type="stmt" count="1"/>
+        <line num="700" type="stmt" count="1"/>
+        <line num="701" type="stmt" count="1"/>
+        <line num="704" type="stmt" count="0"/>
+        <line num="708" type="stmt" count="2"/>
+        <line num="719" type="method" name="getQuerySql" visibility="public" complexity="15" crap="15" count="92"/>
+        <line num="721" type="stmt" count="92"/>
+        <line num="723" type="stmt" count="92"/>
+        <line num="724" type="stmt" count="3"/>
+        <line num="728" type="stmt" count="92"/>
+        <line num="729" type="stmt" count="2"/>
+        <line num="730" type="stmt" count="2"/>
+        <line num="731" type="stmt" count="2"/>
+        <line num="734" type="stmt" count="92"/>
+        <line num="736" type="stmt" count="54"/>
+        <line num="739" type="stmt" count="92"/>
+        <line num="740" type="stmt" count="6"/>
+        <line num="743" type="stmt" count="92"/>
+        <line num="744" type="stmt" count="6"/>
+        <line num="747" type="stmt" count="92"/>
+        <line num="748" type="stmt" count="11"/>
+        <line num="751" type="stmt" count="92"/>
+        <line num="752" type="stmt" count="12"/>
+        <line num="753" type="stmt" count="12"/>
+        <line num="755" type="stmt" count="12"/>
+        <line num="756" type="stmt" count="12"/>
+        <line num="757" type="stmt" count="9"/>
+        <line num="758" type="stmt" count="0"/>
+        <line num="759" type="stmt" count="3"/>
+        <line num="760" type="stmt" count="12"/>
+        <line num="765" type="stmt" count="92"/>
+        <line num="766" type="stmt" count="92"/>
+        <line num="768" type="stmt" count="92"/>
+        <metrics loc="771" ncloc="491" classes="1" methods="28" coveredmethods="17" conditionals="0" coveredconditionals="0" statements="237" coveredstatements="219" elements="265" coveredelements="236"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/QueryResultDTO.php">
+        <class name="Omegaalfa\QueryBuilder\QueryResultDTO" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+        </class>
+        <line num="15" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="17"/>
+        <line num="19" type="stmt" count="17"/>
+        <metrics loc="21" ncloc="16" classes="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/SqlCompilationContext.php">
+        <class name="Omegaalfa\QueryBuilder\SqlCompilationContext" namespace="Omegaalfa\QueryBuilder">
+          <metrics complexity="7" methods="5" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="11" coveredstatements="8" elements="16" coveredelements="12"/>
+        </class>
+        <line num="15" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="10"/>
+        <line num="21" type="stmt" count="10"/>
+        <line num="26" type="method" name="driver" visibility="public" complexity="1" crap="1" count="10"/>
+        <line num="28" type="stmt" count="10"/>
+        <line num="35" type="method" name="quoteIdentifier" visibility="public" complexity="1" crap="1" count="9"/>
+        <line num="37" type="stmt" count="9"/>
+        <line num="46" type="method" name="bindObject" visibility="public" complexity="1" crap="1" count="9"/>
+        <line num="49" type="stmt" count="9"/>
+        <line num="57" type="method" name="bind" visibility="public" complexity="3" crap="3.71" count="9"/>
+        <line num="59" type="stmt" count="9"/>
+        <line num="60" type="stmt" count="0"/>
+        <line num="61" type="stmt" count="0"/>
+        <line num="62" type="stmt" count="0"/>
+        <line num="65" type="stmt" count="9"/>
+        <line num="66" type="stmt" count="9"/>
+        <line num="67" type="stmt" count="9"/>
+        <metrics loc="70" ncloc="50" classes="1" methods="5" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="11" coveredstatements="8" elements="16" coveredelements="12"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\Enums">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Enums/JoinType.php">
+        <class name="Omegaalfa\QueryBuilder\Enums\JoinType" namespace="Omegaalfa\QueryBuilder\Enums">
+          <metrics complexity="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+        </class>
+        <metrics loc="16" ncloc="16" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Enums/OrderDirection.php">
+        <class name="Omegaalfa\QueryBuilder\Enums\OrderDirection" namespace="Omegaalfa\QueryBuilder\Enums">
+          <metrics complexity="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+        </class>
+        <metrics loc="15" ncloc="15" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Enums/SqlOperator.php">
+        <class name="Omegaalfa\QueryBuilder\Enums\SqlOperator" namespace="Omegaalfa\QueryBuilder\Enums">
+          <metrics complexity="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+        </class>
+        <metrics loc="34" ncloc="31" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\Exceptions">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Exceptions/CacheException.php">
+        <class name="Omegaalfa\QueryBuilder\Exceptions\CacheException" namespace="Omegaalfa\QueryBuilder\Exceptions">
+          <metrics complexity="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+        </class>
+        <line num="15" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="4"/>
+        <line num="21" type="stmt" count="4"/>
+        <metrics loc="23" ncloc="18" classes="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Exceptions/DatabaseException.php">
+        <class name="Omegaalfa\QueryBuilder\Exceptions\DatabaseException" namespace="Omegaalfa\QueryBuilder\Exceptions">
+          <metrics complexity="4" methods="3" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="7" coveredstatements="2" elements="10" coveredelements="3"/>
+        </class>
+        <line num="25" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="27" type="stmt" count="1"/>
+        <line num="28" type="stmt" count="1"/>
+        <line num="36" type="method" name="getPreviousException" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="38" type="stmt" count="0"/>
+        <line num="46" type="method" name="getDetailedMessage" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="48" type="stmt" count="0"/>
+        <line num="49" type="stmt" count="0"/>
+        <line num="50" type="stmt" count="0"/>
+        <line num="52" type="stmt" count="0"/>
+        <metrics loc="55" ncloc="35" classes="1" methods="3" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="7" coveredstatements="2" elements="10" coveredelements="3"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Exceptions/QueryException.php">
+        <class name="Omegaalfa\QueryBuilder\Exceptions\QueryException" namespace="Omegaalfa\QueryBuilder\Exceptions">
+          <metrics complexity="6" methods="4" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="12" coveredstatements="3" elements="16" coveredelements="4"/>
+        </class>
+        <line num="32" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="7"/>
+        <line num="39" type="stmt" count="7"/>
+        <line num="40" type="stmt" count="7"/>
+        <line num="41" type="stmt" count="7"/>
+        <line num="49" type="method" name="getSql" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="51" type="stmt" count="0"/>
+        <line num="59" type="method" name="getBindings" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="61" type="stmt" count="0"/>
+        <line num="69" type="method" name="getDetailedMessage" visibility="public" complexity="3" crap="12" count="0"/>
+        <line num="71" type="stmt" count="0"/>
+        <line num="72" type="stmt" count="0"/>
+        <line num="73" type="stmt" count="0"/>
+        <line num="75" type="stmt" count="0"/>
+        <line num="76" type="stmt" count="0"/>
+        <line num="77" type="stmt" count="0"/>
+        <line num="79" type="stmt" count="0"/>
+        <metrics loc="82" ncloc="52" classes="1" methods="4" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="12" coveredstatements="3" elements="16" coveredelements="4"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Exceptions/UnsupportedDatabaseFeatureException.php">
+        <class name="Omegaalfa\QueryBuilder\Exceptions\UnsupportedDatabaseFeatureException" namespace="Omegaalfa\QueryBuilder\Exceptions">
+          <metrics complexity="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+        </class>
+        <metrics loc="10" ncloc="10" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\Expressions">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Expressions/AliasedExpression.php">
+        <class name="Omegaalfa\QueryBuilder\Expressions\AliasedExpression" namespace="Omegaalfa\QueryBuilder\Expressions">
+          <metrics complexity="2" methods="2" coveredmethods="2" conditionals="0" coveredconditionals="0" statements="2" coveredstatements="2" elements="4" coveredelements="4"/>
+        </class>
+        <line num="16" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="10"/>
+        <line num="21" type="stmt" count="10"/>
+        <line num="27" type="method" name="compile" visibility="public" complexity="1" crap="1" count="10"/>
+        <line num="29" type="stmt" count="10"/>
+        <metrics loc="32" ncloc="24" classes="1" methods="2" coveredmethods="2" conditionals="0" coveredconditionals="0" statements="2" coveredstatements="2" elements="4" coveredelements="4"/>
+      </file>
+    </package>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/CacheInterface.php">
+      <metrics loc="57" ncloc="24" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/ConnectionInterface.php">
+      <metrics loc="41" ncloc="24" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/DatabaseValueInterface.php">
+      <metrics loc="35" ncloc="19" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/PaginatorInterface.php">
+      <metrics loc="22" ncloc="15" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/QueryBuilderInterface.php">
+      <metrics loc="243" ncloc="59" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/QueryLoggerInterface.php">
+      <metrics loc="30" ncloc="17" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Interfaces/SqlExpressionInterface.php">
+      <metrics loc="18" ncloc="13" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+    </file>
+    <package name="Omegaalfa\QueryBuilder\Logger">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Logger/FileQueryLogger.php">
+        <class name="Omegaalfa\QueryBuilder\Logger\FileQueryLogger" namespace="Omegaalfa\QueryBuilder\Logger">
+          <metrics complexity="72" methods="11" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="133" coveredstatements="101" elements="144" coveredelements="105"/>
+        </class>
+        <line num="38" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="7"/>
+        <line num="52" type="stmt" count="7"/>
+        <line num="53" type="stmt" count="7"/>
+        <line num="54" type="stmt" count="7"/>
+        <line num="55" type="stmt" count="7"/>
+        <line num="57" type="stmt" count="7"/>
+        <line num="67" type="method" name="logQuery" visibility="public" complexity="3" crap="3" count="6"/>
+        <line num="69" type="stmt" count="6"/>
+        <line num="70" type="stmt" count="1"/>
+        <line num="73" type="stmt" count="5"/>
+        <line num="74" type="stmt" count="5"/>
+        <line num="75" type="stmt" count="5"/>
+        <line num="76" type="stmt" count="5"/>
+        <line num="77" type="stmt" count="5"/>
+        <line num="78" type="stmt" count="5"/>
+        <line num="79" type="stmt" count="5"/>
+        <line num="81" type="stmt" count="5"/>
+        <line num="82" type="stmt" count="2"/>
+        <line num="85" type="stmt" count="5"/>
+        <line num="94" type="method" name="logError" visibility="public" complexity="4" crap="4.09" count="1"/>
+        <line num="96" type="stmt" count="1"/>
+        <line num="97" type="stmt" count="0"/>
+        <line num="100" type="stmt" count="1"/>
+        <line num="101" type="stmt" count="1"/>
+        <line num="102" type="stmt" count="1"/>
+        <line num="103" type="stmt" count="1"/>
+        <line num="104" type="stmt" count="1"/>
+        <line num="105" type="stmt" count="1"/>
+        <line num="106" type="stmt" count="1"/>
+        <line num="107" type="stmt" count="1"/>
+        <line num="108" type="stmt" count="1"/>
+        <line num="109" type="stmt" count="1"/>
+        <line num="111" type="stmt" count="1"/>
+        <line num="112" type="stmt" count="0"/>
+        <line num="114" type="stmt" count="1"/>
+        <line num="115" type="stmt" count="0"/>
+        <line num="118" type="stmt" count="1"/>
+        <line num="124" type="method" name="validateConfiguration" visibility="private" complexity="15" crap="30.71" count="7"/>
+        <line num="126" type="stmt" count="7"/>
+        <line num="127" type="stmt" count="1"/>
+        <line num="129" type="stmt" count="6"/>
+        <line num="130" type="stmt" count="0"/>
+        <line num="132" type="stmt" count="6"/>
+        <line num="133" type="stmt" count="0"/>
+        <line num="135" type="stmt" count="6"/>
+        <line num="136" type="stmt" count="0"/>
+        <line num="138" type="stmt" count="6"/>
+        <line num="139" type="stmt" count="0"/>
+        <line num="142" type="stmt" count="6"/>
+        <line num="143" type="stmt" count="6"/>
+        <line num="144" type="stmt" count="0"/>
+        <line num="146" type="stmt" count="6"/>
+        <line num="147" type="stmt" count="0"/>
+        <line num="149" type="stmt" count="6"/>
+        <line num="150" type="stmt" count="0"/>
+        <line num="155" type="method" name="writeEntry" visibility="private" complexity="3" crap="3" count="6"/>
+        <line num="158" type="stmt" count="6"/>
+        <line num="159" type="stmt" count="6"/>
+        <line num="160" type="stmt" count="6"/>
+        <line num="161" type="stmt" count="6"/>
+        <line num="162" type="stmt" count="6"/>
+        <line num="163" type="stmt" count="1"/>
+        <line num="164" type="stmt" count="1"/>
+        <line num="165" type="stmt" count="1"/>
+        <line num="174" type="method" name="writeLine" visibility="private" complexity="16" crap="18.95" count="6"/>
+        <line num="176" type="stmt" count="6"/>
+        <line num="177" type="stmt" count="6"/>
+        <line num="178" type="stmt" count="6"/>
+        <line num="179" type="stmt" count="1"/>
+        <line num="183" type="stmt" count="5"/>
+        <line num="184" type="stmt" count="0"/>
+        <line num="186" type="stmt" count="5"/>
+        <line num="187" type="stmt" count="0"/>
+        <line num="190" type="stmt" count="5"/>
+        <line num="191" type="stmt" count="0"/>
+        <line num="194" type="stmt" count="5"/>
+        <line num="195" type="stmt" count="5"/>
+        <line num="196" type="stmt" count="5"/>
+        <line num="197" type="stmt" count="1"/>
+        <line num="200" type="stmt" count="5"/>
+        <line num="201" type="stmt" count="5"/>
+        <line num="202" type="stmt" count="5"/>
+        <line num="203" type="stmt" count="0"/>
+        <line num="207" type="stmt" count="5"/>
+        <line num="208" type="stmt" count="0"/>
+        <line num="210" type="stmt" count="5"/>
+        <line num="211" type="stmt" count="5"/>
+        <line num="212" type="stmt" count="5"/>
+        <line num="213" type="stmt" count="5"/>
+        <line num="214" type="stmt" count="0"/>
+        <line num="216" type="stmt" count="5"/>
+        <line num="218" type="stmt" count="5"/>
+        <line num="219" type="stmt" count="0"/>
+        <line num="222" type="stmt" count="5"/>
+        <line num="225" type="stmt" count="5"/>
+        <line num="226" type="stmt" count="5"/>
+        <line num="233" type="method" name="rotateFiles" visibility="private" complexity="8" crap="10.37" count="1"/>
+        <line num="235" type="stmt" count="1"/>
+        <line num="236" type="stmt" count="1"/>
+        <line num="237" type="stmt" count="0"/>
+        <line num="240" type="stmt" count="1"/>
+        <line num="241" type="stmt" count="1"/>
+        <line num="242" type="stmt" count="1"/>
+        <line num="243" type="stmt" count="0"/>
+        <line num="247" type="stmt" count="1"/>
+        <line num="248" type="stmt" count="0"/>
+        <line num="253" type="method" name="normalizeCollection" visibility="private" complexity="6" crap="6.56" count="2"/>
+        <line num="255" type="stmt" count="2"/>
+        <line num="256" type="stmt" count="0"/>
+        <line num="259" type="stmt" count="2"/>
+        <line num="260" type="stmt" count="2"/>
+        <line num="261" type="stmt" count="2"/>
+        <line num="262" type="stmt" count="2"/>
+        <line num="263" type="stmt" count="0"/>
+        <line num="264" type="stmt" count="0"/>
+        <line num="267" type="stmt" count="2"/>
+        <line num="268" type="stmt" count="1"/>
+        <line num="269" type="stmt" count="2"/>
+        <line num="272" type="stmt" count="2"/>
+        <line num="280" type="method" name="normalizeValue" visibility="private" complexity="10" crap="19.39" count="2"/>
+        <line num="282" type="stmt" count="2"/>
+        <line num="283" type="stmt" count="2"/>
+        <line num="284" type="stmt" count="2"/>
+        <line num="285" type="stmt" count="1"/>
+        <line num="286" type="stmt" count="0"/>
+        <line num="287" type="stmt" count="0"/>
+        <line num="288" type="stmt" count="0"/>
+        <line num="289" type="stmt" count="0"/>
+        <line num="290" type="stmt" count="0"/>
+        <line num="291" type="stmt" count="2"/>
+        <line num="292" type="stmt" count="2"/>
+        <line num="299" type="method" name="isSensitiveKey" visibility="private" complexity="4" crap="4" count="2"/>
+        <line num="301" type="stmt" count="2"/>
+        <line num="302" type="stmt" count="2"/>
+        <line num="303" type="stmt" count="2"/>
+        <line num="304" type="stmt" count="1"/>
+        <line num="308" type="stmt" count="2"/>
+        <line num="315" type="method" name="truncate" visibility="private" complexity="2" crap="3.19" count="3"/>
+        <line num="317" type="stmt" count="3"/>
+        <line num="318" type="stmt" count="3"/>
+        <line num="321" type="stmt" count="0"/>
+        <line num="322" type="stmt" count="0"/>
+        <line num="323" type="stmt" count="0"/>
+        <line num="324" type="stmt" count="0"/>
+        <metrics loc="327" ncloc="282" classes="1" methods="11" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="133" coveredstatements="101" elements="144" coveredelements="105"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\PostgreSQL\PgVector">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/PostgreSQL/PgVector/Vector.php">
+        <class name="Omegaalfa\QueryBuilder\PostgreSQL\PgVector\Vector" namespace="Omegaalfa\QueryBuilder\PostgreSQL\PgVector">
+          <metrics complexity="22" methods="10" coveredmethods="9" conditionals="0" coveredconditionals="0" statements="23" coveredstatements="22" elements="33" coveredelements="31"/>
+        </class>
+        <line num="18" type="method" name="__construct" visibility="public" complexity="12" crap="12" count="20"/>
+        <line num="20" type="stmt" count="20"/>
+        <line num="21" type="stmt" count="2"/>
+        <line num="23" type="stmt" count="18"/>
+        <line num="24" type="stmt" count="1"/>
+        <line num="26" type="stmt" count="17"/>
+        <line num="27" type="stmt" count="1"/>
+        <line num="29" type="stmt" count="16"/>
+        <line num="30" type="stmt" count="16"/>
+        <line num="31" type="stmt" count="1"/>
+        <line num="33" type="stmt" count="16"/>
+        <line num="34" type="stmt" count="3"/>
+        <line num="37" type="stmt" count="12"/>
+        <line num="43" type="method" name="dimensions" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="45" type="stmt" count="1"/>
+        <line num="49" type="method" name="toArray" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="51" type="stmt" count="0"/>
+        <line num="57" type="method" name="toPostgres" visibility="public" complexity="1" crap="1" count="5"/>
+        <line num="59" type="stmt" count="5"/>
+        <line num="65" type="method" name="value" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="67" type="stmt" count="1"/>
+        <line num="73" type="method" name="pdoType" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="75" type="stmt" count="1"/>
+        <line num="81" type="method" name="sqlType" visibility="public" complexity="1" crap="1" count="5"/>
+        <line num="83" type="stmt" count="5"/>
+        <line num="90" type="method" name="supportsDriver" visibility="public" complexity="1" crap="1" count="10"/>
+        <line num="92" type="stmt" count="10"/>
+        <line num="98" type="method" name="cacheValue" visibility="public" complexity="1" crap="1" count="4"/>
+        <line num="100" type="stmt" count="4"/>
+        <line num="108" type="method" name="formatNumber" visibility="private" complexity="2" crap="2" count="5"/>
+        <line num="110" type="stmt" count="5"/>
+        <line num="111" type="stmt" count="4"/>
+        <line num="112" type="stmt" count="5"/>
+        <metrics loc="115" ncloc="85" classes="1" methods="10" coveredmethods="9" conditionals="0" coveredconditionals="0" statements="23" coveredstatements="22" elements="33" coveredelements="31"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/PostgreSQL/PgVector/VectorDistance.php">
+        <class name="Omegaalfa\QueryBuilder\PostgreSQL\PgVector\VectorDistance" namespace="Omegaalfa\QueryBuilder\PostgreSQL\PgVector">
+          <metrics complexity="8" methods="6" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="13" coveredstatements="10" elements="19" coveredelements="13"/>
+        </class>
+        <line num="19" type="method" name="__construct" visibility="public" complexity="2" crap="2" count="10"/>
+        <line num="26" type="stmt" count="10"/>
+        <line num="35" type="method" name="l2" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="37" type="stmt" count="0"/>
+        <line num="46" type="method" name="cosine" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="48" type="stmt" count="1"/>
+        <line num="57" type="method" name="innerProduct" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="59" type="stmt" count="0"/>
+        <line num="68" type="method" name="l1" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="70" type="stmt" count="0"/>
+        <line num="78" type="method" name="compile" visibility="public" complexity="2" crap="2" count="10"/>
+        <line num="80" type="stmt" count="10"/>
+        <line num="81" type="stmt" count="1"/>
+        <line num="83" type="stmt" count="9"/>
+        <line num="84" type="stmt" count="9"/>
+        <line num="85" type="stmt" count="9"/>
+        <line num="86" type="stmt" count="9"/>
+        <line num="87" type="stmt" count="9"/>
+        <line num="88" type="stmt" count="9"/>
+        <metrics loc="91" ncloc="58" classes="1" methods="6" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="13" coveredstatements="10" elements="19" coveredelements="13"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/PostgreSQL/PgVector/VectorMetric.php">
+        <class name="Omegaalfa\QueryBuilder\PostgreSQL\PgVector\VectorMetric" namespace="Omegaalfa\QueryBuilder\PostgreSQL\PgVector">
+          <metrics complexity="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+        </class>
+        <metrics loc="14" ncloc="14" classes="0" methods="0" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="0" coveredstatements="0" elements="0" coveredelements="0"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\Traits">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Traits/HelperQueryOperationsTrait.php">
+        <class name="Omegaalfa\QueryBuilder\Traits\HelperQueryOperationsTrait" namespace="Omegaalfa\QueryBuilder\Traits">
+          <metrics complexity="13" methods="4" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="33" coveredstatements="31" elements="37" coveredelements="34"/>
+        </class>
+        <line num="47" type="method" name="setDriver" visibility="protected" complexity="1" crap="1" count="78"/>
+        <line num="49" type="stmt" count="78"/>
+        <line num="59" type="method" name="normalizeAndValidateOperator" visibility="protected" complexity="3" crap="3.33" count="38"/>
+        <line num="61" type="stmt" count="38"/>
+        <line num="62" type="stmt" count="8"/>
+        <line num="63" type="stmt" count="0"/>
+        <line num="66" type="stmt" count="38"/>
+        <line num="67" type="stmt" count="0"/>
+        <line num="70" type="stmt" count="38"/>
+        <line num="77" type="method" name="normalizeField" visibility="protected" complexity="3" crap="3" count="90"/>
+        <line num="80" type="stmt" count="90"/>
+        <line num="81" type="stmt" count="6"/>
+        <line num="83" type="stmt" count="90"/>
+        <line num="97" type="method" name="quoteIdentifier" visibility="protected" complexity="6" crap="6" count="101"/>
+        <line num="99" type="stmt" count="101"/>
+        <line num="102" type="stmt" count="101"/>
+        <line num="104" type="stmt" count="101"/>
+        <line num="105" type="stmt" count="96"/>
+        <line num="108" type="stmt" count="47"/>
+        <line num="111" type="stmt" count="47"/>
+        <line num="112" type="stmt" count="4"/>
+        <line num="113" type="stmt" count="43"/>
+        <line num="114" type="stmt" count="47"/>
+        <line num="117" type="stmt" count="47"/>
+        <line num="118" type="stmt" count="1"/>
+        <line num="119" type="stmt" count="1"/>
+        <line num="120" type="stmt" count="1"/>
+        <line num="121" type="stmt" count="1"/>
+        <line num="122" type="stmt" count="1"/>
+        <line num="123" type="stmt" count="1"/>
+        <line num="127" type="stmt" count="47"/>
+        <line num="128" type="stmt" count="47"/>
+        <line num="129" type="stmt" count="47"/>
+        <line num="130" type="stmt" count="3"/>
+        <line num="131" type="stmt" count="47"/>
+        <line num="132" type="stmt" count="47"/>
+        <line num="134" type="stmt" count="47"/>
+        <metrics loc="137" ncloc="89" classes="1" methods="4" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="33" coveredstatements="31" elements="37" coveredelements="34"/>
+      </file>
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Traits/QueryBuilderCacheTrait.php">
+        <class name="Omegaalfa\QueryBuilder\Traits\QueryBuilderCacheTrait" namespace="Omegaalfa\QueryBuilder\Traits">
+          <metrics complexity="21" methods="6" coveredmethods="2" conditionals="0" coveredconditionals="0" statements="73" coveredstatements="58" elements="79" coveredelements="60"/>
+        </class>
+        <line num="32" type="method" name="resetQueryCacheKey" visibility="protected" complexity="1" crap="1" count="50"/>
+        <line num="34" type="stmt" count="50"/>
+        <line num="40" type="method" name="cache" visibility="public" complexity="2" crap="2.06" count="4"/>
+        <line num="42" type="stmt" count="4"/>
+        <line num="43" type="stmt" count="0"/>
+        <line num="46" type="stmt" count="4"/>
+        <line num="48" type="stmt" count="4"/>
+        <line num="54" type="method" name="saveToCache" visibility="private" complexity="5" crap="5.23" count="2"/>
+        <line num="56" type="stmt" count="2"/>
+        <line num="57" type="stmt" count="0"/>
+        <line num="61" type="stmt" count="2"/>
+        <line num="62" type="stmt" count="2"/>
+        <line num="63" type="stmt" count="2"/>
+        <line num="64" type="stmt" count="0"/>
+        <line num="66" type="stmt" count="2"/>
+        <line num="67" type="stmt" count="2"/>
+        <line num="68" type="stmt" count="2"/>
+        <line num="69" type="stmt" count="2"/>
+        <line num="70" type="stmt" count="2"/>
+        <line num="71" type="stmt" count="2"/>
+        <line num="72" type="stmt" count="2"/>
+        <line num="73" type="stmt" count="2"/>
+        <line num="74" type="stmt" count="2"/>
+        <line num="75" type="stmt" count="2"/>
+        <line num="76" type="stmt" count="2"/>
+        <line num="77" type="stmt" count="0"/>
+        <line num="78" type="stmt" count="0"/>
+        <line num="86" type="method" name="generateCacheKey" visibility="private" complexity="4" crap="4.31" count="6"/>
+        <line num="88" type="stmt" count="6"/>
+        <line num="90" type="stmt" count="6"/>
+        <line num="92" type="stmt" count="6"/>
+        <line num="93" type="stmt" count="6"/>
+        <line num="94" type="stmt" count="6"/>
+        <line num="95" type="stmt" count="6"/>
+        <line num="98" type="stmt" count="6"/>
+        <line num="99" type="stmt" count="6"/>
+        <line num="100" type="stmt" count="6"/>
+        <line num="101" type="stmt" count="6"/>
+        <line num="102" type="stmt" count="6"/>
+        <line num="103" type="stmt" count="0"/>
+        <line num="104" type="stmt" count="0"/>
+        <line num="105" type="stmt" count="0"/>
+        <line num="106" type="stmt" count="0"/>
+        <line num="107" type="stmt" count="0"/>
+        <line num="108" type="stmt" count="0"/>
+        <line num="109" type="stmt" count="0"/>
+        <line num="110" type="stmt" count="6"/>
+        <line num="112" type="stmt" count="6"/>
+        <line num="113" type="stmt" count="6"/>
+        <line num="114" type="stmt" count="6"/>
+        <line num="115" type="stmt" count="6"/>
+        <line num="116" type="stmt" count="6"/>
+        <line num="117" type="stmt" count="6"/>
+        <line num="118" type="stmt" count="6"/>
+        <line num="122" type="method" name="canonicalCacheParams" visibility="private" complexity="2" crap="2" count="6"/>
+        <line num="124" type="stmt" count="6"/>
+        <line num="125" type="stmt" count="6"/>
+        <line num="126" type="stmt" count="3"/>
+        <line num="127" type="stmt" count="6"/>
+        <line num="128" type="stmt" count="6"/>
+        <line num="129" type="stmt" count="6"/>
+        <line num="134" type="method" name="getFromCache" visibility="private" complexity="7" crap="7.27" count="18"/>
+        <line num="137" type="stmt" count="18"/>
+        <line num="138" type="stmt" count="18"/>
+        <line num="140" type="stmt" count="15"/>
+        <line num="144" type="stmt" count="3"/>
+        <line num="146" type="stmt" count="3"/>
+        <line num="147" type="stmt" count="1"/>
+        <line num="150" type="stmt" count="3"/>
+        <line num="152" type="stmt" count="3"/>
+        <line num="153" type="stmt" count="1"/>
+        <line num="156" type="stmt" count="2"/>
+        <line num="157" type="stmt" count="2"/>
+        <line num="158" type="stmt" count="2"/>
+        <line num="159" type="stmt" count="2"/>
+        <line num="160" type="stmt" count="2"/>
+        <line num="161" type="stmt" count="0"/>
+        <line num="162" type="stmt" count="0"/>
+        <line num="163" type="stmt" count="0"/>
+        <metrics loc="167" ncloc="142" classes="1" methods="6" coveredmethods="2" conditionals="0" coveredconditionals="0" statements="73" coveredstatements="58" elements="79" coveredelements="60"/>
+      </file>
+    </package>
+    <package name="Omegaalfa\QueryBuilder\Utils">
+      <file name="/home/omgaalfa/php-projetos/applications/query-builder/src/Utils/EnvLoader.php">
+        <class name="Omegaalfa\QueryBuilder\Utils\EnvLoader" namespace="Omegaalfa\QueryBuilder\Utils">
+          <metrics complexity="67" methods="12" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="124" coveredstatements="98" elements="136" coveredelements="101"/>
+        </class>
+        <line num="33" type="method" name="load" visibility="public" complexity="11" crap="14.90" count="5"/>
+        <line num="40" type="stmt" count="5"/>
+        <line num="42" type="stmt" count="5"/>
+        <line num="43" type="stmt" count="0"/>
+        <line num="44" type="stmt" count="0"/>
+        <line num="46" type="stmt" count="0"/>
+        <line num="48" type="stmt" count="5"/>
+        <line num="49" type="stmt" count="0"/>
+        <line num="52" type="stmt" count="5"/>
+        <line num="53" type="stmt" count="5"/>
+        <line num="54" type="stmt" count="0"/>
+        <line num="56" type="stmt" count="5"/>
+        <line num="57" type="stmt" count="0"/>
+        <line num="60" type="stmt" count="5"/>
+        <line num="61" type="stmt" count="4"/>
+        <line num="62" type="stmt" count="4"/>
+        <line num="64" type="stmt" count="3"/>
+        <line num="65" type="stmt" count="3"/>
+        <line num="66" type="stmt" count="1"/>
+        <line num="68" type="stmt" count="3"/>
+        <line num="69" type="stmt" count="0"/>
+        <line num="71" type="stmt" count="3"/>
+        <line num="74" type="stmt" count="3"/>
+        <line num="81" type="method" name="has" visibility="public" complexity="3" crap="3" count="3"/>
+        <line num="83" type="stmt" count="3"/>
+        <line num="84" type="stmt" count="3"/>
+        <line num="85" type="stmt" count="3"/>
+        <line num="86" type="stmt" count="3"/>
+        <line num="94" type="method" name="get" visibility="public" complexity="4" crap="4.13" count="3"/>
+        <line num="96" type="stmt" count="3"/>
+        <line num="97" type="stmt" count="3"/>
+        <line num="98" type="stmt" count="3"/>
+        <line num="99" type="stmt" count="0"/>
+        <line num="101" type="stmt" count="3"/>
+        <line num="108" type="method" name="require" visibility="public" complexity="3" crap="3.14" count="2"/>
+        <line num="110" type="stmt" count="2"/>
+        <line num="111" type="stmt" count="2"/>
+        <line num="112" type="stmt" count="0"/>
+        <line num="114" type="stmt" count="2"/>
+        <line num="122" type="method" name="getInt" visibility="public" complexity="3" crap="3.33" count="2"/>
+        <line num="124" type="stmt" count="2"/>
+        <line num="125" type="stmt" count="2"/>
+        <line num="126" type="stmt" count="0"/>
+        <line num="128" type="stmt" count="2"/>
+        <line num="129" type="stmt" count="0"/>
+        <line num="131" type="stmt" count="2"/>
+        <line num="139" type="method" name="getBool" visibility="public" complexity="5" crap="5.20" count="1"/>
+        <line num="141" type="stmt" count="1"/>
+        <line num="142" type="stmt" count="1"/>
+        <line num="143" type="stmt" count="0"/>
+        <line num="145" type="stmt" count="1"/>
+        <line num="146" type="stmt" count="1"/>
+        <line num="147" type="stmt" count="0"/>
+        <line num="148" type="stmt" count="1"/>
+        <line num="149" type="stmt" count="1"/>
+        <line num="150" type="stmt" count="1"/>
+        <line num="151" type="stmt" count="1"/>
+        <line num="158" type="method" name="resolvePath" visibility="private" complexity="2" crap="2" count="5"/>
+        <line num="160" type="stmt" count="5"/>
+        <line num="161" type="stmt" count="5"/>
+        <line num="162" type="stmt" count="1"/>
+        <line num="163" type="stmt" count="5"/>
+        <line num="171" type="method" name="assertSafeFile" visibility="private" complexity="7" crap="7.05" count="5"/>
+        <line num="173" type="stmt" count="5"/>
+        <line num="174" type="stmt" count="5"/>
+        <line num="175" type="stmt" count="0"/>
+        <line num="177" type="stmt" count="5"/>
+        <line num="178" type="stmt" count="3"/>
+        <line num="180" type="stmt" count="2"/>
+        <line num="181" type="stmt" count="2"/>
+        <line num="182" type="stmt" count="1"/>
+        <line num="183" type="stmt" count="1"/>
+        <line num="184" type="stmt" count="1"/>
+        <line num="192" type="method" name="readFile" visibility="private" complexity="5" crap="5.51" count="4"/>
+        <line num="194" type="stmt" count="4"/>
+        <line num="195" type="stmt" count="4"/>
+        <line num="196" type="stmt" count="0"/>
+        <line num="199" type="stmt" count="4"/>
+        <line num="200" type="stmt" count="0"/>
+        <line num="202" type="stmt" count="4"/>
+        <line num="203" type="stmt" count="4"/>
+        <line num="204" type="stmt" count="4"/>
+        <line num="205" type="stmt" count="0"/>
+        <line num="207" type="stmt" count="4"/>
+        <line num="209" type="stmt" count="4"/>
+        <line num="214" type="method" name="parse" visibility="private" complexity="8" crap="8.19" count="4"/>
+        <line num="216" type="stmt" count="4"/>
+        <line num="217" type="stmt" count="0"/>
+        <line num="219" type="stmt" count="4"/>
+        <line num="220" type="stmt" count="4"/>
+        <line num="221" type="stmt" count="4"/>
+        <line num="222" type="stmt" count="0"/>
+        <line num="225" type="stmt" count="4"/>
+        <line num="226" type="stmt" count="4"/>
+        <line num="227" type="stmt" count="4"/>
+        <line num="228" type="stmt" count="4"/>
+        <line num="229" type="stmt" count="4"/>
+        <line num="230" type="stmt" count="2"/>
+        <line num="232" type="stmt" count="4"/>
+        <line num="233" type="stmt" count="1"/>
+        <line num="235" type="stmt" count="4"/>
+        <line num="236" type="stmt" count="0"/>
+        <line num="239" type="stmt" count="4"/>
+        <line num="240" type="stmt" count="4"/>
+        <line num="241" type="stmt" count="4"/>
+        <line num="242" type="stmt" count="3"/>
+        <line num="244" type="stmt" count="3"/>
+        <line num="253" type="method" name="parseValue" visibility="private" complexity="13" crap="15.64" count="3"/>
+        <line num="255" type="stmt" count="3"/>
+        <line num="256" type="stmt" count="3"/>
+        <line num="257" type="stmt" count="1"/>
+        <line num="259" type="stmt" count="3"/>
+        <line num="260" type="stmt" count="3"/>
+        <line num="261" type="stmt" count="3"/>
+        <line num="264" type="stmt" count="1"/>
+        <line num="265" type="stmt" count="1"/>
+        <line num="266" type="stmt" count="1"/>
+        <line num="267" type="stmt" count="1"/>
+        <line num="268" type="stmt" count="0"/>
+        <line num="269" type="stmt" count="0"/>
+        <line num="271" type="stmt" count="1"/>
+        <line num="272" type="stmt" count="1"/>
+        <line num="273" type="stmt" count="1"/>
+        <line num="274" type="stmt" count="0"/>
+        <line num="275" type="stmt" count="0"/>
+        <line num="276" type="stmt" count="0"/>
+        <line num="278" type="stmt" count="1"/>
+        <line num="279" type="stmt" count="1"/>
+        <line num="280" type="stmt" count="1"/>
+        <line num="281" type="stmt" count="1"/>
+        <line num="283" type="stmt" count="1"/>
+        <line num="285" type="stmt" count="0"/>
+        <line num="293" type="method" name="assertValidKey" visibility="private" complexity="3" crap="3" count="4"/>
+        <line num="295" type="stmt" count="4"/>
+        <line num="296" type="stmt" count="1"/>
+        <line num="297" type="stmt" count="1"/>
+        <metrics loc="301" ncloc="239" classes="1" methods="12" coveredmethods="3" conditionals="0" coveredconditionals="0" statements="124" coveredstatements="98" elements="136" coveredelements="101"/>
+      </file>
+    </package>
+    <metrics files="33" loc="4464" ncloc="3110" classes="21" methods="159" coveredmethods="67" conditionals="0" coveredconditionals="0" statements="1243" coveredstatements="773" elements="1402" coveredelements="840"/>
+  </project>
+</coverage>
