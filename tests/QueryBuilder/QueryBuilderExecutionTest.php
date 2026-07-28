@@ -70,7 +70,17 @@ final class QueryBuilderExecutionTest extends TestCase
         $this->assertFalse($qb->exists());
     }
 
-    public function testCreatesDefaultPaginatorWhenLimitIsUsed(): void
+    public function testLimitDoesNotCreatePagination(): void
+    {
+        $dataStatement = $this->createStatementReturningRow(['id' => 3]);
+        $qb = $this->buildQueryBuilderWithStatements([$dataStatement], useDefaultPaginator: true);
+
+        $result = $qb->select('doenca')->limit(2, 2)->execute();
+
+        $this->assertNull($result->pagination);
+    }
+
+    public function testCreatesDefaultPaginatorWhenPaginateIsUsed(): void
     {
         $countStatement = $this->createStatementReturningRow(['total' => 5]);
         $dataStatement = $this->createStatementReturningRow(['id' => 3]);
@@ -79,7 +89,7 @@ final class QueryBuilderExecutionTest extends TestCase
             useDefaultPaginator: true,
         );
 
-        $result = $qb->select('doenca')->limit(2, 2)->execute();
+        $result = $qb->select('doenca')->paginate(perPage: 2, currentPage: 2)->execute();
 
         $this->assertEquals(
             new PaginationDTO(currentPage: 2, perPage: 2, totalPages: 3, totalItems: 5),

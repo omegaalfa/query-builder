@@ -35,6 +35,13 @@ $qb->insert('documents', [
 $qb->update('documents', ['embedding' => new Vector([0.3, 0.2, 0.1], 3)])
     ->where('id', '=', 1)
     ->execute();
+
+$qb->insertBatch('documents', [
+    ['id' => 1, 'tenant_id' => 42, 'content' => 'Updated', 'embedding' => new Vector([0.2, 0.3, 0.4], 3)],
+    ['id' => 2, 'tenant_id' => 42, 'content' => 'New', 'embedding' => new Vector([0.4, 0.3, 0.2], 3)],
+])->onConflict(['id'])
+    ->doUpdate(['content', 'embedding'])
+    ->execute();
 ```
 
 The vector is serialized canonically, bound as `PDO::PARAM_STR`, and used as `CAST(:embedding AS vector)`. It is never concatenated into SQL.
@@ -57,6 +64,11 @@ $result = $qb
     ->limit(10)
     ->execute();
 ```
+
+`limit()` only adds `LIMIT/OFFSET`; it does not execute a `COUNT`. Use
+`paginate($perPage, $currentPage)` only when the result must include total and
+page metadata, since pagination executes a count query followed by the limited
+query. For top-k vector search, `limit()` is normally the appropriate choice.
 
 This generates the indexable ordering form:
 
@@ -103,7 +115,9 @@ ON documents USING ivfflat (embedding vector_cosine_ops)
 WITH (lists = 100);
 ```
 
-HNSW supports `vector` indexes up to 2,000 dimensions; IVFFlat has the same indexed `vector` limit. Approximate indexes trade recall for speed. `hnsw.ef_search` and `ivfflat.probes` are intentionally outside the MVP because safe query-local use requires transaction-scoped `SET LOCAL` support.
+HNSW supports `vector` indexes up to 2,000 dimensions; IVFFlat has the same indexed `vector` limit. Approximate indexes trade recall for speed. The local 10,000-row/384-dimension baseline showed exact scans around 5.2 ms and HNSW around 2.6-2.8 ms, so exact search remains a sensible baseline for small collections. HNSW is the initial ANN recommendation when latency or collection size requires an index; measure recall with representative data before adopting it.
+
+Filtered ANN queries should have normal B-tree indexes for selective relational predicates such as tenant, collection, and status. PostgreSQL may correctly prefer such an index plus exact distance ordering for very selective filters. The benchmark covers global, 50%, 10%, 1%, and 0.1% selectivity and reports the actual plan and recall. pgvector iterative scans can improve result counts after filtering, but query-local tuning is still outside this API because safe use requires transaction-scoped `SET LOCAL` support.
 
 ## Testing
 
@@ -113,8 +127,13 @@ composer test
 docker compose up -d --wait pgvector
 php vectorPgsql.php
 php benchmarks/pgvector.php
+composer benchmark:pgvector-overhead
+BENCH_ROWS=10000 BENCH_DIMENSIONS=384 composer benchmark:pgvector-search
+composer benchmark:database
 docker compose down
 ```
+
+The detailed methodology, parameters, units, build cost, indexed-ingestion cost, filtered ANN plans, and recall results are in [Benchmarks](benchmarks.md). These are PHP/client and local-database measurements, not universal pgvector results.
 
 See [Environment configuration](environment.md) for production permission checks and secret-injection guidance.
 

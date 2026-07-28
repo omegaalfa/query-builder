@@ -189,6 +189,11 @@ interface QueryBuilderInterface
     public function limit(int $limit, int $offset = 0): self;
 
     /**
+     * Define paginação completa e solicita a consulta adicional de contagem.
+     */
+    public function paginate(int $perPage, int $currentPage = 1): self;
+
+    /**
      * Define uma coluna ou expressão para agrupamento (GROUP BY).
      *
      * @param string $column Coluna ou expressão a agrupar.
@@ -239,4 +244,12 @@ interface QueryBuilderInterface
      * @throws QueryException
      */
     public function insertBatch(string $table, array $data): self;
+
+    /** @param list<string> $columns */
+    public function onConflict(array $columns): self;
+
+    public function doNothing(): self;
+
+    /** @param list<string> $columns */
+    public function doUpdate(array $columns): self;
 }

@@ -133,7 +133,7 @@ SQL
             $this->qb->insert('users', ['name' => 'U' . $i, 'age' => 20 + $i, 'status' => 1, 'value' => $i])->execute();
         }
 
-        $result = $this->qb->select('users', ['id', 'name'])->limit(2, 0)->execute();
+        $result = $this->qb->select('users', ['id', 'name'])->paginate(perPage: 2, currentPage: 1)->execute();
         $data = iterator_to_array($result->data);
         $this->assertCount(2, $data);
         $this->assertNotNull($result->pagination);

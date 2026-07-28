@@ -163,7 +163,7 @@ final class QueryBuilder extends QueryBuilderOperations
             }
 
             $pagination = null;
-            if ($this->limit) {
+            if ($this->paginationRequested && $this->limit) {
                 $total = $this->getTotalCount();
                 $this->paginator ??= new Paginator();
                 $pagination = $this->paginator->paginate(

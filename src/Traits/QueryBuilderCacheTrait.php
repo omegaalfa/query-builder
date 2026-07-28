@@ -113,6 +113,7 @@ trait QueryBuilderCacheTrait
             $this->cachePrefix,
             $this->table ?? 'raw',
             $contextHash,
+            ($this->paginationRequested ?? false) ? 'paginate' : 'limit',
             $sqlHash,
             $paramsHash,
         ]);

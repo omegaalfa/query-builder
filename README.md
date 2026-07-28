@@ -119,8 +119,9 @@ foreach ($result->data as $usuario) {
 
 ### Construtor e paginação
 
-Somente a conexão é obrigatória. Ao executar uma consulta com `limit()`, o
-`QueryBuilder` cria o `Paginator` padrão automaticamente:
+Somente a conexão é obrigatória. Ao executar uma consulta com `paginate()`, o
+`QueryBuilder` cria o `Paginator` padrão automaticamente. `limit()` apenas
+limita os resultados e não executa uma consulta adicional de contagem:
 
 ```php
 $qb = new QueryBuilder($connection);
@@ -356,6 +357,34 @@ $qb->insertBatch('usuarios', $usuarios)->execute();
 ```
 
 ⚠️ **Importante:** Todos os registros devem ter as mesmas colunas.
+
+#### Upsert PostgreSQL tipado
+
+`onConflict()` pode ser combinado com `doUpdate()` ou `doNothing()` sem aceitar
+fragmentos SQL arbitrários:
+
+```php
+$qb->insertBatch('ai_chunks', $chunks)
+   ->onConflict(['external_id'])
+   ->doUpdate([
+       'content',
+       'metadata',
+       'embedding',
+       'content_hash',
+       'updated_at',
+   ])
+   ->execute();
+```
+
+```php
+$qb->insertBatch('ai_chunks', $chunks)
+   ->onConflict(['tenant_id', 'document_id', 'content_hash'])
+   ->doNothing()
+   ->execute();
+```
+
+As colunas de conflito e atualização devem existir nos registros inseridos. A
+API falha precocemente quando usada fora do driver PostgreSQL.
 
 ---
 
@@ -747,7 +776,7 @@ $qb->select('pedidos', ['*', 'DATE(criado_em) as data'])
 
 #### `limit()`
 
-Limita número de resultados (paginação).
+Limita o número de resultados sem executar `COUNT`.
 
 ```php
 public function limit(int $limit, int $offset = 0): self
@@ -762,17 +791,34 @@ public function limit(int $limit, int $offset = 0): self
 // Primeiros 10 registros
 $qb->select('produtos')->limit(10);
 
-// Paginação: página 2, 20 por página
-$page = 2;
-$perPage = 20;
-$offset = ($page - 1) * $perPage;
-$qb->select('produtos')->limit($perPage, $offset);
+// Top-k ou janela sem contagem
+$qb->select('produtos')->limit(20, 20);
 
 // Com ordenação
 $qb->select('usuarios')
    ->orderBy('criado_em', OrderDirection::DESC)
    ->limit(50);
 ```
+
+#### `paginate()`
+
+Executa paginação completa: consulta de contagem e consulta limitada.
+
+```php
+public function paginate(int $perPage, int $currentPage = 1): self
+```
+
+```php
+$result = $qb->select('produtos')
+    ->paginate(perPage: 20, currentPage: 2)
+    ->execute();
+
+echo $result->pagination->totalItems;
+echo $result->pagination->totalPages;
+```
+
+Use `limit()` para top-k, inclusive `nearestNeighbors()`. Use `paginate()` apenas
+quando a contagem total for necessária.
 
 ---
 
@@ -1059,7 +1105,7 @@ public function execute(bool $bufferedQuery = true): QueryResultDTO
 class QueryResultDTO {
     public iterable $data;      // Resultados (array ou Generator)
     public int $count;          // Número de linhas afetadas
-    public ?PaginationDTO $pagination;  // Dados de paginação (se limit usado)
+    public ?PaginationDTO $pagination;  // Dados de paginação (se paginate usado)
 }
 ```
 
@@ -1075,7 +1121,7 @@ foreach ($result->data as $usuario) {
 // Informações
 echo "Total: {$result->count} registros\n";
 
-// Paginação (se usou limit)
+// Paginação (se usou paginate)
 if ($result->pagination) {
     echo "Página {$result->pagination->currentPage} de {$result->pagination->totalPages}\n";
     echo "Total de itens: {$result->pagination->totalItems}\n";
@@ -1224,12 +1270,10 @@ foreach ($result->data as $row) {
 ```php
 $page = $_GET['page'] ?? 1;
 $perPage = 20;
-$offset = ($page - 1) * $perPage;
-
 $result = $qb->select('usuarios', ['id', 'nome', 'email', 'criado_em'])
              ->where('ativo', SqlOperator::EQUALS, true)
              ->orderBy('criado_em', OrderDirection::DESC)
-             ->limit($perPage, $offset)
+             ->paginate(perPage: $perPage, currentPage: (int) $page)
              ->execute();
 
 // Exibir resultados

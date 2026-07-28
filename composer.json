@@ -42,7 +42,10 @@
   "scripts": {
     "test": "phpunit",
     "benchmark:compare": "php -d xdebug.mode=off benchmarks/compare-doctrine.php",
-    "benchmark:pgvector": "php -d xdebug.mode=off benchmarks/pgvector.php"
+    "benchmark:pgvector": "php -d xdebug.mode=off benchmarks/pgvector.php",
+    "benchmark:pgvector-overhead": "php -d xdebug.mode=off benchmarks/pgvector-overhead.php",
+    "benchmark:database": "php -d xdebug.mode=off benchmarks/database-workloads.php",
+    "benchmark:pgvector-search": "php -d xdebug.mode=off benchmarks/pgvector-search.php"
   },
   "minimum-stability": "stable",
   "prefer-stable": true,

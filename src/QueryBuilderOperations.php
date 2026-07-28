@@ -59,6 +59,16 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     protected ?array $limit = null;
 
+    protected bool $paginationRequested = false;
+
+    /** @var list<string> */
+    protected array $insertColumns = [];
+
+    /** @var list<string>|null */
+    protected ?array $conflictColumns = null;
+
+    protected bool $conflictActionDefined = false;
+
     /**
      * @var array
      */
@@ -166,6 +176,10 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->having = [];
         $this->table = null;
         $this->limit = null;
+        $this->paginationRequested = false;
+        $this->insertColumns = [];
+        $this->conflictColumns = null;
+        $this->conflictActionDefined = false;
         $this->params = [];
         $this->whereGroups = [];
         $this->isOrGroup = false;
@@ -187,6 +201,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->resetOperationsState();
         $this->table = $this->quoteIdentifier($table);
         $fields = array_keys($data);
+        $this->insertColumns = $fields;
         $this->sql = [
             'INSERT INTO',
             $this->table,
@@ -224,6 +239,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         // Pega colunas do primeiro registro
         $firstRow = reset($data);
         $fields = array_keys($firstRow);
+        $this->insertColumns = $fields;
 
         // Valida que todos os registros têm as mesmas colunas
         foreach ($data as $index => $row) {
@@ -240,7 +256,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $placeholders = [];
             foreach ($fields as $field) {
                 $param = ":{$field}_{$rowIndex}";
-                $placeholders[] = $param;
+                $placeholders[] = $this->valueSql($param, $row[$field]);
                 $this->params[$param] = $row[$field];
             }
             $valueSets[] = '(' . implode(', ', $placeholders) . ')';
@@ -255,6 +271,90 @@ class QueryBuilderOperations implements QueryBuilderInterface
         ];
 
         return $this;
+    }
+
+    /**
+     * Define as colunas da restrição de conflito para um INSERT PostgreSQL.
+     *
+     * @param list<string> $columns
+     */
+    public function onConflict(array $columns): self
+    {
+        if ($this->driver !== 'pgsql') {
+            throw new UnsupportedDatabaseFeatureException('ON CONFLICT is currently supported only by the pgsql driver.');
+        }
+        if ($this->insertColumns === []) {
+            throw new QueryException('onConflict() requires an active insert or insertBatch operation.');
+        }
+        if ($columns === [] || !array_is_list($columns)) {
+            throw new QueryException('Conflict columns must be a non-empty list.');
+        }
+        $this->assertInsertedColumns($columns, 'conflict');
+        $this->conflictColumns = $columns;
+
+        return $this;
+    }
+
+    public function doNothing(): self
+    {
+        $this->assertConflictActionCanBeDefined();
+        $this->sql[] = sprintf(
+            'ON CONFLICT (%s) DO NOTHING',
+            implode(', ', array_map([$this, 'quoteIdentifier'], $this->conflictColumns)),
+        );
+        $this->conflictActionDefined = true;
+
+        return $this;
+    }
+
+    /** @param list<string> $columns */
+    public function doUpdate(array $columns): self
+    {
+        $this->assertConflictActionCanBeDefined();
+        if ($columns === [] || !array_is_list($columns)) {
+            throw new QueryException('Update columns must be a non-empty list.');
+        }
+        $this->assertInsertedColumns($columns, 'update');
+        $assignments = array_map(
+            fn (string $column): string => sprintf(
+                '%s = EXCLUDED.%s',
+                $this->quoteIdentifier($column),
+                $this->quoteIdentifier($column),
+            ),
+            $columns,
+        );
+        $this->sql[] = sprintf(
+            'ON CONFLICT (%s) DO UPDATE SET %s',
+            implode(', ', array_map([$this, 'quoteIdentifier'], $this->conflictColumns)),
+            implode(', ', $assignments),
+        );
+        $this->conflictActionDefined = true;
+
+        return $this;
+    }
+
+    /** @param list<string> $columns */
+    private function assertInsertedColumns(array $columns, string $role): void
+    {
+        foreach ($columns as $column) {
+            if (!is_string($column) || !in_array($column, $this->insertColumns, true)) {
+                throw new QueryException(sprintf(
+                    'Invalid %s column "%s": it must be present in the inserted rows.',
+                    $role,
+                    is_scalar($column) ? (string) $column : get_debug_type($column),
+                ));
+            }
+        }
+    }
+
+    private function assertConflictActionCanBeDefined(): void
+    {
+        if ($this->conflictColumns === null) {
+            throw new QueryException('Define onConflict() before choosing a conflict action.');
+        }
+        if ($this->conflictActionDefined) {
+            throw new QueryException('A conflict action has already been defined.');
+        }
     }
 
     /**
@@ -654,7 +754,25 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function limit(int $limit, int $offset = 0): self
     {
+        if ($limit < 1 || $offset < 0) {
+            throw new QueryException('Limit must be greater than zero and offset cannot be negative.');
+        }
         $this->limit = [$limit, $offset];
+        $this->paginationRequested = false;
+
+        return $this;
+    }
+
+    /**
+     * Solicita paginação completa, incluindo a consulta COUNT.
+     */
+    public function paginate(int $perPage, int $currentPage = 1): self
+    {
+        if ($perPage < 1 || $currentPage < 1) {
+            throw new QueryException('Per page and current page must be greater than zero.');
+        }
+        $this->limit = [$perPage, ($currentPage - 1) * $perPage];
+        $this->paginationRequested = true;
 
         return $this;
     }

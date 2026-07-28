@@ -2,7 +2,7 @@
 
 ## Diagnosis
 
-`QueryBuilder` extends the stateful `QueryBuilderOperations`. A constructor-provided `ConnectionInterface` supplies the PDO driver and connection; execution prepares `getQuerySql()`, infers basic PDO types, streams rows through a generator, optionally materializes them for cache, and resets operation state. Transactions and savepoints live in `PDOConnection`.
+`QueryBuilder` extends the stateful `QueryBuilderOperations`. A constructor-provided `ConnectionInterface` supplies the PDO driver and connection; execution prepares `getQuerySql()`, infers basic PDO types, streams rows through a generator, optionally materializes them for cache, and resets operation state. Transactions and savepoints live in `PDOConnection`. `limit()` is a SQL row cap; `paginate()` explicitly enables the additional count query and paginator metadata.
 
 Query state is split among `sql`, `joins`, `where`, `orderBy`, `groupBy`, `having`, `limit`, and `params`. Named placeholders are derived from data keys or the current parameter count. Identifiers are quoted per driver by `HelperQueryOperationsTrait`. `getQuerySql()` concatenates the state; `toSql(true)` substitutes values for debugging; `explain()` prepares an explain query with the same parameters. Cloning is used only for pagination count.
 
@@ -10,7 +10,7 @@ The pre-change blockers were:
 
 - `select()` distinguished expressions from identifiers using parentheses/`AS` string heuristics, which is not a safe expression model.
 - `orderBy()` accepted identifiers only.
-- no expression could own and reuse a bound placeholder in SELECT and ORDER BY.
+- no expression could safely allocate bindings for each physical occurrence in SELECT and ORDER BY.
 - binding rejected arrays and had no typed database-value protocol.
 - INSERT/UPDATE had no safe type cast for vector text input.
 - the cache hashed only the base `sql` array, omitting assembled filters, ordering, limit, and offset; arbitrary objects were not canonicalized.
@@ -33,14 +33,18 @@ Existing architectural debt remains outside this change: `composer.json` says PH
 
 Use a small restricted compilation protocol in the core and place vector-specific value, metric, and distance classes under `PostgreSQL/PgVector`. `SqlExpressionInterface` is implemented by library-authored expressions and receives a context that alone can quote identifiers and allocate bindings. It does not accept raw SQL. `DatabaseValueInterface` centralizes serialization, PDO type, safe SQL type, driver support, and canonical cache identity. `nearestNeighbors()` is a discoverable convenience over the explicit expression API.
 
-The metric remains a dedicated enum and is never accepted as a free string or added to `SqlOperator`. The same distance object reuses one placeholder across SELECT and ORDER BY. Identifiers and aliases pass through driver-aware quoting. Values use `CAST()` to avoid named-placeholder ambiguity with PostgreSQL `::` syntax.
+The metric remains a dedicated enum and is never accepted as a free string or added to `SqlOperator`. Each physical occurrence of a distance expression receives a distinct placeholder, even when both bind the same canonical vector, so native PDO prepared statements remain portable. Identifiers and aliases pass through driver-aware quoting. Values use `CAST()` to avoid named-placeholder ambiguity with PostgreSQL `::` syntax.
+
+PostgreSQL upsert is modeled as a restricted insert continuation: `onConflict([...])->doNothing()` or `doUpdate([...])`. Conflict and update columns must belong to the inserted row, identifiers are quoted, and update values come only from PostgreSQL's `EXCLUDED` row. No arbitrary conflict SQL is accepted.
+
+Cache identity hashes canonical parameter representations instead of embedding the complete vector in the key. It also distinguishes metric, dimensions, filters, limit, offset, and the semantic difference between `limit()` and `paginate()` even when their generated SELECT SQL is otherwise identical.
 
 Risks are the incremental core surface and the existing mutable builder design. The compilation context is reset with query state, and cache keys are reset between queries. Future generic expressions should remain closed, typed objects; exposing a public arbitrary-expression implementation would defeat the security boundary.
 
 ## Phase classification
 
 - MVP: dense `vector`, finite canonical values, dimension assertion, four dense metrics, distance projection/order, conventional filters, bound INSERT/UPDATE, debug/EXPLAIN/cache compatibility.
-- Phase 2: explicit extension-version probe, cosine-similarity projection, more generic trusted expressions, integration CI.
+- Phase 2: explicit extension-version probe, cosine-similarity projection, more generic trusted expressions, integration CI, richer typed conflict expressions.
 - Schema/migrations: vector column types, HNSW/IVFFlat DDL, operator classes, concurrent creation, validated index options.
 - Advanced: `halfvec`, `sparsevec`, `bit`, Hamming/Jaccard, binary quantization, iterative scans, transaction-local ANN settings, hybrid ranking and RRF.
 
