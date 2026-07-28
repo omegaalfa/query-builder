@@ -7,11 +7,12 @@ namespace Tests\QueryBuilder;
 use Omegaalfa\QueryBuilder\PaginationDTO;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use Omegaalfa\QueryBuilder\QueryResultDTO;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class QueryBuilderExecutionTest extends TestCase
 {
@@ -69,10 +70,31 @@ final class QueryBuilderExecutionTest extends TestCase
         $this->assertFalse($qb->exists());
     }
 
+    public function testCreatesDefaultPaginatorWhenLimitIsUsed(): void
+    {
+        $countStatement = $this->createStatementReturningRow(['total' => 5]);
+        $dataStatement = $this->createStatementReturningRow(['id' => 3]);
+        $qb = $this->buildQueryBuilderWithStatements(
+            [$countStatement, $dataStatement],
+            useDefaultPaginator: true,
+        );
+
+        $result = $qb->select('doenca')->limit(2, 2)->execute();
+
+        $this->assertEquals(
+            new PaginationDTO(currentPage: 2, perPage: 2, totalPages: 3, totalItems: 5),
+            $result->pagination,
+        );
+    }
+
     /**
      * @param array<array-key, PDOStatement> $statements
      */
-    private function buildQueryBuilderWithStatements(array $statements, ?PaginatorInterface $paginator = null): QueryBuilder
+    private function buildQueryBuilderWithStatements(
+        array $statements,
+        ?PaginatorInterface $paginator = null,
+        bool $useDefaultPaginator = false,
+    ): QueryBuilder
     {
         $pdo = new class($statements) extends PDO {
             /** @var PDOStatement[] */
@@ -83,10 +105,10 @@ final class QueryBuilderExecutionTest extends TestCase
                 $this->statements = $statements;
             }
 
-            public function prepare($sql, $options = null)
+            public function prepare(string $query, array $options = []): PDOStatement|false
             {
                 if (empty($this->statements)) {
-                    throw new \RuntimeException("No statement configured for {$sql}");
+                    throw new RuntimeException("No statement configured for {$query}");
                 }
 
                 return array_shift($this->statements);
@@ -107,9 +129,14 @@ final class QueryBuilderExecutionTest extends TestCase
             public function getDriver(): string { return 'mysql'; }
         };
 
-        $paginator = $paginator ?? $this->createMock(PaginatorInterface::class);
+        if ($useDefaultPaginator) {
+            return new QueryBuilder($connection);
+        }
 
-        return new QueryBuilder($connection, $paginator);
+        return new QueryBuilder(
+            $connection,
+            $paginator ?? $this->createMock(PaginatorInterface::class),
+        );
     }
 
     private function createStatementReturningRow(array $row): PDOStatement

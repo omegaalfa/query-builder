@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Tests\QueryBuilder;
 
 use Omegaalfa\QueryBuilder\QueryBuilder;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\PaginationDTO;
 use Omegaalfa\QueryBuilder\QueryBuilderOperations;
 use PHPUnit\Framework\TestCase;
 use PDO;
+use RuntimeException;
+use Throwable;
 
 final class QueryBuilderIntegrationTest extends TestCase
 {
@@ -52,7 +54,7 @@ SQL
                     $res = $callback($this->pdo);
                     $this->pdo->commit();
                     return $res;
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->pdo->rollBack();
                     throw $e;
                 }
@@ -114,9 +116,9 @@ SQL
         try {
             $this->qb->transactional(function($qb, PDO $pdo) {
                 $qb->insert('users', ['name' => 'TxUser', 'age' => 20, 'status' => 1, 'value' => 1.0])->execute();
-                throw new \RuntimeException('force rollback');
+                throw new RuntimeException('force rollback');
             });
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             // expected
         }
 

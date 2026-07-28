@@ -5,13 +5,14 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
-use Omegaalfa\QueryBuilder\exceptions\DatabaseException;
-use Omegaalfa\QueryBuilder\exceptions\QueryException;
-use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
-use Omegaalfa\QueryBuilder\interfaces\QueryLoggerInterface;
-use Omegaalfa\QueryBuilder\traits\QueryBuilderCacheTrait;
+use Omegaalfa\QueryBuilder\Exceptions\DatabaseException;
+use Omegaalfa\QueryBuilder\Exceptions\QueryException;
+use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\DatabaseValueInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Interfaces\QueryLoggerInterface;
+use Omegaalfa\QueryBuilder\Traits\QueryBuilderCacheTrait;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -27,13 +28,13 @@ final class QueryBuilder extends QueryBuilderOperations
 
     /**
      * @param ConnectionInterface $connection
-     * @param PaginatorInterface $paginator
+     * @param ?PaginatorInterface $paginator
      * @param CacheInterface|null $cache
      * @param QueryLoggerInterface|null $logger
      */
     public function __construct(
         private readonly ConnectionInterface   $connection,
-        private readonly PaginatorInterface    $paginator,
+        private ?PaginatorInterface            $paginator = null,
         private readonly ?CacheInterface       $cache = null,
         private readonly ?QueryLoggerInterface $logger = null
     )
@@ -79,6 +80,9 @@ final class QueryBuilder extends QueryBuilderOperations
         // Substitui placeholders por valores (APENAS PARA DEBUG!)
         $debugSql = $sql;
         foreach ($this->params as $param => $value) {
+            if ($value instanceof DatabaseValueInterface) {
+                $value = $value->value();
+            }
             $replace = match (true) {
                 is_null($value) => 'NULL',
                 is_bool($value) => $value ? '1' : '0',
@@ -115,6 +119,10 @@ final class QueryBuilder extends QueryBuilderOperations
             $stmt = $pdo->prepare($explainSql);
 
             foreach ($this->params as $param => $value) {
+                if ($value instanceof DatabaseValueInterface) {
+                    $stmt->bindValue($param, $value->value(), $value->pdoType());
+                    continue;
+                }
                 if ($value instanceof \DateTimeInterface) {
                     $stmt->bindValue($param, $value->format('Y-m-d H:i:s'));
                 } elseif (is_int($value)) {
@@ -150,22 +158,23 @@ final class QueryBuilder extends QueryBuilderOperations
     {
         try {
             if ($cached = $this->getFromCache()) {
-                $this->resetOperationsState();
+                $this->resetOperationsState(preserveCacheKey: true);
                 return $cached;
             }
-
-            $stmt = $this->prepareAndExecute($bufferedQuery);
-            $count = $stmt->rowCount();
 
             $pagination = null;
             if ($this->limit) {
                 $total = $this->getTotalCount();
+                $this->paginator ??= new Paginator();
                 $pagination = $this->paginator->paginate(
                     total: $total,
                     perPage: $this->limit[0],
                     currentPage: (int)($this->limit[1] / $this->limit[0]) + 1
                 );
             }
+
+            $stmt = $this->prepareAndExecute($bufferedQuery);
+            $count = $stmt->rowCount();
 
             $isCacheEnabled = isset($this->cacheTtl) && $this->cache !== null;
             $data = $this->streamData($stmt);
@@ -200,6 +209,10 @@ final class QueryBuilder extends QueryBuilderOperations
             $pdo = $this->connection->pdo($bufferedQuery);
             $stmt = $pdo->prepare($sql);
             foreach ($this->params as $param => $value) {
+                if ($value instanceof DatabaseValueInterface) {
+                    $stmt->bindValue($param, $value->value(), $value->pdoType());
+                    continue;
+                }
                 // 🔸 Nulos
                 if ($value === null) {
                     $stmt->bindValue($param, null, PDO::PARAM_NULL);
@@ -251,7 +264,7 @@ final class QueryBuilder extends QueryBuilderOperations
                 $this->logger->logQuery($sql, $this->params, $duration, $stmt->rowCount());
             }
 
-            $this->resetOperationsState();
+            $this->resetOperationsState(preserveCacheKey: true);
 
             return $stmt;
         } catch (\PDOException $e) {
@@ -273,6 +286,16 @@ final class QueryBuilder extends QueryBuilderOperations
         $countQuery->sql = ['SELECT', 'COUNT(*) as total', "FROM {$this->table}"];
         $countQuery->orderBy = [];
         $countQuery->limit = null;
+
+        $countSql = $countQuery->getQuerySql();
+        $countQuery->params = array_filter(
+            $countQuery->params,
+            static fn (mixed $value, string $placeholder): bool => preg_match(
+                '/(^|[^a-zA-Z0-9_])' . preg_quote($placeholder, '/') . '(?=$|[^a-zA-Z0-9_])/',
+                $countSql,
+            ) === 1,
+            ARRAY_FILTER_USE_BOTH,
+        );
 
         $stmt = $countQuery->prepareAndExecute(true);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\QueryBuilder;
 
+use DateTimeImmutable;
 use Omegaalfa\QueryBuilder\QueryBuilder;
-use Omegaalfa\QueryBuilder\exceptions\DatabaseException;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Exceptions\DatabaseException;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\PaginationDTO;
-use Omegaalfa\QueryBuilder\enums\SqlOperator;
+use Omegaalfa\QueryBuilder\Enums\SqlOperator;
 use PHPUnit\Framework\TestCase;
 use PDO;
 use PDOStatement;
@@ -87,7 +88,7 @@ final class QueryBuilderBindingTest extends TestCase
 
     public function testBindDateTimeFormatsString(): void
     {
-        $dt = new \DateTimeImmutable('2020-01-02 03:04:05');
+        $dt = new DateTimeImmutable('2020-01-02 03:04:05');
 
         $stmt = $this->createMock(PDOStatement::class);
         $stmt->expects($this->once())->method('bindValue')->with(':param0', $dt->format('Y-m-d H:i:s'));

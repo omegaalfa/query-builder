@@ -34,13 +34,35 @@
 
 **Inspirado em:** Eloquent, Doctrine DBAL, Laravel Query Builder
 
+O ambiente Docker opcional com PostgreSQL/pgvector, MySQL e Redis está documentado em [docs/docker.md](docs/docker.md).
+
+O logging estruturado e sua configuração segura para produção estão documentados em [docs/logging.md](docs/logging.md).
+
+A metodologia de comparação com Doctrine DBAL está documentada em [docs/benchmarks.md](docs/benchmarks.md).
+
 ---
 
 ## 📦 Instalação
 
 ```bash
 composer require omegaalfa/query-builder
+cp .env.example .env
 ```
+
+### Namespaces canônicos
+
+Os segmentos de namespace seguem PSR-4 em `StudlyCaps`, por exemplo:
+
+```php
+use Omegaalfa\QueryBuilder\Connection\PDOConnection;
+use Omegaalfa\QueryBuilder\Enums\OrderDirection;
+use Omegaalfa\QueryBuilder\Exceptions\QueryException;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+```
+
+Ao migrar de uma versão que usava diretórios em minúsculas, atualize imports como
+`QueryBuilder\connection` para `QueryBuilder\Connection`. Em sistemas de arquivos
+case-sensitive, a capitalização faz parte do caminho resolvido pelo autoload PSR-4.
 
 ### Requisitos
 
@@ -59,26 +81,28 @@ composer require omegaalfa/query-builder
 <?php
 declare(strict_types=1);
 
-use Omegaalfa\QueryBuilder\connection\PDOConnection;
-use Omegaalfa\QueryBuilder\connection\DatabaseSettings;
+use Omegaalfa\QueryBuilder\Connection\PDOConnection;
+use Omegaalfa\QueryBuilder\DatabaseSettings;
 use Omegaalfa\QueryBuilder\QueryBuilder;
-use Omegaalfa\QueryBuilder\Paginator;
+use Omegaalfa\QueryBuilder\Utils\EnvLoader;
+
+EnvLoader::load(__DIR__, required: true);
 
 // 1. Configurar conexão
 $config = new DatabaseSettings(
-    driver: 'mysql',
-    host: 'localhost',
-    database: 'meu_banco',
-    username: 'root',
-    password: '',
-    port: 3306,
-    charset: 'utf8mb4'
+    driver: EnvLoader::get('DB_CONNECTION', 'mysql'),
+    host: EnvLoader::get('DB_HOST', '127.0.0.1'),
+    database: EnvLoader::require('DB_DATABASE'),
+    username: EnvLoader::require('DB_USERNAME'),
+    password: EnvLoader::require('DB_PASSWORD'),
+    port: EnvLoader::getInt('DB_PORT', 3306) ?? 3306,
+    charset: EnvLoader::get('DB_CHARSET', 'utf8mb4'),
+    collation: EnvLoader::get('DB_COLLATION', 'utf8mb4_unicode_ci'),
 );
 
-// 2. Criar instâncias
+// 2. Criar instâncias. O paginador padrão é criado sob demanda.
 $connection = new PDOConnection($config);
-$paginator = new Paginator();
-$qb = new QueryBuilder($connection, $paginator);
+$qb = new QueryBuilder($connection);
 
 // 3. Usar!
 $result = $qb
@@ -91,6 +115,36 @@ $result = $qb
 foreach ($result->data as $usuario) {
     echo "{$usuario['nome']} - {$usuario['email']}\n";
 }
+```
+
+### Construtor e paginação
+
+Somente a conexão é obrigatória. Ao executar uma consulta com `limit()`, o
+`QueryBuilder` cria o `Paginator` padrão automaticamente:
+
+```php
+$qb = new QueryBuilder($connection);
+```
+
+Uma implementação personalizada de `PaginatorInterface` ainda pode ser
+injetada explicitamente:
+
+```php
+$qb = new QueryBuilder(
+    connection: $connection,
+    paginator: $customPaginator,
+);
+```
+
+Para configurar cache ou logger sem fornecer um paginador, prefira argumentos
+nomeados:
+
+```php
+$qb = new QueryBuilder(
+    connection: $connection,
+    cache: $cache,
+    logger: $logger,
+);
 ```
 
 ---
@@ -1106,8 +1160,8 @@ print_r($analysis);
 ### Exemplo 1: CRUD Completo
 
 ```php
-use Omegaalfa\QueryBuilder\enums\SqlOperator;
-use Omegaalfa\QueryBuilder\enums\OrderDirection;
+use Omegaalfa\QueryBuilder\Enums\SqlOperator;
+use Omegaalfa\QueryBuilder\Enums\OrderDirection;
 
 // CREATE
 $qb->insert('produtos', [
@@ -1319,10 +1373,9 @@ vendor/bin/phpunit --coverage-html coverage/
 
 # Testes específicos
 vendor/bin/phpunit tests/QueryBuilder/QueryBuilderSecurityTest.php
-
-# Análise estática (PHPStan)
-composer phpstan
 ```
+
+PHPStan ainda não está configurado neste projeto; `composer test` é o comando de validação suportado.
 
 ### Suítes de Teste
 
@@ -1462,7 +1515,6 @@ Contribuições são muito bem-vindas!
 - ✅ Adicione **testes** para novas features
 - ✅ Mantenha **strict_types**
 - ✅ Documente com **PHPDoc**
-- ✅ Execute `composer phpstan` antes de commitar
 - ✅ Atualize **README** se necessário
 
 ---

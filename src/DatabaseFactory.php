@@ -6,9 +6,9 @@ declare(strict_types=1);
 namespace Omegaalfa\QueryBuilder;
 
 use Omegaalfa\QueryBuilder\config\ConfigService;
-use Omegaalfa\QueryBuilder\connection\DatabaseSettings;
-use Omegaalfa\QueryBuilder\connection\PDOConnection;
-use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
+use Omegaalfa\QueryBuilder\DatabaseSettings;
+use Omegaalfa\QueryBuilder\Connection\PDOConnection;
+use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
 
 
 class DatabaseFactory
@@ -35,8 +35,7 @@ class DatabaseFactory
                     collation: $config['collation'],
                 )
             ),
-            new Paginator(),
-            $cache
+            cache: $cache
         );
     }
 }

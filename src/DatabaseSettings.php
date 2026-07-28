@@ -34,12 +34,19 @@ final class DatabaseSettings
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_EMULATE_PREPARES => false
         ],
-        public string          $charset = 'utf8mb4',
+        public string          $charset = 'auto',
         public string          $collation = 'utf8mb4_unicode_ci',
         public ?string         $prefix = null,
     )
     {
         $this->driver = $this->normalizeDriver($driver);
+        $this->charset = $this->charset !== 'auto'
+            ? $this->charset
+            : match ($this->driver) {
+                'mysql' => 'utf8mb4',
+                'pgsql' => 'UTF8',
+                'sqlite' => '',
+            };
         $this->validate();
     }
 
@@ -77,7 +84,7 @@ final class DatabaseSettings
             }
         }
 
-        if (!preg_match('/^[a-zA-Z0-9_]+$/', $this->charset)) {
+        if ($this->charset !== '' && !preg_match('/^[a-zA-Z0-9_]+$/', $this->charset)) {
             throw new InvalidArgumentException('Invalid charset format.');
         }
     }

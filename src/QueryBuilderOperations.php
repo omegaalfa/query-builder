@@ -5,12 +5,19 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
-use Omegaalfa\QueryBuilder\enums\JoinType;
-use Omegaalfa\QueryBuilder\enums\OrderDirection;
-use Omegaalfa\QueryBuilder\enums\SqlOperator;
-use Omegaalfa\QueryBuilder\exceptions\QueryException;
-use Omegaalfa\QueryBuilder\interfaces\QueryBuilderInterface;
-use Omegaalfa\QueryBuilder\traits\HelperQueryOperationsTrait;
+use Omegaalfa\QueryBuilder\Enums\JoinType;
+use Omegaalfa\QueryBuilder\Enums\OrderDirection;
+use Omegaalfa\QueryBuilder\Enums\SqlOperator;
+use Omegaalfa\QueryBuilder\Exceptions\QueryException;
+use Omegaalfa\QueryBuilder\Exceptions\UnsupportedDatabaseFeatureException;
+use Omegaalfa\QueryBuilder\Expressions\AliasedExpression;
+use Omegaalfa\QueryBuilder\Interfaces\DatabaseValueInterface;
+use Omegaalfa\QueryBuilder\Interfaces\SqlExpressionInterface;
+use Omegaalfa\QueryBuilder\PostgreSQL\PgVector\Vector;
+use Omegaalfa\QueryBuilder\PostgreSQL\PgVector\VectorDistance;
+use Omegaalfa\QueryBuilder\PostgreSQL\PgVector\VectorMetric;
+use Omegaalfa\QueryBuilder\Interfaces\QueryBuilderInterface;
+use Omegaalfa\QueryBuilder\Traits\HelperQueryOperationsTrait;
 
 class QueryBuilderOperations implements QueryBuilderInterface
 {
@@ -62,6 +69,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     protected array $sql = [];
 
+    protected ?SqlCompilationContext $compilationContext = null;
+
 
     /**
      * @var string|null
@@ -79,6 +88,14 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @var bool
      */
     protected bool $isOrGroup = false;
+
+    public function __clone(): void
+    {
+        $params = [...$this->params];
+        unset($this->params);
+        $this->params = $params;
+        $this->compilationContext = null;
+    }
 
     /**
      * Define um alias para a tabela principal da consulta.
@@ -125,7 +142,12 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
         // ✅ SECURITY FIX: Apply normalization/quoting to fields to prevent identifier injection
         // Uses normalizeField from HelperQueryOperationsTrait which allows functions/aliases but quotes identifiers
-        $processedFields = array_map([$this, 'normalizeField'], $fields);
+        $processedFields = array_map(
+            fn (mixed $field): string => $field instanceof SqlExpressionInterface
+                ? $field->compile($this->compilationContext())
+                : $this->normalizeField($field),
+            $fields,
+        );
 
         $this->sql = ['SELECT', implode(', ', $processedFields), 'FROM ' . $this->table];
         return $this;
@@ -134,7 +156,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /**
      * @return void
      */
-    protected function resetOperationsState(): void
+    protected function resetOperationsState(bool $preserveCacheKey = false): void
     {
         $this->sql = [];
         $this->joins = [];
@@ -147,6 +169,10 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->params = [];
         $this->whereGroups = [];
         $this->isOrGroup = false;
+        $this->compilationContext = null;
+        if (!$preserveCacheKey && method_exists($this, 'resetQueryCacheKey')) {
+            $this->resetQueryCacheKey();
+        }
     }
 
     /**
@@ -166,7 +192,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $this->table,
             '(' . implode(', ', $fields) . ')',
             'VALUES',
-            '(' . implode(', ', array_map(static fn($field) => ':' . $field, $fields)) . ')'
+            '(' . implode(', ', array_map(fn ($field) => $this->valueSql(':' . $field, $data[$field]), $fields)) . ')'
         ];
 
         foreach ($data as $key => $value) {
@@ -245,7 +271,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->table = $this->quoteIdentifier($table);
         foreach ($data as $key => $value) {
             $param = ':' . $key;
-            $assignments[] = sprintf('%s = %s', $this->quoteIdentifier($key), $param);
+            $assignments[] = sprintf('%s = %s', $this->quoteIdentifier($key), $this->valueSql($param, $value));
             $this->params[$param] = $value;
         }
 
@@ -503,6 +529,51 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $this->orderBy[] = sprintf('%s %s', $this->quoteIdentifier($column), $direction->value);
         return $this;
+    }
+
+    public function orderByExpression(
+        SqlExpressionInterface $expression,
+        OrderDirection $direction = OrderDirection::ASC,
+    ): self {
+        $this->orderBy[] = sprintf('%s %s', $expression->compile($this->compilationContext()), $direction->value);
+        return $this;
+    }
+
+    /** @param Vector|array<int, int|float> $vector */
+    public function nearestNeighbors(
+        string $column,
+        Vector|array $vector,
+        VectorMetric $metric = VectorMetric::L2,
+        string $alias = 'distance',
+        ?int $dimensions = null,
+    ): self {
+        $distance = new VectorDistance($column, $vector, $metric, $dimensions);
+        $selected = new AliasedExpression($distance, $alias);
+        $this->sql[1] = ($this->sql[1] ?? '*') . ', ' . $selected->compile($this->compilationContext());
+        return $this->orderByExpression($distance, OrderDirection::ASC);
+    }
+
+    protected function compilationContext(): SqlCompilationContext
+    {
+        return $this->compilationContext ??= new SqlCompilationContext(
+            $this->params,
+            $this->driver,
+            fn (string $identifier): string => $this->quoteIdentifier($identifier),
+        );
+    }
+
+    protected function valueSql(string $placeholder, mixed $value): string
+    {
+        if (!$value instanceof DatabaseValueInterface) {
+            return $placeholder;
+        }
+        if (!$value->supportsDriver($this->driver)) {
+            throw new UnsupportedDatabaseFeatureException(
+                sprintf('%s is not supported by the %s driver.', $value::class, $this->driver)
+            );
+        }
+        $type = $value->sqlType();
+        return $type === null ? $placeholder : sprintf('CAST(%s AS %s)', $placeholder, $type);
     }
 
     /**

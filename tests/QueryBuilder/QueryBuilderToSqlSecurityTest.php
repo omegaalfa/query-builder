@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\QueryBuilder;
 
 use DateTime;
-use Omegaalfa\QueryBuilder\enums\SqlOperator;
-use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Enums\SqlOperator;
+use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use PHPUnit\Framework\TestCase;
 

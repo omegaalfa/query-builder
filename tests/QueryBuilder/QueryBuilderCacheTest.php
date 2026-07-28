@@ -8,9 +8,9 @@ namespace Tests\QueryBuilder;
 use ArrayIterator;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use Omegaalfa\QueryBuilder\QueryResultDTO;
-use Omegaalfa\QueryBuilder\interfaces\CacheInterface;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
@@ -34,7 +34,7 @@ class QueryBuilderCacheTest extends TestCase
         $fakePdo = new class($stmt) extends PDO {
             private PDOStatement $stmt;
             public function __construct($stmt) { $this->stmt = $stmt; }
-            public function prepare($sql, $options = null) { return $this->stmt; }
+            public function prepare(string $query, array $options = []): PDOStatement|false { return $this->stmt; }
             public function lastInsertId($name = null): string|false { return '1'; }
         };
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\QueryBuilder;
 
-use Omegaalfa\QueryBuilder\enums\JoinType;
-use Omegaalfa\QueryBuilder\enums\OrderDirection;
-use Omegaalfa\QueryBuilder\enums\SqlOperator;
-use Omegaalfa\QueryBuilder\exceptions\QueryException;
+use Omegaalfa\QueryBuilder\Enums\JoinType;
+use Omegaalfa\QueryBuilder\Enums\OrderDirection;
+use Omegaalfa\QueryBuilder\Enums\SqlOperator;
+use Omegaalfa\QueryBuilder\Exceptions\QueryException;
 use Omegaalfa\QueryBuilder\QueryBuilderOperations;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -173,7 +173,7 @@ final class QueryBuilderOperationsTest extends TestCase
         $qb = new QueryBuilderOperations();
 
         // Usa Reflection para obter o driver configurado
-        $driverProperty = (new \ReflectionClass($qb))
+        $driverProperty = (new ReflectionClass($qb))
             ->getProperty('driver');
         $driverProperty->setAccessible(true);
         $driver = $driverProperty->getValue($qb);

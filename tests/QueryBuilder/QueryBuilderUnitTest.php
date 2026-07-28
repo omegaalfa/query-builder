@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\QueryBuilder;
 
 use Omegaalfa\QueryBuilder\QueryBuilder;
-use Omegaalfa\QueryBuilder\interfaces\ConnectionInterface;
-use Omegaalfa\QueryBuilder\interfaces\PaginatorInterface;
+use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\PaginationDTO;
 use PHPUnit\Framework\TestCase;
 use PDO;
