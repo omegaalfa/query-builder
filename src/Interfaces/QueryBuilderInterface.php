@@ -245,6 +245,11 @@ interface QueryBuilderInterface
      */
     public function insertBatch(string $table, array $data): self;
 
+    public function returnLastInsertId(): self;
+
+    /** @param list<string> $columns */
+    public function returning(array $columns): self;
+
     /** @param list<string> $columns */
     public function onConflict(array $columns): self;
 

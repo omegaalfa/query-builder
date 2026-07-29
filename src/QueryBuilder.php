@@ -179,12 +179,12 @@ final class QueryBuilder extends QueryBuilderOperations
             $isCacheEnabled = isset($this->cacheTtl) && $this->cache !== null;
             $data = $this->streamData($stmt);
             if ($isCacheEnabled) {
-                $result = new QueryResultDTO(iterator_to_array($data, false), $count, $pagination);
+                $result = new QueryResultDTO(iterator_to_array($data, false), $count, $pagination, $this->insertId);
                 $this->saveToCache($result);
                 return $result;
             }
 
-            return new QueryResultDTO($data, $count, $pagination);
+            return new QueryResultDTO($data, $count, $pagination, $this->insertId);
         } catch (PDOException $e) {
             throw new QueryException(
                 message: "Query execution failed: {$e->getMessage()}",
@@ -205,6 +205,8 @@ final class QueryBuilder extends QueryBuilderOperations
     {
         $startTime = microtime(true);
         $sql = $this->getQuerySql();
+        $captureInsertId = $this->returnLastInsertIdRequested;
+        $this->insertId = false;
         try {
             $pdo = $this->connection->pdo($bufferedQuery);
             $stmt = $pdo->prepare($sql);
@@ -254,9 +256,13 @@ final class QueryBuilder extends QueryBuilderOperations
 
             $stmt->execute();
 
-            // Only capture last insert ID for INSERT queries to avoid PostgreSQL "lastval not yet defined" error
-            if (stripos($sql, 'INSERT') === 0) {
-                $this->insertId = $pdo->lastInsertId();
+            if ($captureInsertId) {
+                if ($this->driver === 'pgsql') {
+                    $returnedId = $stmt->fetchColumn();
+                    $this->insertId = $returnedId === false ? false : (string) $returnedId;
+                } else {
+                    $this->insertId = $pdo->lastInsertId();
+                }
             }
 
             if ($this->logger) {

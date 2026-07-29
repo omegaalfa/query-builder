@@ -69,6 +69,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
     protected bool $conflictActionDefined = false;
 
+    protected bool $returnLastInsertIdRequested = false;
+
+    /** @var list<string> */
+    protected array $returningColumns = [];
+
     /**
      * @var array
      */
@@ -180,6 +185,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->insertColumns = [];
         $this->conflictColumns = null;
         $this->conflictActionDefined = false;
+        $this->returnLastInsertIdRequested = false;
+        $this->returningColumns = [];
         $this->params = [];
         $this->whereGroups = [];
         $this->isOrGroup = false;
@@ -274,6 +281,54 @@ class QueryBuilderOperations implements QueryBuilderInterface
     }
 
     /**
+     * Explicitly requests the generated identifier.
+     *
+     * PostgreSQL uses RETURNING "id" and never PDO::lastInsertId(). MySQL and
+     * SQLite use their native PDO last-insert-id implementation.
+     */
+    public function returnLastInsertId(): self
+    {
+        $this->assertActiveInsert('returnLastInsertId');
+        if ($this->returningColumns !== []) {
+            throw new QueryException('returnLastInsertId() cannot be combined with returning().');
+        }
+
+        $this->returnLastInsertIdRequested = true;
+        if ($this->driver === 'pgsql') {
+            $this->returningColumns = ['id'];
+        }
+
+        return $this;
+    }
+
+    /**
+     * Adds a typed PostgreSQL RETURNING clause.
+     *
+     * @param list<string> $columns
+     */
+    public function returning(array $columns): self
+    {
+        if ($this->driver !== 'pgsql') {
+            throw new UnsupportedDatabaseFeatureException('RETURNING is currently supported only by the pgsql driver.');
+        }
+        $this->assertActiveInsert('returning');
+        if ($this->returnLastInsertIdRequested) {
+            throw new QueryException('returning() cannot be combined with returnLastInsertId().');
+        }
+        if ($columns === [] || !array_is_list($columns)) {
+            throw new QueryException('Returning columns must be a non-empty list.');
+        }
+        foreach ($columns as $column) {
+            if (!is_string($column) || $column === '') {
+                throw new QueryException('Returning columns must contain only non-empty identifiers.');
+            }
+        }
+        $this->returningColumns = $columns;
+
+        return $this;
+    }
+
+    /**
      * Define as colunas da restrição de conflito para um INSERT PostgreSQL.
      *
      * @param list<string> $columns
@@ -354,6 +409,13 @@ class QueryBuilderOperations implements QueryBuilderInterface
         }
         if ($this->conflictActionDefined) {
             throw new QueryException('A conflict action has already been defined.');
+        }
+    }
+
+    private function assertActiveInsert(string $method): void
+    {
+        if ($this->insertColumns === []) {
+            throw new QueryException("{$method}() requires an active insert or insertBatch operation.");
         }
     }
 
@@ -860,6 +922,10 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
         if ($this->having) {
             $query[] = 'HAVING ' . implode(' AND ', $this->having);
+        }
+
+        if ($this->returningColumns !== []) {
+            $query[] = 'RETURNING ' . implode(', ', array_map([$this, 'quoteIdentifier'], $this->returningColumns));
         }
 
         if ($this->orderBy) {

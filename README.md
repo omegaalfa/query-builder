@@ -220,6 +220,7 @@ Laravel (cursor):                              ~0.00 MB*
 - [select()](#select) - Consulta SELECT
 - [insert()](#insert) - Inserir registro
 - [insertBatch()](#insertbatch) - Inserir múltiplos registros
+- [returnLastInsertId() e returning()](#identidade-e-returning) - Retorno explícito do INSERT
 - [update()](#update) - Atualizar registros
 - [delete()](#delete) - Deletar registros
 
@@ -319,16 +320,47 @@ public function insert(string $table, array $data): self
 
 **Exemplo:**
 ```php
-$qb->insert('usuarios', [
+$resultado = $qb->insert('usuarios', [
     'nome' => 'João Silva',
     'email' => 'joao@example.com',
     'ativo' => true,
     'criado_em' => new DateTime()
-])->execute();
+])->returnLastInsertId()->execute();
 
 // Obter ID inserido
-$novoId = $qb->getInsertId();
+$novoId = $resultado->insertId; // ou $qb->getInsertId()
 echo "Registro criado com ID: {$novoId}";
+```
+
+Um `insert(...)->execute()` comum não chama `PDO::lastInsertId()`. Isso permite
+usar UUID, chaves naturais, chaves compostas e tabelas sem sequence. O retorno
+do identificador precisa ser solicitado explicitamente.
+
+#### Identidade e `RETURNING`
+
+MySQL e SQLite usam `PDO::lastInsertId()` somente após `returnLastInsertId()`.
+No PostgreSQL, o mesmo método gera `RETURNING "id"` e não depende de
+`lastInsertId()`:
+
+```php
+$resultado = $qb->insert('usuarios', $dados)
+    ->returnLastInsertId()
+    ->execute();
+
+$id = $resultado->insertId;
+```
+
+Para UUID, chaves naturais, compostas ou múltiplas colunas no PostgreSQL, use
+`returning()` e consuma normalmente `data`:
+
+```php
+$resultado = $qb->insert('context_entries', [
+    'tenant_id' => $tenantId,
+    'external_id' => $uuid,
+    'content' => $content,
+])->returning(['tenant_id', 'external_id'])->execute();
+
+$chave = iterator_to_array($resultado->data, false)[0];
 ```
 
 ---
@@ -1023,7 +1055,7 @@ try {
             'usuario_id' => 123,
             'total' => 99.90,
             'status' => 'pendente'
-        ])->execute();
+        ])->returnLastInsertId()->execute();
         
         $pedidoId = $qb->getInsertId();
         
@@ -1216,7 +1248,7 @@ $qb->insert('produtos', [
     'estoque' => 10,
     'categoria_id' => 1,
     'ativo' => true
-])->execute();
+])->returnLastInsertId()->execute();
 
 $produtoId = $qb->getInsertId();
 
@@ -1308,7 +1340,7 @@ try {
             'status' => 'pendente',
             'total' => array_sum(array_column($carrinho, 'subtotal')),
             'criado_em' => new DateTime()
-        ])->execute();
+        ])->returnLastInsertId()->execute();
         
         $pedidoId = $qb->getInsertId();
         
