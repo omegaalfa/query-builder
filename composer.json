@@ -27,7 +27,7 @@
     "ext-pdo": "*",
     "ext-ctype": "*",
     "ext-redis": "*",
-    "illuminate/database": "^12.37"
+    "illuminate/database": "^12.37 || ^13.0"
   },
   "autoload": {
     "psr-4": {
