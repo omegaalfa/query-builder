@@ -213,4 +213,18 @@ class QueryBuilderCacheTest extends TestCase
 
         $saveToCache->invoke($qb, $result);
     }
+
+    public function testCacheTagsAreNormalizedAndIncludeTheCurrentTable(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $cache = $this->createMock(CacheInterface::class);
+        $qb = new QueryBuilder($connection, null, $cache);
+
+        $qb->select('users')->cacheTags(['users', '', 'tenant:10', 'users']);
+
+        $reflection = new ReflectionClass($qb);
+        $method = $reflection->getMethod('cacheTagsForCurrentTable');
+
+        self::assertSame(['users', 'tenant:10'], $method->invoke($qb));
+    }
 }

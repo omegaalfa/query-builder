@@ -224,6 +224,9 @@ interface QueryBuilderInterface
     /** @param array<string, mixed> $params */
     public function raw(string $query, array $params = []): self;
 
+    /** @param array<int, string> $tags */
+    public function cacheTags(array $tags): self;
+
     /**
      * Adiciona uma condição OR WHERE.
      *

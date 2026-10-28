@@ -276,6 +276,12 @@ final class QueryBuilder extends QueryBuilderOperations
                 $this->logger->logQuery($sql, $this->params, $duration, $stmt->rowCount());
             }
 
+            if (str_starts_with(strtoupper(ltrim($sql)), 'INSERT')
+                || str_starts_with(strtoupper(ltrim($sql)), 'UPDATE')
+                || str_starts_with(strtoupper(ltrim($sql)), 'DELETE')) {
+                $this->invalidateCacheTags();
+            }
+
             $this->resetOperationsState(preserveCacheKey: true);
 
             return $stmt;

@@ -29,6 +29,9 @@ trait QueryBuilderCacheTrait
 
     private string $cachePrefix = 'qb';
 
+    /** @var list<string> */
+    private array $cacheTags = [];
+
     protected function resetQueryCacheKey(): void
     {
         $this->cacheKey = null;
@@ -48,6 +51,23 @@ trait QueryBuilderCacheTrait
         return $this;
     }
 
+    /** @param array<int, string> $tags */
+    public function cacheTags(array $tags): self
+    {
+        $normalized = [];
+        foreach ($tags as $tag) {
+            $tag = trim($tag);
+            if ($tag !== '') {
+                $normalized[] = $tag;
+            }
+        }
+
+        $this->cacheTags = array_values(array_unique($normalized));
+        $this->resetQueryCacheKey();
+
+        return $this;
+    }
+
     /**
      * Salva o resultado da query no cache.
      */
@@ -61,17 +81,20 @@ trait QueryBuilderCacheTrait
             $this->cacheKey ??= $this->generateCacheKey();
             $data = iterator_to_array($result->data, false);
 
-            $this->cache->set(
-                $this->cacheKey,
-                [
-                    'data' => $data,
-                    'count' => $result->count,
-                    'pagination' => $result->pagination,
-                    'cached_at' => time(),
-                    'ttl' => $this->cacheTtl,
-                ],
-                $this->cacheTtl
-            );
+            $payload = [
+                'data' => $data,
+                'count' => $result->count,
+                'pagination' => $result->pagination,
+                'cached_at' => time(),
+                'ttl' => $this->cacheTtl,
+            ];
+            $tags = $this->cacheTagsForCurrentTable();
+
+            if (method_exists($this->cache, 'setWithTags')) {
+                $this->cache->setWithTags($this->cacheKey, $payload, $this->cacheTtl, $tags);
+            } else {
+                $this->cache->set($this->cacheKey, $payload, $this->cacheTtl);
+            }
         } catch (Throwable $e) {
             error_log('[QueryBuilderCache] Save failed: ' . $e->getMessage());
         }
@@ -110,7 +133,38 @@ trait QueryBuilderCacheTrait
             $this->paginationRequested ? 'paginate' : 'limit',
             $sqlHash,
             $paramsHash,
+            hash('xxh128', implode('|', $this->cacheTagsForCurrentTable())),
         ]);
+    }
+
+    /** @return list<string> */
+    private function cacheTagsForCurrentTable(): array
+    {
+        $tags = $this->cacheTags;
+        if ($this->table !== null) {
+            $table = trim($this->table, '`"');
+            if ($table !== '') {
+                $tags[] = $table;
+            }
+        }
+
+        return array_values(array_unique($tags));
+    }
+
+    protected function invalidateCacheTags(): void
+    {
+        if ($this->cache === null || !method_exists($this->cache, 'flushTags')) {
+            return;
+        }
+
+        $tags = $this->cacheTagsForCurrentTable();
+        if ($tags !== []) {
+            try {
+                $this->cache->flushTags($tags);
+            } catch (Throwable $e) {
+                error_log('[QueryBuilderCache] Invalidation failed: ' . $e->getMessage());
+            }
+        }
     }
 
     /** @return array<string, mixed> */

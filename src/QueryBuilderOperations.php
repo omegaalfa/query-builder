@@ -91,6 +91,12 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     protected bool $isOrGroup = false;
 
+    /** @param array<int, string> $tags */
+    public function cacheTags(array $tags): self
+    {
+        return $this;
+    }
+
     public function __clone(): void
     {
         $this->params = [...$this->params];
