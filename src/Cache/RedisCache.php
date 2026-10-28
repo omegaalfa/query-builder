@@ -23,6 +23,7 @@ class RedisCache implements CacheInterface
         'stale_hits' => 0,
         'refreshes' => 0,
         'lock_contention' => 0,
+        'fallbacks' => 0,
     ];
 
     private int $circuitFailures = 0;
@@ -385,6 +386,10 @@ class RedisCache implements CacheInterface
                 }
             }
         } catch (RedisException $e) {
+            if ($this->failOpen) {
+                ++$this->stats['fallbacks'];
+                return [];
+            }
             throw new CacheException('Redis error getting multiple keys', implode(',', $keys), $e);
         }
 
@@ -437,6 +442,7 @@ class RedisCache implements CacheInterface
             $cached = $this->get($key);
         } catch (CacheException $e) {
             if ($this->failOpen) {
+                ++$this->stats['fallbacks'];
                 return $resolver();
             }
             throw $e;
@@ -472,11 +478,19 @@ class RedisCache implements CacheInterface
 
             $value = $resolver();
             ++$this->stats['refreshes'];
-            $this->set($key, $value, $ttl);
+            try {
+                $this->set($key, $value, $ttl);
+            } catch (CacheException $e) {
+                if (!$this->failOpen) {
+                    throw $e;
+                }
+                ++$this->stats['fallbacks'];
+            }
 
             return $value;
         } catch (RedisException $e) {
             if ($this->failOpen) {
+                ++$this->stats['fallbacks'];
                 return $resolver();
             }
             throw new CacheException('Redis error acquiring cache lock', $key, $e);
@@ -534,10 +548,18 @@ class RedisCache implements CacheInterface
 
                     $value = $resolver();
                     ++$this->stats['refreshes'];
-                    $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
+                    try {
+                        $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
+                    } catch (CacheException $e) {
+                        if (!$this->failOpen) {
+                            throw $e;
+                        }
+                        ++$this->stats['fallbacks'];
+                    }
                     return $value;
                 } catch (RedisException $e) {
                     if ($this->failOpen) {
+                        ++$this->stats['fallbacks'];
                         return $cached['value'];
                     }
                     throw new CacheException('Redis error refreshing stale cache', $key, $e);
@@ -562,10 +584,18 @@ class RedisCache implements CacheInterface
 
             $value = $resolver();
             ++$this->stats['refreshes'];
-            $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
+            try {
+                $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
+            } catch (CacheException $e) {
+                if (!$this->failOpen) {
+                    throw $e;
+                }
+                ++$this->stats['fallbacks'];
+            }
             return $value;
         } catch (RedisException $e) {
             if ($this->failOpen) {
+                ++$this->stats['fallbacks'];
                 return $resolver();
             }
             throw new CacheException('Redis error acquiring stale cache lock', $key, $e);

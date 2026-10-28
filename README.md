@@ -1153,7 +1153,7 @@ Para observabilidade local da instância, consulte e zere os contadores em memó
 
 ```php
 $stats = $cache->getStats();
-// hits, misses, stale_hits, refreshes e lock_contention
+// hits, misses, stale_hits, refreshes, lock_contention e fallbacks
 $cache->resetStats();
 ```
 
@@ -1196,7 +1196,7 @@ $cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
 );
 ```
 
-O modo padrão é `failOpen: false`, preservando o comportamento fail-closed e propagando `CacheException` para que a aplicação decida o fallback explicitamente.
+O modo padrão é `failOpen: false`, preservando o comportamento fail-closed e propagando `CacheException` para que a aplicação decida o fallback explicitamente. Com `failOpen: true`, `remember()` devolve o valor resolvido mesmo quando a gravação falha, e `getMultiple()` devolve uma lista vazia em falhas de infraestrutura. Essas ocorrências são contabilizadas em `fallbacks`.
 
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 

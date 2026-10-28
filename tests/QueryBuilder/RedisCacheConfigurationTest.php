@@ -273,6 +273,29 @@ final class RedisCacheConfigurationTest extends TestCase
         $cache->remember('item', 30, static fn(): string => 'unused');
     }
 
+    public function testRememberReturnsResolvedValueWhenCacheWriteFailsInFailOpenMode(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('get')->with('test:item')->willReturn(false);
+        $redis->expects(self::once())->method('set')->willReturn(true);
+        $redis->expects(self::once())->method('setex')->willThrowException(new RedisException('write failed'));
+        $redis->expects(self::once())->method('eval')->willReturn(1);
+        $cache = $this->cacheWithRedis($redis, failOpen: true);
+
+        self::assertSame('resolved', $cache->remember('item', 30, static fn(): string => 'resolved'));
+        self::assertSame(1, $cache->getStats()['fallbacks']);
+    }
+
+    public function testGetMultipleReturnsEmptyArrayWhenFailOpenAndRedisFails(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('mGet')->willThrowException(new RedisException('read failed'));
+        $cache = $this->cacheWithRedis($redis, failOpen: true);
+
+        self::assertSame([], $cache->getMultiple(['item']));
+        self::assertSame(1, $cache->getStats()['fallbacks']);
+    }
+
     public function testSetUsesPrefixedKeyJsonAndTtl(): void
     {
         $redis = $this->redisMock();

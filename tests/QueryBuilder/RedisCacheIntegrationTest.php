@@ -151,7 +151,14 @@ final class RedisCacheIntegrationTest extends TestCase
 
         $this->cache->resetStats();
         self::assertSame(
-            ['hits' => 0, 'misses' => 0, 'stale_hits' => 0, 'refreshes' => 0, 'lock_contention' => 0],
+            [
+                'hits' => 0,
+                'misses' => 0,
+                'stale_hits' => 0,
+                'refreshes' => 0,
+                'lock_contention' => 0,
+                'fallbacks' => 0,
+            ],
             $this->cache->getStats(),
         );
     }
