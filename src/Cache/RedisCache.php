@@ -160,6 +160,12 @@ class RedisCache implements CacheInterface
         }
     }
 
+    /** @param array<int, string> $tags */
+    public function setWithTags(string $key, mixed $value, int $ttl, array $tags = []): void
+    {
+        $this->set($key, $value, $ttl, $tags);
+    }
+
     /**
      * @param string $key
      *

@@ -1143,6 +1143,16 @@ $cache->flushTags(['users']);
 ```
 
 Tags vazias são ignoradas e duplicatas são removidas. A invalidação remove todas as chaves indexadas pelas tags informadas.
+
+No `QueryBuilder`, use `cacheTags()` para associar uma consulta a tags adicionais. A tabela consultada também é indexada automaticamente, e operações de `insert`, `update` e `delete` invalidam as entradas relacionadas quando o cache Redis está configurado:
+
+```php
+$users = $builder
+    ->select('users')
+    ->cache(300)
+    ->cacheTags(['tenant:10'])
+    ->execute();
+```
              ->execute();
 ```
 
