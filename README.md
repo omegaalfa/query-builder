@@ -1457,7 +1457,7 @@ Além dos testes, o projeto possui validações de qualidade:
 composer quality          # PHPStan nível 6 + PHP-CS-Fixer
 composer quality:stan     # análise estática
 composer quality:cs       # estilo, sem modificar arquivos
-composer quality:mutation # Infection; requer driver de cobertura
+composer quality:mutation # Infection; código coberto, MSI mínimo de 60%
 ```
 
 ### Suítes de Teste
@@ -1728,7 +1728,7 @@ $query = DatabaseFactory::create($settings);
 composer install
 composer quality
 composer test
-composer quality:mutation # requer PCOV ou Xdebug
+composer quality:mutation # requer PCOV ou Xdebug; MSI mínimo de 60%
 ```
 
 O CI executa os testes, as verificações de qualidade e mutation testing automaticamente. O mutation testing usa PCOV em um job separado. Redis permanece opcional e `illuminate/database` é usado apenas no ambiente de desenvolvimento.

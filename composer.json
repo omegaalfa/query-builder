@@ -41,7 +41,7 @@
     "test": "phpunit --no-coverage",
     "quality:stan": "phpstan analyse --configuration=phpstan.neon",
     "quality:cs": "php-cs-fixer fix --dry-run --diff --allow-risky=yes --config=.php-cs-fixer.php",
-    "quality:mutation": "infection --configuration=infection.json5 --test-framework=phpunit --min-msi=50",
+    "quality:mutation": "infection --configuration=infection.json5 --test-framework=phpunit --only-covered --threads=1 --min-msi=60",
     "quality": [
       "@quality:stan",
       "@quality:cs"

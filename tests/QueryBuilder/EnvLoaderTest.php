@@ -83,6 +83,57 @@ final class EnvLoaderTest extends TestCase
         EnvLoader::load($file, required: true, strictPermissions: true);
     }
 
+    public function testOptionalMissingFileAndDefaultsAreHandled(): void
+    {
+        $missing = sys_get_temp_dir() . '/query-builder-env-missing-' . bin2hex(random_bytes(6));
+
+        EnvLoader::load($missing);
+        self::assertNull(EnvLoader::get($this->prefix() . '_MISSING'));
+        self::assertSame('fallback', EnvLoader::get($this->prefix() . '_MISSING', 'fallback'));
+        self::assertSame(42, EnvLoader::getInt($this->prefix() . '_MISSING_INT', 42));
+        self::assertFalse(EnvLoader::getBool($this->prefix() . '_MISSING_BOOL', false));
+
+        $this->expectException(RuntimeException::class);
+        EnvLoader::load($missing, required: true);
+    }
+
+    public function testParsesEscapedDoubleQuotesAndEmptyValues(): void
+    {
+        $prefix = $this->prefix();
+        $file = $this->envFile(
+            "{$prefix}_QUOTED=\"a \\\"quoted\\\" value\"\n{$prefix}_EMPTY=\n"
+        );
+        $this->trackKeys($prefix, ['QUOTED', 'EMPTY']);
+
+        EnvLoader::load($file, required: true);
+
+        self::assertSame('a "quoted" value', EnvLoader::get("{$prefix}_QUOTED"));
+        self::assertSame('', EnvLoader::get("{$prefix}_EMPTY"));
+    }
+
+    public function testRejectsNulBytesAndUnclosedQuotedValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        EnvLoader::load($this->envFile("SAFE=value\0\n"), required: true);
+    }
+
+    public function testRejectsMalformedEntriesAndInvalidTypedValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        EnvLoader::load($this->envFile("MALFORMED\n"), required: true);
+    }
+
+    public function testRejectsInvalidIntegerAndBooleanValues(): void
+    {
+        $prefix = $this->prefix();
+        $file = $this->envFile("{$prefix}_INT=1.5\n{$prefix}_BOOL=maybe\n");
+        $this->trackKeys($prefix, ['INT', 'BOOL']);
+        EnvLoader::load($file, required: true);
+
+        $this->expectException(InvalidArgumentException::class);
+        EnvLoader::getInt("{$prefix}_INT");
+    }
+
     private function prefix(): string
     {
         return 'QB_ENV_' . strtoupper(bin2hex(random_bytes(4)));
