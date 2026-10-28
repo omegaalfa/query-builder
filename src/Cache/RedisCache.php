@@ -150,7 +150,10 @@ class RedisCache implements CacheInterface
         return $this->prefix . $key;
     }
 
-    /** @param array<int, string> $tags @return list<string> */
+    /**
+     * @param array<int, string> $tags
+     * @return list<string>
+     */
     private function normalizeTags(array $tags): array
     {
         $normalized = [];
