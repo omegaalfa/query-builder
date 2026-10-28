@@ -41,6 +41,7 @@
 - O CI executa PHPStan e PHP-CS-Fixer em um job dedicado.
 - PHPStan foi elevado para o nível 6, com tipos explícitos para parâmetros, propriedades e retornos iteráveis.
 - O CI agora executa Infection com PCOV em um job separado de mutation testing.
+- O CI passou a instalar `ext-redis` nos jobs de testes, qualidade e mutation testing, evitando que a cobertura do Redis seja ignorada.
 - O gate de mutação considera apenas código coberto e exige MSI mínimo de 60%, reduzindo falsos negativos por código sem cobertura.
 - `composer test` executa PHPUnit sem exigir driver de cobertura.
 

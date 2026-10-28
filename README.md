@@ -1755,7 +1755,7 @@ composer test
 composer quality:mutation # requer PCOV ou Xdebug; MSI mínimo de 60%
 ```
 
-O CI executa os testes, as verificações de qualidade e mutation testing automaticamente. O mutation testing usa PCOV em um job separado. Redis permanece opcional e `illuminate/database` é usado apenas no ambiente de desenvolvimento.
+O CI executa os testes, as verificações de qualidade e mutation testing automaticamente. O mutation testing usa PCOV em um job separado e instala `ext-redis` para validar a implementação do cache Redis. Redis permanece opcional em instalações de produção e `illuminate/database` é usado apenas no ambiente de desenvolvimento.
 
 ## 💬 Contato
 
