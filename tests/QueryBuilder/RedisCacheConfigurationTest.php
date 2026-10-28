@@ -29,6 +29,8 @@ final class RedisCacheConfigurationTest extends TestCase
         yield 'port above range' => [['port' => 65_536]];
         yield 'non-positive timeout' => [['timeout' => 0.0]];
         yield 'negative database' => [['database' => -1]];
+        yield 'non-positive circuit threshold' => [['circuitFailureThreshold' => 0]];
+        yield 'non-positive circuit recovery window' => [['circuitRecoverySeconds' => 0]];
     }
 
     public function testGetMultiplePreservesFalseZeroAndEmptyStringValues(): void
@@ -204,6 +206,50 @@ final class RedisCacheConfigurationTest extends TestCase
         self::assertTrue($cache->ping());
     }
 
+    public function testCircuitOpensAfterConsecutiveRedisFailuresAndCanBeReset(): void
+    {
+        $redis = $this->redisMock();
+        $calls = 0;
+        $redis->expects(self::exactly(3))->method('get')
+            ->willReturnCallback(function () use (&$calls): string|false {
+                ++$calls;
+                throw new RedisException('connection lost');
+            });
+        $cache = $this->cacheWithRedis($redis);
+
+        for ($attempt = 0; $attempt < 3; ++$attempt) {
+            try {
+                $cache->get('item');
+            } catch (CacheException) {
+                // Expected while the circuit accumulates failures.
+            }
+        }
+
+        self::assertSame('open', $cache->circuitState()['state']);
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessage('circuit breaker is open');
+        $cache->get('item');
+    }
+
+    public function testResetCircuitAllowsRedisCallsAgain(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::exactly(3))->method('get')
+            ->willThrowException(new RedisException('connection lost'));
+        $cache = $this->cacheWithRedis($redis);
+
+        for ($attempt = 0; $attempt < 3; ++$attempt) {
+            try {
+                $cache->get('item');
+            } catch (CacheException) {
+                // Expected while the circuit accumulates failures.
+            }
+        }
+
+        $cache->resetCircuit();
+        self::assertSame('closed', $cache->circuitState()['state']);
+    }
+
     public function testSetUsesPrefixedKeyJsonAndTtl(): void
     {
         $redis = $this->redisMock();
@@ -254,6 +300,8 @@ final class RedisCacheConfigurationTest extends TestCase
         $cache = $reflection->newInstanceWithoutConstructor();
         $reflection->getProperty('redis')->setValue($cache, $redis);
         $reflection->getProperty('prefix')->setValue($cache, 'test:');
+        $reflection->getProperty('circuitFailureThreshold')->setValue($cache, 3);
+        $reflection->getProperty('circuitRecoverySeconds')->setValue($cache, 30);
 
         return $cache;
     }

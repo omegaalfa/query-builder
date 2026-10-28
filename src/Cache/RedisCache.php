@@ -25,6 +25,14 @@ class RedisCache implements CacheInterface
         'lock_contention' => 0,
     ];
 
+    private int $circuitFailures = 0;
+
+    private ?int $circuitOpenedAt = null;
+
+    private readonly int $circuitFailureThreshold;
+
+    private readonly int $circuitRecoverySeconds;
+
     private const int LOCK_WAIT_ATTEMPTS = 5;
 
     private const int LOCK_WAIT_MICROSECONDS = 10_000;
@@ -61,6 +69,8 @@ class RedisCache implements CacheInterface
         ?string $password = null,
         float $timeout = 2.5,
         int $database = 0,
+        int $circuitFailureThreshold = 3,
+        int $circuitRecoverySeconds = 30,
     ) {
         if ($port < 1 || $port > 65535) {
             throw new CacheException('Redis port must be between 1 and 65535.');
@@ -71,9 +81,14 @@ class RedisCache implements CacheInterface
         if ($database < 0) {
             throw new CacheException('Redis database must be zero or greater.');
         }
+        if ($circuitFailureThreshold < 1 || $circuitRecoverySeconds < 1) {
+            throw new CacheException('Redis circuit breaker settings must be greater than zero.');
+        }
 
         $this->redis = new Redis();
         $this->prefix = $prefix;
+        $this->circuitFailureThreshold = $circuitFailureThreshold;
+        $this->circuitRecoverySeconds = $circuitRecoverySeconds;
         try {
             if (!$this->redis->connect($host, $port, $timeout)) {
                 throw new CacheException("Cannot connect to Redis at {$host}:{$port}.");
@@ -97,8 +112,12 @@ class RedisCache implements CacheInterface
     public function has(string $key): bool
     {
         try {
-            return $this->redis->exists($this->prefixKey($key)) > 0;
+            $this->assertCircuitClosed($key);
+            $result = $this->redis->exists($this->prefixKey($key)) > 0;
+            $this->recordCircuitSuccess();
+            return $result;
         } catch (RedisException $e) {
+            $this->recordCircuitFailure();
             throw new CacheException("Redis error checking key", $key, $e);
         }
     }
@@ -155,6 +174,7 @@ class RedisCache implements CacheInterface
     public function set(string $key, mixed $value, int $ttl, array $tags = []): void
     {
         try {
+            $this->assertCircuitClosed($key);
             $encoded = json_encode($value, JSON_THROW_ON_ERROR);
 
             if (!$this->redis->setex($this->prefixKey($key), $ttl, $encoded)) {
@@ -162,9 +182,11 @@ class RedisCache implements CacheInterface
             }
 
             $this->replaceTagAssociations($key, $this->normalizeTags($tags));
+            $this->recordCircuitSuccess();
         } catch (JsonException $e) {
             throw new CacheException("Failed to encode value for cache", $key, $e);
         } catch (RedisException $e) {
+            $this->recordCircuitFailure();
             throw new CacheException("Redis error setting key", $key, $e);
         }
     }
@@ -283,6 +305,54 @@ class RedisCache implements CacheInterface
         }
     }
 
+    /** @return array{state: 'closed'|'open', failures: int, opened_at: int|null} */
+    public function circuitState(): array
+    {
+        return [
+            'state' => $this->isCircuitOpen() ? 'open' : 'closed',
+            'failures' => $this->circuitFailures,
+            'opened_at' => $this->circuitOpenedAt,
+        ];
+    }
+
+    public function resetCircuit(): void
+    {
+        $this->circuitFailures = 0;
+        $this->circuitOpenedAt = null;
+    }
+
+    private function isCircuitOpen(): bool
+    {
+        if ($this->circuitOpenedAt === null) {
+            return false;
+        }
+        if (time() - $this->circuitOpenedAt >= $this->circuitRecoverySeconds) {
+            $this->resetCircuit();
+            return false;
+        }
+        return true;
+    }
+
+    private function assertCircuitClosed(string $key): void
+    {
+        if ($this->isCircuitOpen()) {
+            throw new CacheException('Redis circuit breaker is open.', $key);
+        }
+    }
+
+    private function recordCircuitSuccess(): void
+    {
+        $this->circuitFailures = 0;
+    }
+
+    private function recordCircuitFailure(): void
+    {
+        ++$this->circuitFailures;
+        if ($this->circuitFailures >= $this->circuitFailureThreshold) {
+            $this->circuitOpenedAt = time();
+        }
+    }
+
     /**
      * @param array<int, string> $keys
      * @return array<string, mixed>
@@ -325,16 +395,21 @@ class RedisCache implements CacheInterface
     public function get(string $key): mixed
     {
         try {
+            $this->assertCircuitClosed($key);
             $value = $this->redis->get($this->prefixKey($key));
 
             if ($value === false) {
+                $this->recordCircuitSuccess();
                 return null;
             }
 
-            return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            $this->recordCircuitSuccess();
+            return $decoded;
         } catch (JsonException $e) {
             throw new CacheException("Failed to decode cached value", $key, $e);
         } catch (RedisException $e) {
+            $this->recordCircuitFailure();
             throw new CacheException("Redis error getting key", $key, $e);
         }
     }

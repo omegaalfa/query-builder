@@ -1172,6 +1172,21 @@ if (!$cache->ping()) {
 
 Falhas de conexão retornam `available: false` e não lançam exceção nesses métodos.
 
+O Redis também possui circuit breaker em memória. Por padrão, três falhas consecutivas abrem o circuito por 30 segundos, evitando novas chamadas enquanto o serviço está indisponível:
+
+```php
+$cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
+    host: '127.0.0.1',
+    circuitFailureThreshold: 3,
+    circuitRecoverySeconds: 30,
+);
+
+$state = $cache->circuitState();
+$cache->resetCircuit();
+```
+
+Quando o circuito está aberto, a aplicação pode usar um fallback sem cache e tentar novamente após a janela de recuperação.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php
