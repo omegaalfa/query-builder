@@ -1135,6 +1135,20 @@ $value = $cache->remember('dashboard:summary', 300, static function (): array {
 
 A liberação do lock é feita por um script Lua atômico que compara o token do proprietário antes de remover a chave. Assim, um processo atrasado não remove o lock que já foi assumido por outro processo.
 
+Para reduzir a latência depois da expiração, use `rememberStale()`. O primeiro TTL define a janela fresca; o segundo define por quanto tempo o valor antigo pode ser servido enquanto um processo protegido por lock atualiza o cache:
+
+```php
+$summary = $cache->rememberStale(
+    'dashboard:summary',
+    ttl: 300,
+    staleTtl: 60,
+    resolver: static fn (): array => $repository->loadSummary(),
+    tags: ['dashboard'],
+);
+```
+
+Se outro processo já estiver atualizando o valor stale, o valor antigo é retornado sem duplicar o trabalho.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php

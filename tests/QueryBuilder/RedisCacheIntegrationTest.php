@@ -107,6 +107,39 @@ final class RedisCacheIntegrationTest extends TestCase
         self::assertNull($this->cache->get('item'));
     }
 
+    public function testRememberStaleReturnsFreshValueWithoutResolvingAgain(): void
+    {
+        $calls = 0;
+        $resolver = function () use (&$calls): string {
+            ++$calls;
+            return 'fresh';
+        };
+
+        self::assertSame('fresh', $this->cache->rememberStale('swr', 30, 30, $resolver));
+        self::assertSame('fresh', $this->cache->rememberStale('swr', 30, 30, $resolver));
+        self::assertSame(1, $calls);
+    }
+
+    public function testRememberStaleRefreshesAfterFreshWindow(): void
+    {
+        $calls = 0;
+        $resolver = function () use (&$calls): string {
+            ++$calls;
+            return 'value-' . $calls;
+        };
+
+        self::assertSame('value-1', $this->cache->rememberStale('swr', 1, 3, $resolver));
+        sleep(2);
+        self::assertSame('value-2', $this->cache->rememberStale('swr', 1, 3, $resolver));
+        self::assertSame(2, $calls);
+    }
+
+    public function testRememberStaleRejectsInvalidWindows(): void
+    {
+        $this->expectException(CacheException::class);
+        $this->cache->rememberStale('swr', 0, 30, static fn(): string => 'value');
+    }
+
     public function testExpirationRemovesValueFromRedis(): void
     {
         $this->cache->set('short-lived', 'value', 1);

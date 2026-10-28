@@ -344,6 +344,83 @@ class RedisCache implements CacheInterface
         }
     }
 
+    /**
+     * Recupera um valor com stale-while-revalidate protegido por lock Redis.
+     *
+     * @param Closure(): mixed $resolver
+     * @param array<int, string> $tags
+     */
+    public function rememberStale(
+        string $key,
+        int $ttl,
+        int $staleTtl,
+        Closure $resolver,
+        array $tags = [],
+    ): mixed {
+        if ($ttl <= 0 || $staleTtl <= 0) {
+            throw new CacheException('Redis stale cache TTLs must be greater than zero.', $key);
+        }
+
+        $cached = $this->get($key);
+        $now = time();
+        if (is_array($cached)
+            && array_key_exists('value', $cached)
+            && is_int($cached['expires_at'] ?? null)
+            && is_int($cached['stale_until'] ?? null)
+        ) {
+            if ($now < $cached['expires_at']) {
+                return $cached['value'];
+            }
+            if ($now < $cached['stale_until']) {
+                $lockKey = $this->prefixKey($key . ':swr-lock');
+                $token = bin2hex(random_bytes(16));
+                try {
+                    if (!$this->redis->set($lockKey, $token, ['nx', 'ex' => min($staleTtl, 30)])) {
+                        return $cached['value'];
+                    }
+
+                    $value = $resolver();
+                    $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
+                    return $value;
+                } finally {
+                    $this->releaseLock($lockKey, $token);
+                }
+            }
+        }
+
+        $lockKey = $this->prefixKey($key . ':swr-lock');
+        $token = bin2hex(random_bytes(16));
+        try {
+            if (!$this->redis->set($lockKey, $token, ['nx', 'ex' => min($ttl, 30)])) {
+                $value = $this->get($key);
+                if (is_array($value) && array_key_exists('value', $value)) {
+                    return $value['value'];
+                }
+            }
+
+            $value = $resolver();
+            $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
+            return $value;
+        } finally {
+            $this->releaseLock($lockKey, $token);
+        }
+    }
+
+    /** @param array<int, string> $tags */
+    private function setStaleValue(string $key, mixed $value, int $ttl, int $staleTtl, array $tags): void
+    {
+        $this->set(
+            $key,
+            [
+                'value' => $value,
+                'expires_at' => time() + $ttl,
+                'stale_until' => time() + $ttl + $staleTtl,
+            ],
+            $ttl + $staleTtl,
+            $tags,
+        );
+    }
+
     private function releaseLock(string $lockKey, string $token): void
     {
         try {
