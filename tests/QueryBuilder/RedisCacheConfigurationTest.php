@@ -33,13 +33,9 @@ final class RedisCacheConfigurationTest extends TestCase
     public function testGetMultiplePreservesFalseZeroAndEmptyStringValues(): void
     {
         $redis = $this->redisMock();
-        $redis->expects(self::exactly(3))
-            ->method('get')
-            ->willReturnOnConsecutiveCalls(
-                json_encode(false),
-                json_encode(0),
-                json_encode(''),
-            );
+        $redis->expects(self::once())->method('mGet')
+            ->with(['test:false', 'test:zero', 'test:empty'])
+            ->willReturn([json_encode(false), json_encode(0), json_encode('')]);
         $cache = $this->cacheWithRedis($redis);
 
         self::assertSame(
@@ -51,12 +47,45 @@ final class RedisCacheConfigurationTest extends TestCase
     public function testGetMultipleOmitsMissingValuesOnly(): void
     {
         $redis = $this->redisMock();
-        $redis->expects(self::exactly(2))
-            ->method('get')
-            ->willReturnOnConsecutiveCalls(false, json_encode(['id' => 1]));
+        $redis->expects(self::once())->method('mGet')
+            ->with(['test:missing', 'test:present'])
+            ->willReturn([false, json_encode(['id' => 1])]);
         $cache = $this->cacheWithRedis($redis);
 
         self::assertSame(['present' => ['id' => 1]], $cache->getMultiple(['missing', 'present']));
+    }
+
+    public function testGetMultipleReturnsEmptyArrayWithoutCallingRedis(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::never())->method('mGet');
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertSame([], $cache->getMultiple([]));
+    }
+
+    public function testGetMultipleWrapsRedisFailures(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())
+            ->method('mGet')
+            ->willThrowException(new RedisException('connection lost'));
+        $cache = $this->cacheWithRedis($redis);
+
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessage('Redis error getting multiple keys');
+        $cache->getMultiple(['item']);
+    }
+
+    public function testGetMultipleWrapsInvalidJson(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('mGet')->willReturn(['not-json']);
+        $cache = $this->cacheWithRedis($redis);
+
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessage('Failed to decode cached value');
+        $cache->getMultiple(['item']);
     }
 
     public function testSetUsesPrefixedKeyJsonAndTtl(): void

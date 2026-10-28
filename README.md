@@ -1123,7 +1123,7 @@ $cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
 );
 ```
 
-`getMultiple()` preserva valores válidos como `false`, `0` e `''`; somente chaves ausentes são omitidas. Erros de conexão, serialização e limpeza são convertidos em `CacheException`.
+`getMultiple()` usa uma única operação `mGet()` para reduzir round-trips ao Redis, preserva valores válidos como `false`, `0` e `''` e omite somente chaves ausentes. Erros de conexão, serialização e limpeza são convertidos em `CacheException`.
              ->execute();
 ```
 

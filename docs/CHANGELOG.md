@@ -21,6 +21,7 @@
 - `DatabaseFactory::create()` recebe `DatabaseSettings` explicitamente.
 - `RedisCache::getMultiple()` agora preserva valores falsos, zero e strings vazias; apenas chaves ausentes são omitidas.
 - `RedisCache::clear()` converte falhas do Redis em `CacheException`.
+- `RedisCache::getMultiple()` passou a usar `mGet()` em uma única operação, reduzindo round-trips sem alterar o tratamento de valores válidos.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações

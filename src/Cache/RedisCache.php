@@ -159,12 +159,30 @@ class RedisCache implements CacheInterface
     public function getMultiple(array $keys): array
     {
         $result = [];
-        foreach ($keys as $key) {
-            $value = $this->get($key);
-            if ($value !== null) {
-                $result[$key] = $value;
-            }
+        if ($keys === []) {
+            return $result;
         }
+
+        try {
+            $prefixedKeys = array_map(fn(string $key): string => $this->prefixKey($key), $keys);
+            $values = $this->redis->mGet($prefixedKeys);
+
+            foreach ($keys as $index => $key) {
+                $encoded = $values[$index] ?? false;
+                if ($encoded === false) {
+                    continue;
+                }
+
+                try {
+                    $result[$key] = json_decode($encoded, true, 512, JSON_THROW_ON_ERROR);
+                } catch (JsonException $e) {
+                    throw new CacheException('Failed to decode cached value', $key, $e);
+                }
+            }
+        } catch (RedisException $e) {
+            throw new CacheException('Redis error getting multiple keys', implode(',', $keys), $e);
+        }
+
         return $result;
     }
 
