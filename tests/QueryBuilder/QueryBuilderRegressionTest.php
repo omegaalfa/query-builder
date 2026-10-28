@@ -45,6 +45,15 @@ final class QueryBuilderRegressionTest extends TestCase
         );
     }
 
+    public function testWhereAcceptsEnumCaseNamesAsOperators(): void
+    {
+        $builder = new QueryBuilderOperations();
+
+        $builder->select('users')->where('status', 'EQUALS', 1);
+
+        self::assertStringContainsString('`status` = :param0', $builder->getQuerySql());
+    }
+
     public function testRawPositionalAndNamedParametersAreNormalized(): void
     {
         $builder = new QueryBuilderOperations();

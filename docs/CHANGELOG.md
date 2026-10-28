@@ -19,6 +19,7 @@
 - Agregadores executam uma cópia do builder e não alteram a query original.
 - `QueryBuilderInterface` e `ConnectionInterface` foram alinhadas com as implementações.
 - `DatabaseFactory::create()` recebe `DatabaseSettings` explicitamente.
+- Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
 

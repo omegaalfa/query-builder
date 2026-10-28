@@ -59,8 +59,19 @@ trait HelperQueryOperationsTrait
     protected function normalizeAndValidateOperator(SqlOperator|string $operator): SqlOperator
     {
         if (is_string($operator)) {
-            $operator = SqlOperator::tryFrom(strtoupper($operator))
-                ?? throw new QueryException("Invalid SQL operator: $operator");
+            $normalizedOperator = strtoupper(trim($operator));
+            $operator = SqlOperator::tryFrom($normalizedOperator);
+
+            if ($operator === null) {
+                foreach (SqlOperator::cases() as $candidate) {
+                    if ($candidate->name === $normalizedOperator) {
+                        $operator = $candidate;
+                        break;
+                    }
+                }
+            }
+
+            $operator ??= throw new QueryException("Invalid SQL operator: $operator");
         }
 
         if (!in_array($operator, self::SUPPORTED_OPERATORS, true)) {
