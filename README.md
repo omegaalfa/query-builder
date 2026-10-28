@@ -1198,6 +1198,19 @@ $cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
 
 O modo padrão é `failOpen: false`, preservando o comportamento fail-closed e propagando `CacheException` para que a aplicação decida o fallback explicitamente. Com `failOpen: true`, `remember()` devolve o valor resolvido mesmo quando a gravação falha, e `getMultiple()` devolve uma lista vazia em falhas de infraestrutura. Essas ocorrências são contabilizadas em `fallbacks`.
 
+Falhas transitórias podem ser repetidas automaticamente com backoff exponencial:
+
+```php
+$cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
+    host: '127.0.0.1',
+    retryAttempts: 2,
+    retryDelayMs: 50,
+    retryBackoffMultiplier: 2.0,
+);
+```
+
+As tentativas realizadas aparecem na métrica `retries`.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php

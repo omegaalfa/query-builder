@@ -296,6 +296,30 @@ final class RedisCacheConfigurationTest extends TestCase
         self::assertSame(1, $cache->getStats()['fallbacks']);
     }
 
+    public function testRedisReadRetriesWithBackoffAndEventuallySucceeds(): void
+    {
+        $redis = $this->redisMock();
+        $calls = 0;
+        $redis->expects(self::exactly(2))->method('get')
+            ->willReturnCallback(function () use (&$calls): string|false {
+                ++$calls;
+                if ($calls === 1) {
+                    throw new RedisException('temporary failure');
+                }
+                return '"ready"';
+            });
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertSame('ready', $cache->get('item'));
+        self::assertSame(1, $cache->getStats()['retries']);
+    }
+
+    public function testRetryAttemptsAreValidated(): void
+    {
+        $this->expectException(CacheException::class);
+        new RedisCache('127.0.0.1', retryAttempts: -1);
+    }
+
     public function testSetUsesPrefixedKeyJsonAndTtl(): void
     {
         $redis = $this->redisMock();
@@ -349,6 +373,9 @@ final class RedisCacheConfigurationTest extends TestCase
         $reflection->getProperty('circuitFailureThreshold')->setValue($cache, 3);
         $reflection->getProperty('circuitRecoverySeconds')->setValue($cache, 30);
         $reflection->getProperty('failOpen')->setValue($cache, $failOpen);
+        $reflection->getProperty('retryAttempts')->setValue($cache, 2);
+        $reflection->getProperty('retryDelayMs')->setValue($cache, 0);
+        $reflection->getProperty('retryBackoffMultiplier')->setValue($cache, 2.0);
 
         return $cache;
     }

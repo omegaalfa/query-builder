@@ -24,6 +24,7 @@ class RedisCache implements CacheInterface
         'refreshes' => 0,
         'lock_contention' => 0,
         'fallbacks' => 0,
+        'retries' => 0,
     ];
 
     private int $circuitFailures = 0;
@@ -35,6 +36,12 @@ class RedisCache implements CacheInterface
     private readonly int $circuitRecoverySeconds;
 
     private readonly bool $failOpen;
+
+    private readonly int $retryAttempts;
+
+    private readonly int $retryDelayMs;
+
+    private readonly float $retryBackoffMultiplier;
 
     private const int LOCK_WAIT_ATTEMPTS = 5;
 
@@ -75,6 +82,9 @@ class RedisCache implements CacheInterface
         int $circuitFailureThreshold = 3,
         int $circuitRecoverySeconds = 30,
         bool $failOpen = false,
+        int $retryAttempts = 2,
+        int $retryDelayMs = 50,
+        float $retryBackoffMultiplier = 2.0,
     ) {
         if ($port < 1 || $port > 65535) {
             throw new CacheException('Redis port must be between 1 and 65535.');
@@ -88,12 +98,18 @@ class RedisCache implements CacheInterface
         if ($circuitFailureThreshold < 1 || $circuitRecoverySeconds < 1) {
             throw new CacheException('Redis circuit breaker settings must be greater than zero.');
         }
+        if ($retryAttempts < 0 || $retryDelayMs < 0 || $retryBackoffMultiplier < 1.0) {
+            throw new CacheException('Redis retry settings are invalid.');
+        }
 
         $this->redis = new Redis();
         $this->prefix = $prefix;
         $this->circuitFailureThreshold = $circuitFailureThreshold;
         $this->circuitRecoverySeconds = $circuitRecoverySeconds;
         $this->failOpen = $failOpen;
+        $this->retryAttempts = $retryAttempts;
+        $this->retryDelayMs = $retryDelayMs;
+        $this->retryBackoffMultiplier = $retryBackoffMultiplier;
         try {
             if (!$this->redis->connect($host, $port, $timeout)) {
                 throw new CacheException("Cannot connect to Redis at {$host}:{$port}.");
@@ -118,7 +134,9 @@ class RedisCache implements CacheInterface
     {
         try {
             $this->assertCircuitClosed($key);
-            $result = $this->redis->exists($this->prefixKey($key)) > 0;
+            $result = $this->withRetry(
+                fn(): bool => $this->redis->exists($this->prefixKey($key)) > 0
+            );
             $this->recordCircuitSuccess();
             return $result;
         } catch (RedisException $e) {
@@ -182,7 +200,10 @@ class RedisCache implements CacheInterface
             $this->assertCircuitClosed($key);
             $encoded = json_encode($value, JSON_THROW_ON_ERROR);
 
-            if (!$this->redis->setex($this->prefixKey($key), $ttl, $encoded)) {
+            $stored = $this->withRetry(
+                fn(): bool => $this->redis->setex($this->prefixKey($key), $ttl, $encoded)
+            );
+            if (!$stored) {
                 throw new CacheException("Failed to set cache value", $key);
             }
 
@@ -278,7 +299,7 @@ class RedisCache implements CacheInterface
     {
         $startedAt = microtime(true);
         try {
-            $available = $this->redis->ping() !== false;
+            $available = $this->withRetry(fn(): bool => $this->redis->ping() !== false);
             return [
                 'available' => $available,
                 'latency_ms' => round((microtime(true) - $startedAt) * 1_000, 3),
@@ -358,6 +379,25 @@ class RedisCache implements CacheInterface
         }
     }
 
+    private function withRetry(Closure $operation): mixed
+    {
+        $delayMs = $this->retryDelayMs;
+        for ($attempt = 0; ; ++$attempt) {
+            try {
+                return $operation();
+            } catch (RedisException $e) {
+                if ($attempt >= $this->retryAttempts) {
+                    throw $e;
+                }
+                ++$this->stats['retries'];
+                if ($delayMs > 0) {
+                    usleep($delayMs * 1_000);
+                }
+                $delayMs = (int)ceil($delayMs * $this->retryBackoffMultiplier);
+            }
+        }
+    }
+
     /**
      * @param array<int, string> $keys
      * @return array<string, mixed>
@@ -371,7 +411,7 @@ class RedisCache implements CacheInterface
 
         try {
             $prefixedKeys = array_map(fn(string $key): string => $this->prefixKey($key), $keys);
-            $values = $this->redis->mGet($prefixedKeys);
+            $values = $this->withRetry(fn(): array => $this->redis->mGet($prefixedKeys));
 
             foreach ($keys as $index => $key) {
                 $encoded = $values[$index] ?? false;
@@ -405,7 +445,7 @@ class RedisCache implements CacheInterface
     {
         try {
             $this->assertCircuitClosed($key);
-            $value = $this->redis->get($this->prefixKey($key));
+            $value = $this->withRetry(fn(): string|false => $this->redis->get($this->prefixKey($key)));
 
             if ($value === false) {
                 $this->recordCircuitSuccess();

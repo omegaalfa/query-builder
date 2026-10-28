@@ -32,6 +32,7 @@
 - Adicionado circuit breaker configurável ao `RedisCache`, com limiar de falhas, janela de recuperação, `circuitState()` e `resetCircuit()`.
 - Adicionado modo opcional `failOpen` para `remember()` e `rememberStale()`, permitindo fallback pelo resolver quando o Redis está indisponível.
 - O modo `failOpen` agora também cobre falhas de gravação do `remember()` e falhas de leitura do `getMultiple()`, contabilizadas na métrica `fallbacks`.
+- Adicionado retry configurável com backoff exponencial para operações Redis, contabilizado na métrica `retries`.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -71,6 +72,7 @@
 - Adicionados testes de abertura, bloqueio e reset do circuit breaker.
 - Adicionados testes para fallback `failOpen` e preservação do comportamento `failClosed`.
 - Adicionados testes para fallback após falha de gravação e leitura em lote.
+- Adicionados testes para retry bem-sucedido e validação da configuração de tentativas.
 - Adicionado teste de normalização de tags do `QueryBuilder`.
 
 ### Migração

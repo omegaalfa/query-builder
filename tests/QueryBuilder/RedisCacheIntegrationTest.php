@@ -158,6 +158,7 @@ final class RedisCacheIntegrationTest extends TestCase
                 'refreshes' => 0,
                 'lock_contention' => 0,
                 'fallbacks' => 0,
+                'retries' => 0,
             ],
             $this->cache->getStats(),
         );
