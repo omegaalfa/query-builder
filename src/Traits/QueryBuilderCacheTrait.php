@@ -14,8 +14,8 @@ use Throwable;
 /**
  * Trait QueryBuilderCacheTrait
  *
- * @property array $sql
- * @property array $params
+ * @property array<int, mixed> $sql
+ * @property array<string, mixed> $params
  * @property CacheInterface|null $cache
  * @property string|null $table
  * @property string|null $driver
@@ -59,9 +59,7 @@ trait QueryBuilderCacheTrait
 
         try {
             $this->cacheKey ??= $this->generateCacheKey();
-            $data = is_iterable($result->data)
-                ? iterator_to_array($result->data, false)
-                : $result->data;
+            $data = iterator_to_array($result->data, false);
 
             $this->cache->set(
                 $this->cacheKey,
@@ -95,11 +93,7 @@ trait QueryBuilderCacheTrait
         );
 
         // Evita colis�o entre tenants / conex�es
-        $contextHash = (
-            property_exists($this, 'connection') &&
-            $this->connection !== null &&
-            method_exists($this->connection, 'getDbSettings')
-        )
+        $contextHash = method_exists($this->connection, 'getDbSettings')
             ? hash(
                 'xxh128',
                 json_encode(
@@ -107,13 +101,13 @@ trait QueryBuilderCacheTrait
                     JSON_THROW_ON_ERROR
                 )
             )
-            : ($this->driver ?? 'default');
+            : $this->driver;
 
         return implode(':', [
             $this->cachePrefix,
             $this->table ?? 'raw',
             $contextHash,
-            ($this->paginationRequested ?? false) ? 'paginate' : 'limit',
+            $this->paginationRequested ? 'paginate' : 'limit',
             $sqlHash,
             $paramsHash,
         ]);

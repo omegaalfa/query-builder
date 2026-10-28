@@ -39,8 +39,8 @@ final class QueryBuilderOperationsTest extends TestCase
     {
         $sql = $this->qb->insert('doenca', ['nome' => 'A', 'status' => 1])->getQuerySql();
         $this->assertStringContainsString('INSERT INTO `doenca`', $sql);
-        $this->assertStringContainsString('(nome, status)', $sql);
-        $this->assertStringContainsString('VALUES (:nome, :status)', $sql);
+        $this->assertStringContainsString('(`nome`, `status`)', $sql);
+        $this->assertStringContainsString('VALUES (:param0, :param1)', $sql);
     }
 
     // ---------------------------------------------------------------------
@@ -50,7 +50,7 @@ final class QueryBuilderOperationsTest extends TestCase
     public function testUpdateGeneratesExpectedSQL(): void
     {
         $sql = $this->qb->update('doenca', ['nome' => 'X'])->getQuerySql();
-        $this->assertSame('UPDATE `doenca` SET `nome` = :nome', $sql);
+        $this->assertSame('UPDATE `doenca` SET `nome` = :param0', $sql);
     }
 
     public function testDeleteGeneratesExpectedSQL(): void
@@ -88,25 +88,25 @@ final class QueryBuilderOperationsTest extends TestCase
     public function testWhereIn(): void
     {
         $sql = $this->qb->select('doenca')->whereIn('status', [1, 2])->getQuerySql();
-        $this->assertStringContainsString('`status` IN (:status_in_0, :status_in_1)', $sql);
+        $this->assertStringContainsString('`status` IN (:param0, :param1)', $sql);
     }
 
     public function testWhereNotIn(): void
     {
         $sql = $this->qb->select('doenca')->whereNotIn('status', [1, 2])->getQuerySql();
-        $this->assertStringContainsString('`status` NOT IN (:status_notin_0, :status_notin_1)', $sql);
+        $this->assertStringContainsString('`status` NOT IN (:param0, :param1)', $sql);
     }
 
     public function testWhereBetween(): void
     {
         $sql = $this->qb->select('doenca')->whereBetween('idDoenca', [1, 10])->getQuerySql();
-        $this->assertStringContainsString('`idDoenca` BETWEEN :idDoenca_bt1 AND :idDoenca_bt2', $sql);
+        $this->assertStringContainsString('`idDoenca` BETWEEN :param0 AND :param1', $sql);
     }
 
     public function testWhereNotBetween(): void
     {
         $sql = $this->qb->select('doenca')->whereNotBetween('idDoenca', [1, 10])->getQuerySql();
-        $this->assertStringContainsString('`idDoenca` NOT BETWEEN :idDoenca_nbt1 AND :idDoenca_nbt2', $sql);
+        $this->assertStringContainsString('`idDoenca` NOT BETWEEN :param0 AND :param1', $sql);
     }
 
     public function testWhereNullAndNotNull(): void
@@ -175,7 +175,6 @@ final class QueryBuilderOperationsTest extends TestCase
         // Usa Reflection para obter o driver configurado
         $driverProperty = (new ReflectionClass($qb))
             ->getProperty('driver');
-        $driverProperty->setAccessible(true);
         $driver = $driverProperty->getValue($qb);
 
         // Testa APENAS se o driver for MySQL ou MariaDB (os incompatíveis)
@@ -211,7 +210,7 @@ final class QueryBuilderOperationsTest extends TestCase
             ->getQuerySql();
 
         $this->assertStringContainsString('GROUP BY `status`', $sql);
-        $this->assertStringContainsString('HAVING `status` > :having0', $sql);
+        $this->assertStringContainsString('HAVING `status` > :param0', $sql);
     }
 
     public function testHavingRequiresGroupBy(): void
@@ -245,14 +244,13 @@ final class QueryBuilderOperationsTest extends TestCase
     {
         $sql = $this->qb->raw('SELECT * FROM doenca WHERE status = ?', [1])->getQuerySql();
         // Agora, esperamos o placeholder nomeado que você criou:
-        $this->assertSame('SELECT * FROM doenca WHERE status = :raw_param0', $sql);
+        $this->assertSame('SELECT * FROM doenca WHERE status = :param0', $sql);
     }
 
     public function testQuoteIdentifierEscapesProperly(): void
     {
         $reflection = new ReflectionClass($this->qb);
         $method = $reflection->getMethod('quoteIdentifier');
-        $method->setAccessible(true);
 
         $result = $method->invoke($this->qb, 'tabela.coluna');
         $this->assertSame('`tabela`.`coluna`', $result);

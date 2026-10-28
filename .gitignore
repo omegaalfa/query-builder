@@ -52,6 +52,10 @@ coverage/
 # Arquivos de IDE para PHPStan/Psalm
 /.phpstan/
 /.psalm/
+/.php-cs-fixer.cache
+/.infection/
+infection.log
+infection-summary.log
 
 # Arquivos de lock de outros gerenciadores (se houver)
 ./composer.lock

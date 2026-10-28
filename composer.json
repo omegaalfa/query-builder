@@ -23,11 +23,9 @@
     }
   ],
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.3",
     "ext-pdo": "*",
-    "ext-ctype": "*",
-    "ext-redis": "*",
-    "illuminate/database": "^12.37"
+    "ext-ctype": "*"
   },
   "autoload": {
     "psr-4": {
@@ -40,7 +38,14 @@
     }
   },
   "scripts": {
-    "test": "phpunit",
+    "test": "phpunit --no-coverage",
+    "quality:stan": "phpstan analyse --configuration=phpstan.neon",
+    "quality:cs": "php-cs-fixer fix --dry-run --diff --allow-risky=yes --config=.php-cs-fixer.php",
+    "quality:mutation": "infection --configuration=infection.json5 --test-framework=phpunit --min-msi=50",
+    "quality": [
+      "@quality:stan",
+      "@quality:cs"
+    ],
     "benchmark:compare": "php -d xdebug.mode=off benchmarks/compare-doctrine.php",
     "benchmark:pgvector": "php -d xdebug.mode=off benchmarks/pgvector.php",
     "benchmark:pgvector-overhead": "php -d xdebug.mode=off benchmarks/pgvector-overhead.php",
@@ -49,8 +54,20 @@
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "infection/extension-installer": true
+    }
+  },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.75",
+    "infection/infection": "^0.29",
+    "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^12.5.8",
-    "doctrine/dbal": "^4.4"
+    "doctrine/dbal": "^4.4",
+    "illuminate/database": "^12.37"
+  },
+  "suggest": {
+    "ext-redis": "Required only when using RedisCache"
   }
 }

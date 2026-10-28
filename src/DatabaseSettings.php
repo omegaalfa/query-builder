@@ -18,7 +18,7 @@ final class DatabaseSettings
      * @param int $port
      * @param string $username
      * @param string $password
-     * @param array $options
+     * @param array<int|string, mixed> $options
      * @param string $charset
      * @param string $collation
      * @param string|null $prefix
@@ -46,6 +46,7 @@ final class DatabaseSettings
                 'mysql' => 'utf8mb4',
                 'pgsql' => 'UTF8',
                 'sqlite' => '',
+                default => throw new InvalidArgumentException("Unsupported database driver: {$this->driver}"),
             };
         $this->validate();
     }

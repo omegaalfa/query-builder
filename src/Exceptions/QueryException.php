@@ -16,7 +16,7 @@ class QueryException extends Exception
 	private ?string $sql;
 
 	/**
-	 * @var array
+     * @var array<string, mixed>
 	 */
 	private array $bindings;
 
@@ -29,9 +29,11 @@ class QueryException extends Exception
 	 * @param  int             $code               Código da exceção.
 	 * @param  Throwable|null  $previousException  Exceção anterior encadeada, se houver.
 	 */
+	/** @param array<string, mixed> $bindings */
 	public function __construct(
 		string $message,
 		?string $sql = null,
+		/** @var array<string, mixed> $bindings */
 		array $bindings = [],
 		int $code = 0,
 		?Throwable $previousException = null
@@ -54,7 +56,7 @@ class QueryException extends Exception
 	/**
 	 * Retorna os parâmetros usados na consulta.
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public function getBindings(): array
 	{

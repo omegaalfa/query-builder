@@ -18,7 +18,7 @@ interface ConnectionInterface
     /**
      * @return PDO
      */
-    public function pdo() : PDO;
+    public function pdo(bool $bufferedQuery = true): PDO;
 
     /**
      * @return void

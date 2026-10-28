@@ -76,9 +76,9 @@ final readonly class Vector implements DatabaseValueInterface
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function sqlType(): ?string
+    public function sqlType(): string
     {
         return 'vector';
     }

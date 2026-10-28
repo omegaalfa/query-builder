@@ -7,6 +7,39 @@ on:
   pull_request:
 
 jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    name: Mutation testing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup PHP with PCOV
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: pcov
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: Run Infection
+        run: composer quality:mutation
+
+  quality:
+    runs-on: ubuntu-latest
+    name: Quality checks
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: Run PHPStan and PHP-CS-Fixer
+        run: composer quality
+
   tests:
     runs-on: ubuntu-latest
     strategy:

@@ -57,8 +57,8 @@ final class PgVectorTest extends TestCase
             ->getQuerySql();
 
         self::assertSame(
-            'SELECT "id", "embedding" <=> CAST(:expr0 AS vector) AS "distance" '
-            . 'FROM "documents" ORDER BY "embedding" <=> CAST(:expr1 AS vector) ASC LIMIT 10 OFFSET 0',
+            'SELECT "id", "embedding" <=> CAST(:param0 AS vector) AS "distance" '
+            . 'FROM "documents" ORDER BY "embedding" <=> CAST(:param1 AS vector) ASC LIMIT 10 OFFSET 0',
             $sql,
         );
         self::assertSame(2, $this->parameterCount($builder));
@@ -74,9 +74,9 @@ final class PgVectorTest extends TestCase
             ->limit(5)
             ->getQuerySql();
 
-        self::assertStringContainsString($metric->value . ' CAST(:expr0 AS vector)', $sql);
+        self::assertStringContainsString($metric->value . ' CAST(:param0 AS vector)', $sql);
         self::assertStringContainsString('AS "distance"', $sql);
-        self::assertStringContainsString('ORDER BY "embedding" ' . $metric->value . ' CAST(:expr1 AS vector) ASC', $sql);
+        self::assertStringContainsString('ORDER BY "embedding" ' . $metric->value . ' CAST(:param1 AS vector) ASC', $sql);
         self::assertStringContainsString('WHERE "tenant_id" = :param2', $sql);
     }
 
@@ -91,11 +91,11 @@ final class PgVectorTest extends TestCase
     {
         $builder = $this->postgresBuilder();
         self::assertSame(
-            'INSERT INTO "documents" (embedding) VALUES (CAST(:embedding AS vector))',
+            'INSERT INTO "documents" ("embedding") VALUES (CAST(:param0 AS vector))',
             $builder->insert('documents', ['embedding' => new Vector([1, 2, 3])])->getQuerySql(),
         );
         self::assertSame(
-            'UPDATE "documents" SET "embedding" = CAST(:embedding AS vector)',
+            'UPDATE "documents" SET "embedding" = CAST(:param0 AS vector)',
             $builder->update('documents', ['embedding' => new Vector([3, 2, 1])])->getQuerySql(),
         );
     }

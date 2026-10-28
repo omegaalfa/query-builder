@@ -11,6 +11,7 @@ use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
 use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 
 /**
  * ═══════════════════════════════════════════════════════════════════════
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  * 4. Testar edge cases e caracteres especiais
  * ═══════════════════════════════════════════════════════════════════════
  */
+#[AllowMockObjectsWithoutExpectations]
 final class QueryBuilderToSqlSecurityTest extends TestCase
 {
     private QueryBuilder $qb;
@@ -70,9 +72,9 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'\\' OR 1=1 --'", $sqlDebug,
             "⚠️ toSql(true) deve escapar aspas simples com addslashes()");
         
-        echo "\n✅ PROTEÇÃO ATIVA: SQL Injection OR 1=1 bloqueado\n";
-        echo "   SQL Seguro:  {$sqlSafe}\n";
-        echo "   SQL Debug:   {$sqlDebug}\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -97,8 +99,8 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertMatchesRegularExpression("/'.*UNION SELECT.*'/", $sqlDebug,
             "UNION SELECT deve estar dentro de aspas simples");
         
-        echo "\n✅ PROTEÇÃO ATIVA: SQL Injection UNION SELECT bloqueado\n";
-        echo "   SQL Seguro: {$sqlSafe}\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -120,8 +122,8 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'admin\\' --'", $sqlDebug,
             "Aspas e comentários devem ser escapados");
         
-        echo "\n✅ PROTEÇÃO ATIVA: SQL Injection via comentário bloqueado\n";
-        echo "   SQL Debug: {$sqlDebug}\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -144,8 +146,8 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $sqlDebug = $this->qb->toSql(true);
         $this->assertStringContainsString("'\\'; DROP TABLE usuarios; --'", $sqlDebug);
         
-        echo "\n✅ PROTEÇÃO ATIVA: Stacked queries (DROP TABLE) bloqueado\n";
-        echo "   SQL Seguro: {$sqlSafe}\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -167,7 +169,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'0x61646D696E'", $sqlDebug,
             "Hex strings devem ser tratados como strings normais");
         
-        echo "\n✅ PROTEÇÃO ATIVA: Hex encoding tratado como string\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -194,7 +196,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString('Books', $sqlDebug,
             "Conteúdo deve estar presente");
         
-        echo "\n✅ Aspas corretamente escapadas no debug\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -211,7 +213,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("\\\\", $sqlDebug,
             "Backslashes devem ser escapados");
         
-        echo "\n✅ Backslashes escapados corretamente\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -228,7 +230,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString($unicodeInput, $sqlDebug,
             "Unicode deve ser preservado");
         
-        echo "\n✅ Unicode preservado corretamente\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -251,7 +253,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $sqlDebug = $this->qb->toSql(true);
         $this->assertStringContainsString("LIKE '%\\' OR \\'1\\'=\\'1'", $sqlDebug);
         
-        echo "\n✅ LIKE com wildcards maliciosos bloqueado\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -265,14 +267,14 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
            ->whereIn('id', $maliciousArray);
         
         $sqlSafe = $this->qb->toSql();
-        $this->assertMatchesRegularExpression('/:id_in_\d+.*:id_in_\d+.*:id_in_\d+/', $sqlSafe,
+        $this->assertMatchesRegularExpression('/:param\d+.*:param\d+.*:param\d+/', $sqlSafe,
             "IN deve ter placeholders separados para cada valor");
         
         $sqlDebug = $this->qb->toSql(true);
         $this->assertStringContainsString("'3) OR 1=1 --'", $sqlDebug,
             "Valor malicioso no IN deve ser escapado");
         
-        echo "\n✅ IN operator com valores maliciosos bloqueado\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -287,13 +289,13 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         
         $sqlSafe = $this->qb->toSql();
         $this->assertStringContainsString('BETWEEN', $sqlSafe);
-        $this->assertMatchesRegularExpression('/:preco_bt\d+/', $sqlSafe,
+        $this->assertMatchesRegularExpression('/:param\d+/', $sqlSafe,
             "BETWEEN deve ter placeholders");
         
         $sqlDebug = $this->qb->toSql(true);
         $this->assertStringContainsString("'1\\' OR \\'1\\'=\\'1'", $sqlDebug);
         
-        echo "\n✅ BETWEEN com valores maliciosos bloqueado\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -318,8 +320,8 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertMatchesRegularExpression('/`deletado`\s*=\s*0/', $sqlDebug,
             "false deve ser convertido para 0");
         
-        echo "\n✅ Booleanos convertidos corretamente (1/0)\n";
-        echo "   SQL Debug: {$sqlDebug}\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -334,7 +336,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString('= NULL', $sqlDebug,
             "NULL deve aparecer como NULL (não como string)");
         
-        echo "\n✅ NULL tratado corretamente\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -352,7 +354,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertMatchesRegularExpression('/`preco`\s*>\s*99\.99/', $sqlDebug,
             "Floats não devem ter aspas");
         
-        echo "\n✅ Números sem aspas (correto)\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -369,7 +371,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'2024-01-15 10:30:00'", $sqlDebug,
             "DateTime deve ser formatado como string SQL");
         
-        echo "\n✅ DateTime formatado corretamente\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -395,7 +397,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'João\\' OR \\'1\\'=\\'1'", $sqlDebug);
         $this->assertStringContainsString("'admin@test.com\\' --'", $sqlDebug);
         
-        echo "\n✅ Múltiplas condições AND: todas protegidas\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -414,7 +416,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'admin\\' OR \\'1\\'=\\'1'", $sqlDebug);
         $this->assertStringContainsString("DROP TABLE", $sqlDebug);
         
-        echo "\n✅ Condições OR: ambas protegidas\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -432,7 +434,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $sqlDebug = $this->qb->toSql(true);
         $this->assertStringContainsString("''", $sqlDebug);
         
-        echo "\n✅ String vazia tratada corretamente\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -451,7 +453,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $sqlDebug = $this->qb->toSql(true);
         $this->assertStringContainsString("A\\' OR \\'1\\'=\\'1", $sqlDebug);
         
-        echo "\n✅ String longa com injection bloqueada\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -467,7 +469,7 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringContainsString("'123'", $sqlDebug);
         $this->assertStringContainsString("'00456'", $sqlDebug);
         
-        echo "\n✅ Strings numéricas com aspas (correto)\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -491,8 +493,8 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
         $this->assertStringNotContainsString('123', $sql,
             "Valores não devem aparecer diretamente no SQL");
         
-        echo "\n✅ SEGURANÇA VERIFICADA: Placeholders sempre presentes\n";
-        echo "   SQL: {$sql}\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -508,9 +510,9 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
             "1'; UPDATE usuarios SET role='admin' WHERE '1'='1",
         ];
         
-        echo "\n═══════════════════════════════════════════════════════════════════\n";
-        echo "🔒 TESTE FINAL: Verificando proteção contra ataques conhecidos\n";
-        echo "═══════════════════════════════════════════════════════════════════\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
         
         foreach ($attacks as $i => $attack) {
             $this->setUp(); // Reset QueryBuilder
@@ -527,13 +529,13 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
             // SEMPRE deve ter placeholder
             $this->assertStringContainsString(':param', $sql);
             
-            echo "   ✅ Ataque " . ($i + 1) . " BLOQUEADO: {$attack}\n";
-            echo "      SQL gerado: {$sql}\n\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
         }
         
-        echo "═══════════════════════════════════════════════════════════════════\n";
-        echo "🎉 TODOS OS ATAQUES FORAM BLOQUEADOS COM SUCESSO!\n";
-        echo "═══════════════════════════════════════════════════════════════════\n";
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 
     /**
@@ -555,6 +557,6 @@ final class QueryBuilderToSqlSecurityTest extends TestCase
                 "addslashes deve escapar: $input -> $expectedEscaped");
         }
         
-        echo "\n✅ addslashes funcionando corretamente\n";
+        // Diagnostic output omitted; assertions remain authoritative.
     }
 }

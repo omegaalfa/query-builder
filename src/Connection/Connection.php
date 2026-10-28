@@ -17,7 +17,7 @@ use RuntimeException;
 class Connection
 {
     /**
-     * @var array
+     * @var array<string, QueryBuilder>
      */
     private static array $instances = [];
 

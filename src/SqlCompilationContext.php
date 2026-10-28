@@ -10,14 +10,19 @@ use Omegaalfa\QueryBuilder\Interfaces\DatabaseValueInterface;
 
 final class SqlCompilationContext
 {
+    /** @var array<string, mixed> */
+    private array $params;
+
+    private int $counter = 0;
 
     /** @param array<string, mixed> $params */
     public function __construct(
-        private array             &$params,
+        array                  &$params,
         private readonly string   $driver,
         private readonly Closure $identifierQuoter,
     )
     {
+        $this->params =& $params;
     }
 
     /**
@@ -62,8 +67,10 @@ final class SqlCompilationContext
             );
         }
 
-        $placeholder = ':expr' . count($this->params);
-        $this->params[$placeholder] = $value;
+        $placeholder = ':param' . $this->counter++;
+        $params = $this->params;
+        $params[$placeholder] = $value;
+        $this->params = $params;
         return $placeholder;
     }
 }

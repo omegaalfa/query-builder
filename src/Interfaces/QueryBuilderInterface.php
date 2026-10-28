@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder\Interfaces;
 
+use Closure;
 use Omegaalfa\QueryBuilder\Enums\JoinType;
 use Omegaalfa\QueryBuilder\Enums\OrderDirection;
 use Omegaalfa\QueryBuilder\Enums\SqlOperator;
@@ -34,7 +35,11 @@ interface QueryBuilderInterface
      * @param array $fields Lista de colunas a selecionar (default: ['*']).
      * @return $this
      */
+    /** @param array<int, string> $fields */
     public function select(string $table, array $fields = ['*']): self;
+
+    /** @param array<int, string> $expressions */
+    public function selectRaw(string $table, string|array $expressions): self;
 
     /**
      * Inicia uma operação INSERT.
@@ -43,6 +48,7 @@ interface QueryBuilderInterface
      * @param array $data Array associativo coluna => valor.
      * @return $this
      */
+    /** @param array<string, mixed> $data */
     public function insert(string $table, array $data): self;
 
     /**
@@ -52,6 +58,7 @@ interface QueryBuilderInterface
      * @param array $data Array associativo coluna => novo valor.
      * @return $this
      */
+    /** @param array<string, mixed> $data */
     public function update(string $table, array $data): self;
 
     /**
@@ -72,7 +79,7 @@ interface QueryBuilderInterface
      * @param mixed $value Valor de comparação.
      * @return $this
      */
-    public function where(string $column, SqlOperator $operator, mixed $value): self;
+    public function where(string $column, SqlOperator|string $operator, mixed $value): self;
 
     /**
      * Adiciona uma condição WHERE ... IN (...).
@@ -83,6 +90,7 @@ interface QueryBuilderInterface
      * @param array $values Lista de valores.
      * @return $this
      */
+    /** @param array<int, mixed> $values */
     public function whereIn(string $column, array $values): self;
 
     /**
@@ -92,6 +100,7 @@ interface QueryBuilderInterface
      * @param array $values Lista de valores.
      * @return $this
      */
+    /** @param array<int, mixed> $values */
     public function whereNotIn(string $column, array $values): self;
 
     /**
@@ -101,6 +110,7 @@ interface QueryBuilderInterface
      * @param array $range Array com dois valores [min, max].
      * @return $this
      */
+    /** @param array<int, mixed> $range */
     public function whereBetween(string $column, array $range): self;
 
     /**
@@ -110,6 +120,7 @@ interface QueryBuilderInterface
      * @param array $range Array com dois valores [min, max].
      * @return $this
      */
+    /** @param array<int, mixed> $range */
     public function whereNotBetween(string $column, array $range): self;
 
     /**
@@ -210,6 +221,7 @@ interface QueryBuilderInterface
      * @param array $params Parâmetros para binding.
      * @return $this
      */
+    /** @param array<string, mixed> $params */
     public function raw(string $query, array $params = []): self;
 
     /**
@@ -222,7 +234,9 @@ interface QueryBuilderInterface
      * @param mixed $value Valor de comparação.
      * @return $this
      */
-    public function orWhere(string $column, string $operator, mixed $value): self;
+    public function orWhere(string $column, SqlOperator|string $operator, mixed $value): self;
+
+    public function whereGroup(Closure $callback): self;
 
     /**
      * Retorna a string SQL final construída pelo QueryBuilder.
@@ -243,6 +257,7 @@ interface QueryBuilderInterface
      * @return $this
      * @throws QueryException
      */
+    /** @param array<int, array<string, mixed>> $data */
     public function insertBatch(string $table, array $data): self;
 
     public function returnLastInsertId(): self;

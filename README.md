@@ -2,13 +2,13 @@
 
 # 🧩 Omegaalfa Query Builder
 
-![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.4-777BB4?style=for-the-badge&logo=php)
+![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.3-777BB4?style=for-the-badge&logo=php)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-production--ready-success?style=for-the-badge)
 ![PDO](https://img.shields.io/badge/dependency-PDO-blue?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-73%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-156%20passing-brightgreen?style=for-the-badge)
 
-**Query Builder moderno, seguro e tipado para PHP 8.4+**
+**Query Builder moderno, seguro e tipado para PHP 8.3+**
 
 [📦 Instalação](#-instalação) • [🚀 Início Rápido](#-início-rápido) • [📖 Documentação](#-documentação-completa) • [🧪 Testes](#-testes) • [🔒 Segurança](#-segurança)
 
@@ -18,17 +18,17 @@
 
 ## 🚀 Sobre o Projeto
 
-**Omegaalfa Query Builder** é uma biblioteca **moderna, leve e fortemente tipada** em **PHP 8.4+** para construção fluente de queries SQL com PDO.
+**Omegaalfa Query Builder** é uma biblioteca **moderna, leve e fortemente tipada** em **PHP 8.3+** para construção fluente de queries SQL com PDO.
 
 ### 🎯 Principais Características
 
 - 🔒 **100% Prepared Statements** - Segurança contra SQL Injection por design
 - 🎨 **Fluent API** - Interface intuitiva e encadeável
-- 📦 **Zero Dependências** - Apenas PHP 8.4+ e PDO
-- 🧪 **Testado** - 73 testes, 145 assertions
+- 📦 **Runtime enxuto** - PDO e extensões PHP obrigatórias; ferramentas adicionais ficam em `require-dev`
+- 🧪 **Testado** - 157 testes, 346 assertions
 - ⚡ **Performance** - Cache inteligente e streaming de resultados
 - 🔄 **Transações** - Suporte completo com savepoints
-- 🌐 **Multi-driver** - MySQL, PostgreSQL, SQLite, SQL Server
+- 🌐 **Multi-driver** - MySQL, PostgreSQL e SQLite
 - 📝 **Type-Safe** - Enums tipadas e strict_types
 - 📚 **Documentado** - PHPDoc completo em todos os métodos
 
@@ -66,10 +66,10 @@ case-sensitive, a capitalização faz parte do caminho resolvido pelo autoload P
 
 ### Requisitos
 
-- **PHP** >= 8.4 com `strict_types` habilitado
+- **PHP** >= 8.3 com `strict_types` habilitado
 - **Extensão PDO** habilitada
 - **Driver PDO** correspondente ao seu banco de dados
-- **Bancos suportados:** MySQL 5.7+, MariaDB 10.2+, PostgreSQL 9.6+, SQLite 3.x+, SQL Server, Oracle
+- **Bancos suportados:** MySQL 5.7+, MariaDB 10.2+, PostgreSQL 9.6+ e SQLite 3.x+
 
 ---
 
@@ -1451,7 +1451,14 @@ vendor/bin/phpunit --coverage-html coverage/
 vendor/bin/phpunit tests/QueryBuilder/QueryBuilderSecurityTest.php
 ```
 
-PHPStan ainda não está configurado neste projeto; `composer test` é o comando de validação suportado.
+Além dos testes, o projeto possui validações de qualidade:
+
+```bash
+composer quality          # PHPStan nível 6 + PHP-CS-Fixer
+composer quality:stan     # análise estática
+composer quality:cs       # estilo, sem modificar arquivos
+composer quality:mutation # Infection; requer driver de cobertura
+```
 
 ### Suítes de Teste
 
@@ -1464,7 +1471,7 @@ PHPStan ainda não está configurado neste projeto; `composer test` é o comando
 - ✅ `QueryBuilderExecutionTest` - Testes de execução
 - ✅ `QueryBuilderFullTest` - Testes end-to-end
 
-**Status:** 73 testes, 145 assertions, 0 failures
+**Status atual:** 157 testes, 346 assertions, 0 failures. Dez testes são opcionais e podem ser ignorados quando drivers de banco ou serviços externos não estiverem disponíveis.
 
 ---
 
@@ -1480,6 +1487,10 @@ Este Query Builder foi desenvolvido com **segurança por design**:
 ✅ **Validação de operadores** em JOINs  
 ✅ **Enums tipadas** para operadores SQL  
 ✅ **Quote automático** de identificadores (Identifier Injection Protection)
+✅ **Placeholders monotônicos** sem nomes derivados de entrada
+✅ **Quoting de colunas** em `insert()` e `insertBatch()`
+✅ **Transações** com estado interno preservado após falhas de commit/rollback
+✅ **Redação de parâmetros sensíveis** no logger
 ✅ **Isolamento de Cache** por contexto de conexão (Multi-tenant safe)
 
 ### Documentação de Segurança
@@ -1523,7 +1534,7 @@ $qb->select('usuarios', $_GET['fields']);
 - [x] Cache integrado
 - [x] Transações com savepoints
 - [x] Multi-driver
-- [x] 73 testes automatizados
+- [x] 157 testes automatizados
 - [x] Auditoria de segurança
 
 ### 🚧 v1.1 (Planejado)
@@ -1652,6 +1663,75 @@ Se este projeto foi útil:
 </div>
 
 ---
+
+## Atualizações recentes da API
+
+Esta versão também inclui correções de segurança e robustez: colunas de `insert()` são protegidas, valores não usam nomes derivados de entrada, `raw()` normaliza parâmetros físicos, transações preservam o estado quando `commit()` ou `rollBack()` falham, e `toSql(true)` continua restrito a diagnóstico.
+
+### Placeholders seguros
+
+Valores são sempre compilados usando placeholders monotônicos (`:param0`, `:param1`, etc.). Os nomes não dependem de tabelas, colunas ou chaves fornecidas pelo usuário.
+
+### Expressões SQL explícitas
+
+Use `selectRaw()` somente quando a expressão SQL for confiável:
+
+```php
+$query->selectRaw('orders', 'COUNT(*) AS total');
+```
+
+Para seleção normal, prefira `select()`:
+
+```php
+$query->select('orders', ['id', 'created_at']);
+```
+
+### Grupos de condições
+
+`whereGroup()` permite agrupar condições compostas:
+
+```php
+$query
+    ->select('users')
+    ->where('active', '=', 1)
+    ->whereGroup(function ($query): void {
+        $query
+            ->where('role', '=', 'admin')
+            ->orWhere('role', '=', 'manager');
+    });
+```
+
+### Agregadores
+
+`count()`, `sum()`, `avg()`, `min()` e `max()` executam uma cópia interna do builder. A query original permanece disponível depois da agregação.
+
+### Fábrica de conexão
+
+Configure a conexão explicitamente:
+
+```php
+$settings = new DatabaseSettings(
+    driver: 'sqlite',
+    host: '',
+    database: ':memory:',
+    port: 0,
+    username: '',
+    password: '',
+);
+
+$query = DatabaseFactory::create($settings);
+```
+
+### Qualidade e testes
+
+```bash
+composer install
+composer quality
+composer test
+composer quality:mutation # requer PCOV ou Xdebug
+```
+
+O CI executa os testes, as verificações de qualidade e mutation testing automaticamente. O mutation testing usa PCOV em um job separado. Redis permanece opcional e `illuminate/database` é usado apenas no ambiente de desenvolvimento.
 
 ## 💬 Contato
 

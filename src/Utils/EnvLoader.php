@@ -95,7 +95,7 @@ final class EnvLoader
     {
         self::assertValidKey($key);
         $value = $_ENV[$key] ?? getenv($key);
-        if ($value === false || $value === null) {
+        if ($value === false) {
             $value = $_SERVER[$key] ?? $default;
         }
         return $value === null ? null : (string)$value;

@@ -64,6 +64,7 @@ class FileQueryLogger implements QueryLoggerInterface
      * @param int $rowCount
      * @return void
      */
+    /** @param array<string, mixed> $params */
     public function logQuery(string $sql, array $params, float $duration, int $rowCount): void
     {
         if (!$this->enabled) {
@@ -91,6 +92,7 @@ class FileQueryLogger implements QueryLoggerInterface
      * @param Throwable $error
      * @return void
      */
+    /** @param array<string, mixed> $params */
     public function logError(string $sql, array $params, Throwable $error): void
     {
         if (!$this->enabled) {
@@ -250,6 +252,10 @@ class FileQueryLogger implements QueryLoggerInterface
     }
 
     /** @return array<int|string, mixed> */
+    /**
+     * @param array<mixed> $values
+     * @return array<mixed>
+     */
     private function normalizeCollection(array $values, int $depth = 0): array
     {
         if ($depth >= 8) {

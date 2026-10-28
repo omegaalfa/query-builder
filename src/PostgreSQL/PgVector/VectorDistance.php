@@ -28,7 +28,7 @@ final readonly class VectorDistance implements SqlExpressionInterface
 
     /**
      * @param string $column
-     * @param Vector|array $vector
+     * @param Vector|array<int, int|float> $vector
      * @param int|null $dimensions
      * @return self
      */
@@ -39,7 +39,7 @@ final readonly class VectorDistance implements SqlExpressionInterface
 
     /**
      * @param string $column
-     * @param Vector|array $vector
+     * @param Vector|array<int, int|float> $vector
      * @param int|null $dimensions
      * @return self
      */
@@ -50,7 +50,7 @@ final readonly class VectorDistance implements SqlExpressionInterface
 
     /**
      * @param string $column
-     * @param Vector|array $vector
+     * @param Vector|array<int, int|float> $vector
      * @param int|null $dimensions
      * @return self
      */
@@ -61,7 +61,7 @@ final readonly class VectorDistance implements SqlExpressionInterface
 
     /**
      * @param string $column
-     * @param Vector|array $vector
+     * @param Vector|array<int, int|float> $vector
      * @param int|null $dimensions
      * @return self
      */

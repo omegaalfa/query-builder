@@ -54,6 +54,7 @@ final class PDOConnection implements ConnectionInterface
     /**
      * @var array
      */
+    /** @var array<int, string> */
     private array $savepoints = [];
     /**
      * @var bool
@@ -276,6 +277,7 @@ final class PDOConnection implements ConnectionInterface
      *
      * @return array Opções PDO dbSettingsuradas
      */
+    /** @return array<int|string, mixed> */
     private function buildConnectionOptions(): array
     {
         $options = $this->dbSettings->options;
@@ -291,7 +293,9 @@ final class PDOConnection implements ConnectionInterface
             }
 
             // FOUND_ROWS para UPDATE statements
-            $options[Pdo\Mysql::ATTR_FOUND_ROWS] = true;
+            if (class_exists(Mysql::class) && defined(Mysql::class . '::ATTR_FOUND_ROWS')) {
+                $options[Mysql::ATTR_FOUND_ROWS] = true;
+            }
 
             // Timeout de conexão (5 segundos)
             $options[PDO::ATTR_TIMEOUT] = 5;
@@ -543,8 +547,12 @@ final class PDOConnection implements ConnectionInterface
      * @return PDO
      * @throws DatabaseException
      */
-    public function pdo(): PDO
+    public function pdo(bool $bufferedQuery = true): PDO
     {
+        if ($this->connection !== null && $bufferedQuery !== $this->bufferedQuery) {
+            throw new DatabaseException('Cannot change buffered query mode after connection is established. Call disconnect() first.');
+        }
+        $this->bufferedQuery = $bufferedQuery;
         if ($this->connection === null) {
             $this->connect();
         }
@@ -580,15 +588,22 @@ final class PDOConnection implements ConnectionInterface
             throw new DatabaseException("Cannot commit: connection is not active");
         }
 
-        $this->transactionLevel--;
-
         try {
-            if ($this->transactionLevel === 0) {
-                return $pdo->commit();
+            if ($this->transactionLevel === 1) {
+                $result = $pdo->commit();
+                if ($result) {
+                    $this->transactionLevel = 0;
+                }
+                return $result;
             }
 
-            $savepoint = array_pop($this->savepoints);
+            $savepoint = $this->savepoints[count($this->savepoints) - 1] ?? null;
+            if ($savepoint === null) {
+                throw new DatabaseException('Transaction savepoint state is inconsistent.');
+            }
             $pdo->exec("RELEASE SAVEPOINT $savepoint");
+            array_pop($this->savepoints);
+            $this->transactionLevel--;
 
         } catch (PDOException $e) {
             throw new DatabaseException(
@@ -618,16 +633,23 @@ final class PDOConnection implements ConnectionInterface
             throw new DatabaseException("Cannot rollback: connection is not active");
         }
 
-        $this->transactionLevel--;
-
         try {
-            if ($this->transactionLevel === 0) {
-                $this->savepoints = [];
-                return $pdo->rollBack();
+            if ($this->transactionLevel === 1) {
+                $result = $pdo->rollBack();
+                if ($result) {
+                    $this->savepoints = [];
+                    $this->transactionLevel = 0;
+                }
+                return $result;
             }
 
-            $savepoint = array_pop($this->savepoints);
+            $savepoint = $this->savepoints[count($this->savepoints) - 1] ?? null;
+            if ($savepoint === null) {
+                throw new DatabaseException('Transaction savepoint state is inconsistent.');
+            }
             $pdo->exec("ROLLBACK TO SAVEPOINT $savepoint");
+            array_pop($this->savepoints);
+            $this->transactionLevel--;
 
         } catch (PDOException $e) {
             throw new DatabaseException(
@@ -727,7 +749,7 @@ final class PDOConnection implements ConnectionInterface
      * ✅ Retorno tipado como PDOStatement para consistência
      *
      * @param string $query
-     * @param array $params
+     * @param array<string, mixed> $params
      * @return PDOStatement
      * @throws DatabaseException
      */
@@ -763,7 +785,7 @@ final class PDOConnection implements ConnectionInterface
             );
 
             try {
-                while ($this->transactionLevel > 0) {
+                for ($level = $this->transactionLevel; $level > 0; --$level) {
                     $this->rollBack();
                 }
             } catch (Throwable $e) {

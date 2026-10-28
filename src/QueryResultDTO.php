@@ -8,7 +8,7 @@ namespace Omegaalfa\QueryBuilder;
 readonly class QueryResultDTO
 {
     /**
-     * @param iterable $data
+     * @param iterable<mixed> $data
      * @param int $count
      * @param PaginationDTO|null $pagination
      * @param false|string $insertId Present only when returnLastInsertId() was requested.

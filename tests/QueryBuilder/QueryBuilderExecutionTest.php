@@ -12,8 +12,10 @@ use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use RuntimeException;
 
+#[AllowMockObjectsWithoutExpectations]
 final class QueryBuilderExecutionTest extends TestCase
 {
     public function testSumReturnsFloat(): void

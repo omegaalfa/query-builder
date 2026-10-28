@@ -14,8 +14,10 @@ use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use Omegaalfa\QueryBuilder\QueryBuilderOperations;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use ReflectionClass;
 
+#[AllowMockObjectsWithoutExpectations]
 final class QueryBuilderFullTest extends TestCase
 {
     private QueryBuilderOperations $qbOps;
@@ -34,7 +36,7 @@ final class QueryBuilderFullTest extends TestCase
     {
         $this->assertStringContainsString(/** @lang text */ 'SELECT `id` FROM `tabela`', $this->qbOps->select('tabela', ['id'])->getQuerySql());
         $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `tabela`', $this->qbOps->insert('tabela', ['a' => 1])->getQuerySql());
-        $this->assertStringContainsString(/** @lang text */ 'UPDATE `tabela` SET `a` = :a', $this->qbOps->update('tabela', ['a' => 1])->getQuerySql());
+        $this->assertStringContainsString(/** @lang text */ 'UPDATE `tabela` SET `a` = :param0', $this->qbOps->update('tabela', ['a' => 1])->getQuerySql());
         $this->assertSame(/** @lang text */ 'DELETE FROM `tabela`', $this->qbOps->delete('tabela')->getQuerySql());
     }
 
@@ -60,7 +62,7 @@ final class QueryBuilderFullTest extends TestCase
 
     public function testHavingClauses(): void
     {
-        $this->assertStringContainsString('HAVING `a` > :having0', $this->qbOps
+        $this->assertStringContainsString('HAVING `a` > :param0', $this->qbOps
             ->select('x', ['a'])
             ->groupBy('a')
             ->having('a', SqlOperator::GREATER_THAN, 0)
@@ -91,7 +93,6 @@ final class QueryBuilderFullTest extends TestCase
         $qb = new QueryBuilderOperations();
         $ref = new ReflectionClass($qb);
         $prop = $ref->getProperty('driver');
-        $prop->setAccessible(true);
         $prop->setValue($qb, 'mysql');
 
         $qb->select('a')->join('b', 'a.id', '=', 'b.id', JoinType::FULL);
@@ -111,7 +112,6 @@ final class QueryBuilderFullTest extends TestCase
     {
         $ref = new ReflectionClass($this->qbOps);
         $method = $ref->getMethod('quoteIdentifier');
-        $method->setAccessible(true);
 
         $this->assertSame('`tabela`.`coluna`', $method->invoke($this->qbOps, 'tabela.coluna'));
         $this->assertSame('`tabela` AS `t`', $method->invoke($this->qbOps, 'tabela as t'));
@@ -134,7 +134,7 @@ final class QueryBuilderFullTest extends TestCase
 
         $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `users`', $sql);
         $this->assertStringContainsString('(`name`, `age`)', $sql);
-        $this->assertStringContainsString('VALUES (:name_0, :age_0), (:name_1, :age_1)', $sql);
+        $this->assertStringContainsString('VALUES (:param0, :param1), (:param2, :param3)', $sql);
     }
 
     public function testInsertBatchThrowsOnMismatchedColumns(): void
@@ -154,7 +154,7 @@ final class QueryBuilderFullTest extends TestCase
         $sql = $this->qb->select('products')->whereNotIn('id', [1, 2, 3])->getQuerySql();
 
         $this->assertStringContainsString('WHERE `id` NOT IN', $sql);
-        $this->assertStringContainsString(':id_notin_0', $sql);
+        $this->assertStringContainsString(':param0', $sql);
     }
 
     public function testWhereNotBetweenGeneratesCorrectSql(): void
@@ -162,8 +162,8 @@ final class QueryBuilderFullTest extends TestCase
         $sql = $this->qb->select('sales')->whereNotBetween('amount', [100, 500])->getQuerySql();
 
         $this->assertStringContainsString('`amount` NOT BETWEEN', $sql);
-        $this->assertStringContainsString(':amount_nbt1', $sql);
-        $this->assertStringContainsString(':amount_nbt2', $sql);
+        $this->assertStringContainsString(':param0', $sql);
+        $this->assertStringContainsString(':param1', $sql);
     }
 
     public function testWhereNullGeneratesCorrectSql(): void
@@ -190,7 +190,7 @@ final class QueryBuilderFullTest extends TestCase
 
         $this->assertStringContainsString(/** @lang text */ 'INSERT INTO `users`', $query);
         $this->assertStringContainsString('(`name`, `email`)', $query);
-        $this->assertStringContainsString('VALUES (:name_0, :email_0), (:name_1, :email_1)', $query);
+        $this->assertStringContainsString('VALUES (:param0, :param1), (:param2, :param3)', $query);
     }
 
     public function testInsertBatchFailsOnInconsistentColumns(): void
@@ -208,7 +208,7 @@ final class QueryBuilderFullTest extends TestCase
         $qb = new QueryBuilderOperations();
         $query = $qb->select('users')->whereNotIn('status', [0, 1])->getQuerySql();
 
-        $this->assertStringContainsString('WHERE `status` NOT IN (:status_notin_0, :status_notin_1)', $query);
+        $this->assertStringContainsString('WHERE `status` NOT IN (:param0, :param1)', $query);
     }
 
     public function testWhereNotBetween(): void
@@ -216,7 +216,7 @@ final class QueryBuilderFullTest extends TestCase
         $qb = new QueryBuilderOperations();
         $query = $qb->select('orders')->whereNotBetween('total', [100, 500])->getQuerySql();
 
-        $this->assertStringContainsString('`total` NOT BETWEEN :total_nbt1 AND :total_nbt2', $query);
+        $this->assertStringContainsString('`total` NOT BETWEEN :param0 AND :param1', $query);
     }
 
     public function testWhereNull(): void
@@ -243,7 +243,7 @@ final class QueryBuilderFullTest extends TestCase
             ->having('total', SqlOperator::GREATER_THAN_OR_EQUALS, 1000)
             ->getQuerySql();
 
-        $this->assertStringContainsString('HAVING `total` >= :having0', $query);
+        $this->assertStringContainsString('HAVING `total` >= :param0', $query);
     }
 
     public function testHavingClauseWithoutGroupByThrows(): void
@@ -295,7 +295,7 @@ final class QueryBuilderFullTest extends TestCase
         $this->assertStringContainsString('LEFT JOIN `vendas` ON `p`.`idProduto` = `vendas`.`idProduto`', $sql);
         $this->assertStringContainsString('WHERE `p`.`status` = :param0', $sql);
         $this->assertStringContainsString('GROUP BY `p`.`idProduto`', $sql);
-        $this->assertStringContainsString('HAVING `totalVendas` > :having1', $sql);
+        $this->assertStringContainsString('HAVING `totalVendas` > :param1', $sql);
         $this->assertStringContainsString('ORDER BY `p`.`nome` ASC', $sql);
         $this->assertStringContainsString('LIMIT 0 , 10', $sql);
     }

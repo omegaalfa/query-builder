@@ -79,7 +79,9 @@ final class QueryBuilder extends QueryBuilderOperations
 
         // Substitui placeholders por valores (APENAS PARA DEBUG!)
         $debugSql = $sql;
-        foreach ($this->params as $param => $value) {
+        $params = $this->params;
+        uksort($params, static fn (string $left, string $right): int => strlen($right) <=> strlen($left));
+        foreach ($params as $param => $value) {
             if ($value instanceof DatabaseValueInterface) {
                 $value = $value->value();
             }
@@ -91,7 +93,11 @@ final class QueryBuilder extends QueryBuilderOperations
                 default => "'" . addslashes((string)$value) . "'"
             };
 
-            $debugSql = str_replace($param, $replace, $debugSql);
+            $debugSql = preg_replace_callback(
+                '/' . preg_quote($param, '/') . '(?![A-Za-z0-9_])/',
+                static fn (): string => $replace,
+                $debugSql,
+            ) ?? $debugSql;
         }
 
         return $debugSql;
@@ -100,7 +106,7 @@ final class QueryBuilder extends QueryBuilderOperations
     /**
      * Executa EXPLAIN na query atual para análise de performance
      *
-     * @return array
+     * @return array<string, mixed>
      * @throws DatabaseException
      */
     public function explain(): array
@@ -176,7 +182,7 @@ final class QueryBuilder extends QueryBuilderOperations
             $stmt = $this->prepareAndExecute($bufferedQuery);
             $count = $stmt->rowCount();
 
-            $isCacheEnabled = isset($this->cacheTtl) && $this->cache !== null;
+            $isCacheEnabled = $this->cacheTtl > 0 && $this->cache !== null;
             $data = $this->streamData($stmt);
             if ($isCacheEnabled) {
                 $result = new QueryResultDTO(iterator_to_array($data, false), $count, $pagination, $this->insertId);
@@ -311,7 +317,7 @@ final class QueryBuilder extends QueryBuilderOperations
 
     /**
      * @param PDOStatement $stmt
-     * @return iterable
+     * @return iterable<int, array<string, mixed>>
      */
     private function streamData(PDOStatement $stmt): iterable
     {
@@ -334,16 +340,7 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     public function sum(string $column): float
     {
-        $originalSql = $this->sql;
-        $this->sql[1] = "SUM({$this->quoteIdentifier($column)}) as total";
-
-        try {
-            $result = $this->execute();
-            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
-            return (float)($data[0]['total'] ?? 0);
-        } finally {
-            $this->sql = $originalSql;
-        }
+        return (float) $this->executeAggregate('SUM', $column, 'total');
     }
 
     /**
@@ -356,16 +353,7 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     public function avg(string $column): float
     {
-        $originalSql = $this->sql;
-        $this->sql[1] = "AVG({$this->quoteIdentifier($column)}) as average";
-
-        try {
-            $result = $this->execute();
-            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
-            return (float)($data[0]['average'] ?? 0);
-        } finally {
-            $this->sql = $originalSql;
-        }
+        return (float) $this->executeAggregate('AVG', $column, 'average');
     }
 
     /**
@@ -378,16 +366,7 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     public function max(string $column): mixed
     {
-        $originalSql = $this->sql;
-        $this->sql[1] = "MAX({$this->quoteIdentifier($column)}) as maximum";
-
-        try {
-            $result = $this->execute();
-            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
-            return $data[0]['maximum'] ?? null;
-        } finally {
-            $this->sql = $originalSql;
-        }
+        return $this->executeAggregate('MAX', $column, 'maximum');
     }
 
     /**
@@ -400,16 +379,7 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     public function min(string $column): mixed
     {
-        $originalSql = $this->sql;
-        $this->sql[1] = "MIN({$this->quoteIdentifier($column)}) as minimum";
-
-        try {
-            $result = $this->execute();
-            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
-            return $data[0]['minimum'] ?? null;
-        } finally {
-            $this->sql = $originalSql;
-        }
+        return $this->executeAggregate('MIN', $column, 'minimum');
     }
 
     /**
@@ -434,15 +404,24 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     public function count(string $column = '*'): int
     {
-        $originalSql = $this->sql;
-        $this->sql[1] = "COUNT({$this->quoteIdentifier($column)}) as total";
+        return (int) $this->executeAggregate('COUNT', $column, 'total');
+    }
 
-        try {
-            $result = $this->execute();
-            $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
-            return (int)($data[0]['total'] ?? 0);
-        } finally {
-            $this->sql = $originalSql;
+    private function executeAggregate(string $function, string $column, string $alias): mixed
+    {
+        $this->assertAggregateQuery();
+        $aggregate = clone $this;
+        $aggregate->sql[1] = sprintf('%s(%s) AS %s', $function, $aggregate->quoteIdentifier($column), $alias);
+        $result = $aggregate->execute();
+        $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
+
+        return $data[0][$alias] ?? null;
+    }
+
+    private function assertAggregateQuery(): void
+    {
+        if (($this->sql[0] ?? null) !== 'SELECT' || !array_key_exists(1, $this->sql)) {
+            throw new QueryException('Aggregate methods require a query created with select(); raw() queries are not supported.');
         }
     }
 }

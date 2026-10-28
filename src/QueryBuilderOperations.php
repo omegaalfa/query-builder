@@ -5,6 +5,8 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
+use Closure;
+use Throwable;
 use Omegaalfa\QueryBuilder\Enums\JoinType;
 use Omegaalfa\QueryBuilder\Enums\OrderDirection;
 use Omegaalfa\QueryBuilder\Enums\SqlOperator;
@@ -29,34 +31,22 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     protected string $driver = 'mysql';
 
-    /**
-     * @var array
-     */
+    /** @var array<int, mixed> */
     protected array $joins = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<int, mixed> */
     protected array $where = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<int, mixed> */
     protected array $orderBy = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<int, mixed> */
     protected array $groupBy = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<int, mixed> */
     protected array $having = [];
 
-    /**
-     * @var array|null
-     */
+    /** @var array<int, mixed>|null */
     protected ?array $limit = null;
 
     protected bool $paginationRequested = false;
@@ -74,14 +64,10 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /** @var list<string> */
     protected array $returningColumns = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<string, mixed> */
     protected array $params = [];
 
-    /**
-     * @var array
-     */
+    /** @var array<int, mixed> */
     protected array $sql = [];
 
     protected ?SqlCompilationContext $compilationContext = null;
@@ -96,6 +82,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /**
      * @var array Para agrupar condições OR
      */
+    /** @var array<int, mixed> */
     protected array $whereGroups = [];
 
 
@@ -106,9 +93,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
     public function __clone(): void
     {
-        $params = [...$this->params];
-        unset($this->params);
-        $this->params = $params;
+        $this->params = [...$this->params];
         $this->compilationContext = null;
     }
 
@@ -150,6 +135,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @param array $fields Lista de colunas a selecionar (default: ['*']).
      * @return $this
      */
+    /** @param array<int, string> $fields */
     public function select(string $table, array $fields = ['*']): self
     {
         $this->resetOperationsState();
@@ -165,6 +151,19 @@ class QueryBuilderOperations implements QueryBuilderInterface
         );
 
         $this->sql = ['SELECT', implode(', ', $processedFields), 'FROM ' . $this->table];
+        return $this;
+    }
+
+    /** @param array<int, string> $expressions */
+    public function selectRaw(string $table, string|array $expressions): self
+    {
+        $this->resetOperationsState();
+        $this->table = $this->quoteIdentifier($table);
+        $fields = is_array($expressions) ? $expressions : [$expressions];
+        if ($fields === []) {
+            throw new QueryException('selectRaw() requires at least one expression.');
+        }
+        $this->sql = ['SELECT', implode(', ', $fields), 'FROM ' . $this->table];
         return $this;
     }
 
@@ -203,24 +202,26 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @param array $data Array associativo coluna => valor.
      * @return $this
      */
+    /** @param array<string, mixed> $data */
     public function insert(string $table, array $data): self
     {
         $this->resetOperationsState();
         $this->table = $this->quoteIdentifier($table);
         $fields = array_keys($data);
         $this->insertColumns = $fields;
+        $quotedFields = array_map([$this, 'quoteIdentifier'], $fields);
+        $placeholders = [];
+        foreach ($data as $value) {
+            $placeholder = $this->bindValue($value);
+            $placeholders[] = $this->valueSql($placeholder, $value);
+        }
         $this->sql = [
             'INSERT INTO',
             $this->table,
-            '(' . implode(', ', $fields) . ')',
+            '(' . implode(', ', $quotedFields) . ')',
             'VALUES',
-            '(' . implode(', ', array_map(fn ($field) => $this->valueSql(':' . $field, $data[$field]), $fields)) . ')'
+            '(' . implode(', ', $placeholders) . ')'
         ];
-
-        foreach ($data as $key => $value) {
-            $param = ':' . $key;
-            $this->params[$param] = $value;
-        }
 
         return $this;
     }
@@ -234,6 +235,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @return $this
      * @throws QueryException
      */
+    /** @param array<int, array<string, mixed>> $data */
     public function insertBatch(string $table, array $data): self
     {
         if (empty($data)) {
@@ -262,9 +264,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
         foreach ($data as $rowIndex => $row) {
             $placeholders = [];
             foreach ($fields as $field) {
-                $param = ":{$field}_{$rowIndex}";
+                $param = $this->bindValue($row[$field]);
                 $placeholders[] = $this->valueSql($param, $row[$field]);
-                $this->params[$param] = $row[$field];
             }
             $valueSets[] = '(' . implode(', ', $placeholders) . ')';
         }
@@ -426,15 +427,15 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @param array $data Array associativo coluna => novo valor.
      * @return $this
      */
+    /** @param array<string, mixed> $data */
     public function update(string $table, array $data): self
     {
         $this->resetOperationsState();
         $assignments = [];
         $this->table = $this->quoteIdentifier($table);
         foreach ($data as $key => $value) {
-            $param = ':' . $key;
+            $param = $this->bindValue($value);
             $assignments[] = sprintf('%s = %s', $this->quoteIdentifier($key), $this->valueSql($param, $value));
-            $this->params[$param] = $value;
         }
 
         $this->sql = ['UPDATE', $this->table, 'SET', implode(', ', $assignments)];
@@ -475,9 +476,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
         }
 
         $operator = $this->normalizeAndValidateOperator($operator);
-        $param = ':param' . count($this->params);
+        $param = $this->bindValue($value);
         $this->where[] = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
-        $this->params[$param] = $value;
 
         return $this;
     }
@@ -496,9 +496,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function orWhere(string $column, SqlOperator|string $operator, mixed $value): self
     {
         $operator = $this->normalizeAndValidateOperator($operator);
-        $param = ':param' . count($this->params);
+        $param = $this->bindValue($value);
         $condition = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
-        $this->params[$param] = $value;
 
         // Marca que estamos em grupo OR
         if (!$this->isOrGroup && !empty($this->where)) {
@@ -508,6 +507,41 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
         $this->whereGroups[] = $condition;
 
+        return $this;
+    }
+
+    public function whereGroup(Closure $callback): self
+    {
+        $outerWhere = $this->where;
+        $outerGroups = $this->whereGroups;
+        $outerOrGroup = $this->isOrGroup;
+
+        $this->where = [];
+        $this->whereGroups = [];
+        $this->isOrGroup = false;
+
+        try {
+            $callback($this);
+            $this->flushOrGroup();
+            if ($this->where === []) {
+                throw new QueryException('whereGroup() callback must add at least one condition.');
+            }
+            $group = count($this->where) === 1
+                && str_starts_with($this->where[0], '(')
+                && str_ends_with($this->where[0], ')')
+                ? $this->where[0]
+                : '(' . implode(' AND ', $this->where) . ')';
+        } catch (Throwable $exception) {
+            $this->where = $outerWhere;
+            $this->whereGroups = $outerGroups;
+            $this->isOrGroup = $outerOrGroup;
+            throw $exception;
+        }
+
+        $this->where = $outerWhere;
+        $this->whereGroups = $outerGroups;
+        $this->isOrGroup = $outerOrGroup;
+        $this->where[] = $group;
         return $this;
     }
 
@@ -521,6 +555,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @return $this
      * @throws QueryException
      */
+    /** @param array<int, mixed> $values */
     public function whereIn(string $column, array $values): self
     {
         if (empty($values)) {
@@ -528,10 +563,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
         }
 
         $placeholders = [];
-        foreach ($values as $i => $v) {
-            $param = ":{$column}_in_{$i}";
+        foreach ($values as $v) {
+            $param = $this->bindValue($v);
             $placeholders[] = $param;
-            $this->params[$param] = $v;
         }
 
         $this->where[] = sprintf('%s IN (%s)', $this->quoteIdentifier($column), implode(', ', $placeholders));
@@ -546,6 +580,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @return $this
      * @throws QueryException
      */
+    /** @param array<int, mixed> $values */
     public function whereNotIn(string $column, array $values): self
     {
         if (empty($values)) {
@@ -553,10 +588,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
         }
 
         $placeholders = [];
-        foreach ($values as $i => $v) {
-            $param = ":{$column}_notin_{$i}";
+        foreach ($values as $v) {
+            $param = $this->bindValue($v);
             $placeholders[] = $param;
-            $this->params[$param] = $v;
         }
 
         $this->where[] = sprintf('%s NOT IN (%s)', $this->quoteIdentifier($column), implode(', ', $placeholders));
@@ -571,17 +605,16 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @return $this
      * @throws QueryException
      */
+    /** @param array<int, mixed> $range */
     public function whereBetween(string $column, array $range): self
     {
         if (count($range) !== 2) {
             throw new QueryException("BETWEEN requires an array with 2 values.");
         }
-        $param1 = ":{$column}_bt1";
-        $param2 = ":{$column}_bt2";
+        $param1 = $this->bindValue($range[0]);
+        $param2 = $this->bindValue($range[1]);
 
         $this->where[] = sprintf('%s BETWEEN %s AND %s', $this->quoteIdentifier($column), $param1, $param2);
-        $this->params[$param1] = $range[0];
-        $this->params[$param2] = $range[1];
 
         return $this;
     }
@@ -594,17 +627,16 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @return $this
      * @throws QueryException
      */
+    /** @param array<int, mixed> $range */
     public function whereNotBetween(string $column, array $range): self
     {
         if (count($range) !== 2) {
             throw new QueryException("NOT BETWEEN requires an array with 2 values.");
         }
-        $param1 = ":{$column}_nbt1";
-        $param2 = ":{$column}_nbt2";
+        $param1 = $this->bindValue($range[0]);
+        $param2 = $this->bindValue($range[1]);
 
         $this->where[] = sprintf('%s NOT BETWEEN %s AND %s', $this->quoteIdentifier($column), $param1, $param2);
-        $this->params[$param1] = $range[0];
-        $this->params[$param2] = $range[1];
 
         return $this;
     }
@@ -738,6 +770,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
         return $type === null ? $placeholder : sprintf('CAST(%s AS %s)', $placeholder, $type);
     }
 
+    protected function bindValue(mixed $value): string
+    {
+        return $this->compilationContext()->bind($value);
+    }
+
     /**
      * Define uma coluna ou expressão para agrupamento (GROUP BY).
      *
@@ -770,9 +807,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
         }
 
         // garante que não reinicia params ou state indevidamente
-        $param = ':having' . count($this->params);
-        $this->having[] = sprintf('%s %s %s', $this->quoteIdentifier($column), $operator->value, $param);
-        $this->params[$param] = $value;
+        $param = $this->bindValue($value);
+        $this->having[] = sprintf('%s %s %s', $this->normalizeField($column), $operator->value, $param);
 
         return $this;
     }
@@ -857,6 +893,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
      * @param array $params Parâmetros para binding.
      * @return $this
      */
+    /** @param array<string, mixed> $params */
     public function raw(string $query, array $params = []): self
     {
         $this->resetOperationsState();
@@ -870,18 +907,27 @@ class QueryBuilderOperations implements QueryBuilderInterface
             if (array_is_list($params)) {
                 // Converte ? para :param0, :param1, etc
                 $paramCounter = 0;
-                $normalizedQuery = preg_replace_callback('/\?/', static function () use (&$paramCounter, $params, &$normalizedParams) {
-                    $placeholder = ':raw_param' . $paramCounter;
-                    $normalizedParams[$placeholder] = $params[$paramCounter] ?? null;
+                $normalizedQuery = preg_replace_callback('/\?/', function () use (&$paramCounter, $params) {
+                    $placeholder = $this->bindValue($params[$paramCounter] ?? null);
                     $paramCounter++;
                     return $placeholder;
                 }, $query);
 
                 $this->sql = [$normalizedQuery];
-                $this->params = $normalizedParams;
             } else {
                 // Params já estão nomeados
-                $this->params = $params;
+                $normalizedQuery = preg_replace_callback(
+                    '/(?<!:):([A-Za-z_][A-Za-z0-9_]*)/',
+                    function (array $match) use ($params): string {
+                        $name = $match[1];
+                        $key = array_key_exists($name, $params) ? $name : ':' . $name;
+                        return array_key_exists($key, $params)
+                            ? $this->bindValue($params[$key])
+                            : $match[0];
+                    },
+                    $query,
+                );
+                $this->sql = [$normalizedQuery ?? $query];
             }
         }
 
@@ -905,11 +951,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         }
 
         // Fecha grupo OR pendente como sub-condição (liga por AND implícito)
-        if ($this->isOrGroup && !empty($this->whereGroups)) {
-            $this->where[] = '(' . implode(' OR ', $this->whereGroups) . ')';
-            $this->whereGroups = [];
-            $this->isOrGroup = false;
-        }
+        $this->flushOrGroup();
 
         if ($this->where) {
             // Simples e robusto: Tudo ligado por AND (incluindo grupos OR)
@@ -950,5 +992,14 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->isOrGroup = false;
 
         return implode(' ', $query);
+    }
+
+    protected function flushOrGroup(): void
+    {
+        if ($this->isOrGroup && $this->whereGroups !== []) {
+            $this->where[] = '(' . implode(' OR ', $this->whereGroups) . ')';
+            $this->whereGroups = [];
+            $this->isOrGroup = false;
+        }
     }
 }

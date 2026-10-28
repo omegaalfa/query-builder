@@ -9,9 +9,11 @@ use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
 use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\PaginationDTO;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PDO;
 use PDOStatement;
 
+#[AllowMockObjectsWithoutExpectations]
 final class QueryBuilderUnitTest extends TestCase
 {
     public function testAggregateMethodsUsePreparedStatementAndReturnValues(): void

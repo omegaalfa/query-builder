@@ -149,8 +149,8 @@ class RedisCache implements CacheInterface
     }
 
     /**
-     * @param array $keys
-     * @return array
+     * @param array<int, string> $keys
+     * @return array<string, mixed>
      */
     public function getMultiple(array $keys): array
     {

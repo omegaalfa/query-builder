@@ -14,8 +14,10 @@ use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use ReflectionClass;
 
+#[AllowMockObjectsWithoutExpectations]
 class QueryBuilderCacheTest extends TestCase
 {
     public function testExecuteSupportsLazyStreamingAndCache(): void
@@ -121,7 +123,6 @@ class QueryBuilderCacheTest extends TestCase
 
         $reflection = new ReflectionClass($qb);
         $generateCacheKey = $reflection->getMethod('generateCacheKey');
-        $generateCacheKey->setAccessible(true);
         $expectedKey = $generateCacheKey->invoke($qb);
 
         $payload = [
@@ -141,7 +142,6 @@ class QueryBuilderCacheTest extends TestCase
             ->willReturn($payload);
 
         $getFromCache = $reflection->getMethod('getFromCache');
-        $getFromCache->setAccessible(true);
 
         $cached = $getFromCache->invoke($qb);
 
@@ -162,7 +162,6 @@ class QueryBuilderCacheTest extends TestCase
 
         $reflection = new ReflectionClass($qb);
         $generateCacheKey = $reflection->getMethod('generateCacheKey');
-        $generateCacheKey->setAccessible(true);
         $expectedKey = $generateCacheKey->invoke($qb);
 
         $cache->expects($this->once())
@@ -176,7 +175,6 @@ class QueryBuilderCacheTest extends TestCase
             ->willReturn('unexpected');
 
         $getFromCache = $reflection->getMethod('getFromCache');
-        $getFromCache->setAccessible(true);
 
         $this->assertNull($getFromCache->invoke($qb));
     }
@@ -192,7 +190,6 @@ class QueryBuilderCacheTest extends TestCase
 
         $reflection = new ReflectionClass($qb);
         $cacheKeyProperty = $reflection->getProperty('cacheKey');
-        $cacheKeyProperty->setAccessible(true);
         $cacheKeyProperty->setValue($qb, 'test:cache:key');
 
         $cache->expects($this->once())
@@ -210,7 +207,6 @@ class QueryBuilderCacheTest extends TestCase
             );
 
         $saveToCache = $reflection->getMethod('saveToCache');
-        $saveToCache->setAccessible(true);
 
         $data = new ArrayIterator([['id' => 2]]);
         $result = new QueryResultDTO($data, 1);

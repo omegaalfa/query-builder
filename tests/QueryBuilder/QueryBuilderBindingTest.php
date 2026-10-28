@@ -12,9 +12,11 @@ use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\PaginationDTO;
 use Omegaalfa\QueryBuilder\Enums\SqlOperator;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PDO;
 use PDOStatement;
 
+#[AllowMockObjectsWithoutExpectations]
 final class QueryBuilderBindingTest extends TestCase
 {
     private function makePaginator(): PaginatorInterface
