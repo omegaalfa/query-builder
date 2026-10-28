@@ -27,6 +27,7 @@
 - Adicionada invalidação por tags com `RedisCache::flushTags()` e tags opcionais em `RedisCache::set()`.
 - Adicionado `QueryBuilder::cacheTags()`, com indexação automática pela tabela e invalidação após operações de escrita usando Redis.
 - Adicionado `RedisCache::rememberStale()` para servir valores stale durante uma janela controlada e atualizar com lock distribuído.
+- Adicionados `RedisCache::getStats()` e `resetStats()` para observar hits, misses, stale hits, refreshes e contenções de lock.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -61,6 +62,7 @@
 - Adicionada suíte de integração Redis, com cobertura de leitura, exclusão, `mGet()`, TTL e `remember()`.
 - Adicionados testes de associação, deduplicação e invalidação de entradas por tags.
 - Adicionados testes de cache fresco, refresh stale e validação das janelas do `rememberStale()`.
+- Adicionado teste dos contadores e da reinicialização das métricas do cache.
 - Adicionado teste de normalização de tags do `QueryBuilder`.
 
 ### Migração

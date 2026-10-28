@@ -1149,6 +1149,16 @@ $summary = $cache->rememberStale(
 
 Se outro processo já estiver atualizando o valor stale, o valor antigo é retornado sem duplicar o trabalho.
 
+Para observabilidade local da instância, consulte e zere os contadores em memória:
+
+```php
+$stats = $cache->getStats();
+// hits, misses, stale_hits, refreshes e lock_contention
+$cache->resetStats();
+```
+
+Essas métricas não são persistidas no Redis e não incluem valores, SQL ou credenciais.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php

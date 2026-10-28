@@ -16,6 +16,15 @@ use RedisException;
 class RedisCache implements CacheInterface
 {
 
+    /** @var array<string, int> */
+    private array $stats = [
+        'hits' => 0,
+        'misses' => 0,
+        'stale_hits' => 0,
+        'refreshes' => 0,
+        'lock_contention' => 0,
+    ];
+
     private const int LOCK_WAIT_ATTEMPTS = 5;
 
     private const int LOCK_WAIT_MICROSECONDS = 10_000;
@@ -233,6 +242,19 @@ class RedisCache implements CacheInterface
         }
     }
 
+    /** @return array<string, int> */
+    public function getStats(): array
+    {
+        return $this->stats;
+    }
+
+    public function resetStats(): void
+    {
+        foreach ($this->stats as $metric => $_value) {
+            $this->stats[$metric] = 0;
+        }
+    }
+
     /**
      * @param array<int, string> $keys
      * @return array<string, mixed>
@@ -306,8 +328,10 @@ class RedisCache implements CacheInterface
 
         $cached = $this->get($key);
         if ($cached !== null) {
+            ++$this->stats['hits'];
             return $cached;
         }
+        ++$this->stats['misses'];
 
         $lockKey = $this->prefixKey($key . ':lock');
         $token = bin2hex(random_bytes(16));
@@ -320,6 +344,7 @@ class RedisCache implements CacheInterface
             );
 
             if (!$acquired) {
+                ++$this->stats['lock_contention'];
                 for ($attempt = 0; $attempt < self::LOCK_WAIT_ATTEMPTS; ++$attempt) {
                     usleep(self::LOCK_WAIT_MICROSECONDS);
                     $cached = $this->get($key);
@@ -332,6 +357,7 @@ class RedisCache implements CacheInterface
             }
 
             $value = $resolver();
+            ++$this->stats['refreshes'];
             $this->set($key, $value, $ttl);
 
             return $value;
@@ -369,17 +395,21 @@ class RedisCache implements CacheInterface
             && is_int($cached['stale_until'] ?? null)
         ) {
             if ($now < $cached['expires_at']) {
+                ++$this->stats['hits'];
                 return $cached['value'];
             }
             if ($now < $cached['stale_until']) {
+                ++$this->stats['stale_hits'];
                 $lockKey = $this->prefixKey($key . ':swr-lock');
                 $token = bin2hex(random_bytes(16));
                 try {
                     if (!$this->redis->set($lockKey, $token, ['nx', 'ex' => min($staleTtl, 30)])) {
+                        ++$this->stats['lock_contention'];
                         return $cached['value'];
                     }
 
                     $value = $resolver();
+                    ++$this->stats['refreshes'];
                     $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
                     return $value;
                 } finally {
@@ -388,10 +418,13 @@ class RedisCache implements CacheInterface
             }
         }
 
+        ++$this->stats['misses'];
+
         $lockKey = $this->prefixKey($key . ':swr-lock');
         $token = bin2hex(random_bytes(16));
         try {
             if (!$this->redis->set($lockKey, $token, ['nx', 'ex' => min($ttl, 30)])) {
+                ++$this->stats['lock_contention'];
                 $value = $this->get($key);
                 if (is_array($value) && array_key_exists('value', $value)) {
                     return $value['value'];
@@ -399,6 +432,7 @@ class RedisCache implements CacheInterface
             }
 
             $value = $resolver();
+            ++$this->stats['refreshes'];
             $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
             return $value;
         } finally {

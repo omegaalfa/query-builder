@@ -140,6 +140,22 @@ final class RedisCacheIntegrationTest extends TestCase
         $this->cache->rememberStale('swr', 0, 30, static fn(): string => 'value');
     }
 
+    public function testCacheStatsExposeAndResetUsageCounters(): void
+    {
+        $this->cache->remember('stats', 30, static fn(): string => 'value');
+        $this->cache->remember('stats', 30, static fn(): string => 'unused');
+
+        self::assertSame(1, $this->cache->getStats()['misses']);
+        self::assertSame(1, $this->cache->getStats()['hits']);
+        self::assertSame(1, $this->cache->getStats()['refreshes']);
+
+        $this->cache->resetStats();
+        self::assertSame(
+            ['hits' => 0, 'misses' => 0, 'stale_hits' => 0, 'refreshes' => 0, 'lock_contention' => 0],
+            $this->cache->getStats(),
+        );
+    }
+
     public function testExpirationRemovesValueFromRedis(): void
     {
         $this->cache->set('short-lived', 'value', 1);
