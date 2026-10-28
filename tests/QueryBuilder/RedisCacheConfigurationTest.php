@@ -148,7 +148,7 @@ final class RedisCacheConfigurationTest extends TestCase
                 1,
             )
             ->willReturn(0);
-        $redis->expects(self::never())->method('del');
+        $redis->expects(self::once())->method('del')->with('test:key-tags:item');
         $cache = $this->cacheWithRedis($redis);
 
         self::assertSame('value', $cache->remember('item', 30, static fn(): string => 'value'));
