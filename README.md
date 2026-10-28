@@ -1110,6 +1110,20 @@ $result = $qb->select('produtos')
 // Cache por 24 horas
 $result = $qb->select('categorias')
              ->cache(86400)
+
+Para usar Redis, instale `ext-redis` e crie uma instância de `RedisCache`. A implementação aplica o prefixo configurado a todas as chaves, serializa valores em JSON, respeita TTL e oferece `getMultiple()`, `deletePattern()` e `clear()`:
+
+```php
+$cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
+    host: '127.0.0.1',
+    prefix: 'app:',
+    port: 6379,
+    timeout: 2.5,
+    database: 0,
+);
+```
+
+`getMultiple()` preserva valores válidos como `false`, `0` e `''`; somente chaves ausentes são omitidas. Erros de conexão, serialização e limpeza são convertidos em `CacheException`.
              ->execute();
 ```
 

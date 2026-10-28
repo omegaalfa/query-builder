@@ -145,7 +145,11 @@ class RedisCache implements CacheInterface
      */
     public function clear(): bool
     {
-        return $this->redis->flushDB();
+        try {
+            return $this->redis->flushDB();
+        } catch (RedisException $e) {
+            throw new CacheException('Redis error clearing database.', previous: $e);
+        }
     }
 
     /**
@@ -156,7 +160,8 @@ class RedisCache implements CacheInterface
     {
         $result = [];
         foreach ($keys as $key) {
-            if ($value = $this->get($key)) {
+            $value = $this->get($key);
+            if ($value !== null) {
                 $result[$key] = $value;
             }
         }

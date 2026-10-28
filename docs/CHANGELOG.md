@@ -19,6 +19,8 @@
 - Agregadores executam uma cópia do builder e não alteram a query original.
 - `QueryBuilderInterface` e `ConnectionInterface` foram alinhadas com as implementações.
 - `DatabaseFactory::create()` recebe `DatabaseSettings` explicitamente.
+- `RedisCache::getMultiple()` agora preserva valores falsos, zero e strings vazias; apenas chaves ausentes são omitidas.
+- `RedisCache::clear()` converte falhas do Redis em `CacheException`.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -45,7 +47,7 @@
 - Adicionados testes para `raw()`, `selectRaw()`, `whereGroup()` e agregadores.
 - Corrigido o teste de locale do PgVector para PHP 8.5.
 - Removido o uso de `Reflection::setAccessible()` dos testes.
-- Estado validado atualmente: 157 testes, 346 assertions, sem falhas.
+- Adicionados testes de configuração, serialização, valores falsos, `getMultiple()`, prefixos, TTL e falhas de limpeza do Redis.
 
 ### Migração
 
