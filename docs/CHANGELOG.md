@@ -30,6 +30,7 @@
 - Adicionados `RedisCache::getStats()` e `resetStats()` para observar hits, misses, stale hits, refreshes e contenções de lock.
 - Adicionados `RedisCache::health()` e `ping()` para verificar disponibilidade e latência do Redis sem lançar exceções.
 - Adicionado circuit breaker configurável ao `RedisCache`, com limiar de falhas, janela de recuperação, `circuitState()` e `resetCircuit()`.
+- Adicionado modo opcional `failOpen` para `remember()` e `rememberStale()`, permitindo fallback pelo resolver quando o Redis está indisponível.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -67,6 +68,7 @@
 - Adicionado teste dos contadores e da reinicialização das métricas do cache.
 - Adicionados testes de health check com Redis disponível e indisponível.
 - Adicionados testes de abertura, bloqueio e reset do circuit breaker.
+- Adicionados testes para fallback `failOpen` e preservação do comportamento `failClosed`.
 - Adicionado teste de normalização de tags do `QueryBuilder`.
 
 ### Migração

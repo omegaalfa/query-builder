@@ -33,6 +33,8 @@ class RedisCache implements CacheInterface
 
     private readonly int $circuitRecoverySeconds;
 
+    private readonly bool $failOpen;
+
     private const int LOCK_WAIT_ATTEMPTS = 5;
 
     private const int LOCK_WAIT_MICROSECONDS = 10_000;
@@ -71,6 +73,7 @@ class RedisCache implements CacheInterface
         int $database = 0,
         int $circuitFailureThreshold = 3,
         int $circuitRecoverySeconds = 30,
+        bool $failOpen = false,
     ) {
         if ($port < 1 || $port > 65535) {
             throw new CacheException('Redis port must be between 1 and 65535.');
@@ -89,6 +92,7 @@ class RedisCache implements CacheInterface
         $this->prefix = $prefix;
         $this->circuitFailureThreshold = $circuitFailureThreshold;
         $this->circuitRecoverySeconds = $circuitRecoverySeconds;
+        $this->failOpen = $failOpen;
         try {
             if (!$this->redis->connect($host, $port, $timeout)) {
                 throw new CacheException("Cannot connect to Redis at {$host}:{$port}.");
@@ -429,7 +433,14 @@ class RedisCache implements CacheInterface
             throw new CacheException('Redis cache TTL must be greater than zero.', $key);
         }
 
-        $cached = $this->get($key);
+        try {
+            $cached = $this->get($key);
+        } catch (CacheException $e) {
+            if ($this->failOpen) {
+                return $resolver();
+            }
+            throw $e;
+        }
         if ($cached !== null) {
             ++$this->stats['hits'];
             return $cached;
@@ -465,6 +476,9 @@ class RedisCache implements CacheInterface
 
             return $value;
         } catch (RedisException $e) {
+            if ($this->failOpen) {
+                return $resolver();
+            }
             throw new CacheException('Redis error acquiring cache lock', $key, $e);
         } finally {
             if (isset($acquired) && $acquired) {
@@ -490,7 +504,14 @@ class RedisCache implements CacheInterface
             throw new CacheException('Redis stale cache TTLs must be greater than zero.', $key);
         }
 
-        $cached = $this->get($key);
+        try {
+            $cached = $this->get($key);
+        } catch (CacheException $e) {
+            if ($this->failOpen) {
+                return $resolver();
+            }
+            throw $e;
+        }
         $now = time();
         if (is_array($cached)
             && array_key_exists('value', $cached)
@@ -515,6 +536,11 @@ class RedisCache implements CacheInterface
                     ++$this->stats['refreshes'];
                     $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
                     return $value;
+                } catch (RedisException $e) {
+                    if ($this->failOpen) {
+                        return $cached['value'];
+                    }
+                    throw new CacheException('Redis error refreshing stale cache', $key, $e);
                 } finally {
                     $this->releaseLock($lockKey, $token);
                 }
@@ -538,6 +564,11 @@ class RedisCache implements CacheInterface
             ++$this->stats['refreshes'];
             $this->setStaleValue($key, $value, $ttl, $staleTtl, $tags);
             return $value;
+        } catch (RedisException $e) {
+            if ($this->failOpen) {
+                return $resolver();
+            }
+            throw new CacheException('Redis error acquiring stale cache lock', $key, $e);
         } finally {
             $this->releaseLock($lockKey, $token);
         }

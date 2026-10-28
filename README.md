@@ -1187,6 +1187,17 @@ $cache->resetCircuit();
 
 Quando o circuito está aberto, a aplicação pode usar um fallback sem cache e tentar novamente após a janela de recuperação.
 
+Para que `remember()` e `rememberStale()` executem o resolver quando o Redis estiver indisponível, habilite `failOpen`:
+
+```php
+$cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
+    host: '127.0.0.1',
+    failOpen: true,
+);
+```
+
+O modo padrão é `failOpen: false`, preservando o comportamento fail-closed e propagando `CacheException` para que a aplicação decida o fallback explicitamente.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php

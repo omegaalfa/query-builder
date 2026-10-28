@@ -250,6 +250,29 @@ final class RedisCacheConfigurationTest extends TestCase
         self::assertSame('closed', $cache->circuitState()['state']);
     }
 
+    public function testRememberUsesResolverWhenFailOpenAndRedisFails(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())
+            ->method('get')
+            ->willThrowException(new RedisException('connection refused'));
+        $cache = $this->cacheWithRedis($redis, failOpen: true);
+
+        self::assertSame('fallback', $cache->remember('item', 30, static fn(): string => 'fallback'));
+    }
+
+    public function testRememberStillThrowsWhenFailClosedAndRedisFails(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())
+            ->method('get')
+            ->willThrowException(new RedisException('connection refused'));
+        $cache = $this->cacheWithRedis($redis);
+
+        $this->expectException(CacheException::class);
+        $cache->remember('item', 30, static fn(): string => 'unused');
+    }
+
     public function testSetUsesPrefixedKeyJsonAndTtl(): void
     {
         $redis = $this->redisMock();
@@ -294,7 +317,7 @@ final class RedisCacheConfigurationTest extends TestCase
         return $this->createMock(Redis::class);
     }
 
-    private function cacheWithRedis(Redis $redis): RedisCache
+    private function cacheWithRedis(Redis $redis, bool $failOpen = false): RedisCache
     {
         $reflection = new ReflectionClass(RedisCache::class);
         $cache = $reflection->newInstanceWithoutConstructor();
@@ -302,6 +325,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $reflection->getProperty('prefix')->setValue($cache, 'test:');
         $reflection->getProperty('circuitFailureThreshold')->setValue($cache, 3);
         $reflection->getProperty('circuitRecoverySeconds')->setValue($cache, 30);
+        $reflection->getProperty('failOpen')->setValue($cache, $failOpen);
 
         return $cache;
     }
