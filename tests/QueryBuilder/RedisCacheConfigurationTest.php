@@ -39,7 +39,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())->method('mGet')
             ->with(['test:false', 'test:zero', 'test:empty'])
             ->willReturn([json_encode(false), json_encode(0), json_encode('')]);
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         self::assertSame(
             ['false' => false, 'zero' => 0, 'empty' => ''],
@@ -53,7 +53,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())->method('mGet')
             ->with(['test:missing', 'test:present'])
             ->willReturn([false, json_encode(['id' => 1])]);
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         self::assertSame(['present' => ['id' => 1]], $cache->getMultiple(['missing', 'present']));
     }
@@ -73,7 +73,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())
             ->method('mGet')
             ->willThrowException(new RedisException('connection lost'));
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         $this->expectException(CacheException::class);
         $this->expectExceptionMessage('Redis error getting multiple keys');
@@ -188,7 +188,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())
             ->method('ping')
             ->willThrowException(new RedisException('connection refused'));
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         $health = $cache->health();
 
@@ -201,7 +201,7 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $redis->expects(self::once())->method('ping')->willReturn(true);
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         self::assertTrue($cache->ping());
     }
@@ -215,7 +215,7 @@ final class RedisCacheConfigurationTest extends TestCase
                 ++$calls;
                 throw new RedisException('connection lost');
             });
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         for ($attempt = 0; $attempt < 3; ++$attempt) {
             try {
@@ -236,7 +236,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis = $this->redisMock();
         $redis->expects(self::exactly(3))->method('get')
             ->willThrowException(new RedisException('connection lost'));
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         for ($attempt = 0; $attempt < 3; ++$attempt) {
             try {
@@ -256,7 +256,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())
             ->method('get')
             ->willThrowException(new RedisException('connection refused'));
-        $cache = $this->cacheWithRedis($redis, failOpen: true);
+        $cache = $this->cacheWithRedis($redis, failOpen: true, retryAttempts: 0);
 
         self::assertSame('fallback', $cache->remember('item', 30, static fn(): string => 'fallback'));
     }
@@ -267,7 +267,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())
             ->method('get')
             ->willThrowException(new RedisException('connection refused'));
-        $cache = $this->cacheWithRedis($redis);
+        $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
         $this->expectException(CacheException::class);
         $cache->remember('item', 30, static fn(): string => 'unused');
@@ -280,7 +280,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())->method('set')->willReturn(true);
         $redis->expects(self::once())->method('setex')->willThrowException(new RedisException('write failed'));
         $redis->expects(self::once())->method('eval')->willReturn(1);
-        $cache = $this->cacheWithRedis($redis, failOpen: true);
+        $cache = $this->cacheWithRedis($redis, failOpen: true, retryAttempts: 0);
 
         self::assertSame('resolved', $cache->remember('item', 30, static fn(): string => 'resolved'));
         self::assertSame(1, $cache->getStats()['fallbacks']);
@@ -290,7 +290,7 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $redis->expects(self::once())->method('mGet')->willThrowException(new RedisException('read failed'));
-        $cache = $this->cacheWithRedis($redis, failOpen: true);
+        $cache = $this->cacheWithRedis($redis, failOpen: true, retryAttempts: 0);
 
         self::assertSame([], $cache->getMultiple(['item']));
         self::assertSame(1, $cache->getStats()['fallbacks']);
@@ -364,7 +364,11 @@ final class RedisCacheConfigurationTest extends TestCase
         return $this->createMock(Redis::class);
     }
 
-    private function cacheWithRedis(Redis $redis, bool $failOpen = false): RedisCache
+    private function cacheWithRedis(
+        Redis $redis,
+        bool $failOpen = false,
+        int $retryAttempts = 2,
+    ): RedisCache
     {
         $reflection = new ReflectionClass(RedisCache::class);
         $cache = $reflection->newInstanceWithoutConstructor();
@@ -373,7 +377,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $reflection->getProperty('circuitFailureThreshold')->setValue($cache, 3);
         $reflection->getProperty('circuitRecoverySeconds')->setValue($cache, 30);
         $reflection->getProperty('failOpen')->setValue($cache, $failOpen);
-        $reflection->getProperty('retryAttempts')->setValue($cache, 2);
+        $reflection->getProperty('retryAttempts')->setValue($cache, $retryAttempts);
         $reflection->getProperty('retryDelayMs')->setValue($cache, 0);
         $reflection->getProperty('retryBackoffMultiplier')->setValue($cache, 2.0);
 
