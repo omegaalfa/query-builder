@@ -156,6 +156,15 @@ final class RedisCacheIntegrationTest extends TestCase
         );
     }
 
+    public function testRedisHealthReportsAvailabilityAndLatency(): void
+    {
+        $health = $this->cache->health();
+
+        self::assertTrue($health['available']);
+        self::assertGreaterThanOrEqual(0.0, $health['latency_ms']);
+        self::assertTrue($this->cache->ping());
+    }
+
     public function testExpirationRemovesValueFromRedis(): void
     {
         $this->cache->set('short-lived', 'value', 1);

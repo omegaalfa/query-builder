@@ -1159,6 +1159,19 @@ $cache->resetStats();
 
 Essas métricas não são persistidas no Redis e não incluem valores, SQL ou credenciais.
 
+Para health checks, use `health()` quando precisar da latência e de uma mensagem de erro, ou `ping()` quando apenas o status booleano for necessário:
+
+```php
+$health = $cache->health();
+// ['available' => true, 'latency_ms' => 0.42]
+
+if (!$cache->ping()) {
+    // ativar fallback ou sinalizar indisponibilidade
+}
+```
+
+Falhas de conexão retornam `available: false` e não lançam exceção nesses métodos.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php

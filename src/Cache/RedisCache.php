@@ -242,6 +242,34 @@ class RedisCache implements CacheInterface
         }
     }
 
+    /**
+     * Verifica a disponibilidade do Redis sem propagar falhas de conexão.
+     *
+     * @return array{available: bool, latency_ms: float, error?: string}
+     */
+    public function health(): array
+    {
+        $startedAt = microtime(true);
+        try {
+            $available = $this->redis->ping() !== false;
+            return [
+                'available' => $available,
+                'latency_ms' => round((microtime(true) - $startedAt) * 1_000, 3),
+            ];
+        } catch (RedisException $e) {
+            return [
+                'available' => false,
+                'latency_ms' => round((microtime(true) - $startedAt) * 1_000, 3),
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function ping(): bool
+    {
+        return $this->health()['available'];
+    }
+
     /** @return array<string, int> */
     public function getStats(): array
     {

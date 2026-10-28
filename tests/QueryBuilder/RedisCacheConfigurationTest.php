@@ -180,6 +180,30 @@ final class RedisCacheConfigurationTest extends TestCase
         $cache->remember('item', 0, static fn(): string => 'value');
     }
 
+    public function testHealthReportsRedisFailureWithoutThrowing(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())
+            ->method('ping')
+            ->willThrowException(new RedisException('connection refused'));
+        $cache = $this->cacheWithRedis($redis);
+
+        $health = $cache->health();
+
+        self::assertFalse($health['available']);
+        self::assertIsFloat($health['latency_ms']);
+        self::assertSame('connection refused', $health['error']);
+    }
+
+    public function testPingReflectsRedisAvailability(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('ping')->willReturn(true);
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertTrue($cache->ping());
+    }
+
     public function testSetUsesPrefixedKeyJsonAndTtl(): void
     {
         $redis = $this->redisMock();
