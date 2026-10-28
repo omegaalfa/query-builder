@@ -42,6 +42,7 @@
 - PHPStan foi elevado para o nível 6, com tipos explícitos para parâmetros, propriedades e retornos iteráveis.
 - O CI agora executa Infection com PCOV em um job separado de mutation testing.
 - O CI passou a instalar `ext-redis` nos jobs de testes, qualidade e mutation testing, evitando que a cobertura do Redis seja ignorada.
+- Os jobs de testes e mutation testing passaram a iniciar Redis 7 como serviço para validar operações reais de cache, TTL e locks.
 - O gate de mutação considera apenas código coberto e exige MSI mínimo de 60%, reduzindo falsos negativos por código sem cobertura.
 - `composer test` executa PHPUnit sem exigir driver de cobertura.
 
@@ -54,6 +55,7 @@
 - Adicionados testes de configuração, serialização, valores falsos, `getMultiple()`, prefixos, TTL e falhas de limpeza do Redis.
 - Adicionados testes para cache hit, aquisição/liberação de lock, espera por outro processo e validação de TTL no `remember()`.
 - Adicionados testes para garantir a comparação do token e a não remoção de locks substituídos.
+- Adicionada suíte de integração Redis, com cobertura de leitura, exclusão, `mGet()`, TTL e `remember()`.
 
 ### Migração
 
