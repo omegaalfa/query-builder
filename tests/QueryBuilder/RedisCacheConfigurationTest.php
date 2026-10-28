@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Redis;
 use RedisException;
+use RuntimeException;
 
 final class RedisCacheConfigurationTest extends TestCase
 {
@@ -86,6 +87,73 @@ final class RedisCacheConfigurationTest extends TestCase
         $this->expectException(CacheException::class);
         $this->expectExceptionMessage('Failed to decode cached value');
         $cache->getMultiple(['item']);
+    }
+
+    public function testRememberReturnsCachedValueWithoutResolving(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('get')->with('test:item')->willReturn('{"value":1}');
+        $redis->expects(self::never())->method('set');
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertSame(['value' => 1], $cache->remember('item', 30, static function (): never {
+            throw new RuntimeException('resolver should not run on cache hit');
+        }));
+    }
+
+    public function testRememberLocksResolvesStoresAndReleasesTheKey(): void
+    {
+        $redis = $this->redisMock();
+        $token = null;
+        $redis->expects(self::exactly(2))->method('get')
+            ->willReturnCallback(function (string $key) use (&$token): string|false {
+                return $key === 'test:item' ? false : $token;
+            });
+        $redis->expects(self::once())->method('set')
+            ->with(
+                'test:item:lock',
+                self::isType('string'),
+                ['nx', 'ex' => 30],
+            )
+            ->willReturnCallback(function (string $key, string $value) use (&$token): bool {
+                $token = $value;
+                return true;
+            });
+        $redis->expects(self::once())->method('setex')
+            ->with('test:item', 30, '{"value":2}')
+            ->willReturn(true);
+        $redis->expects(self::once())->method('del')->with('test:item:lock');
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertSame(['value' => 2], $cache->remember('item', 30, static fn(): array => ['value' => 2]));
+    }
+
+    public function testRememberWaitsForAnotherProcessToPopulateTheValue(): void
+    {
+        $redis = $this->redisMock();
+        $reads = 0;
+        $redis->expects(self::exactly(2))->method('get')
+            ->willReturnCallback(function (string $key) use (&$reads): string|false {
+                ++$reads;
+                return $key === 'test:item' && $reads === 2 ? '"ready"' : false;
+            });
+        $redis->expects(self::once())->method('set')->willReturn(false);
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertSame('ready', $cache->remember('item', 30, static function (): never {
+            throw new RuntimeException('resolver should not run after another process fills cache');
+        }));
+    }
+
+    public function testRememberRejectsNonPositiveTtl(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::never())->method('get');
+        $cache = $this->cacheWithRedis($redis);
+
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessage('TTL must be greater than zero');
+        $cache->remember('item', 0, static fn(): string => 'value');
     }
 
     public function testSetUsesPrefixedKeyJsonAndTtl(): void

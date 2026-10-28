@@ -22,6 +22,7 @@
 - `RedisCache::getMultiple()` agora preserva valores falsos, zero e strings vazias; apenas chaves ausentes são omitidas.
 - `RedisCache::clear()` converte falhas do Redis em `CacheException`.
 - `RedisCache::getMultiple()` passou a usar `mGet()` em uma única operação, reduzindo round-trips sem alterar o tratamento de valores válidos.
+- Adicionado `RedisCache::remember()` com lock distribuído curto para reduzir cache stampede após expiração de chaves.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -49,6 +50,7 @@
 - Corrigido o teste de locale do PgVector para PHP 8.5.
 - Removido o uso de `Reflection::setAccessible()` dos testes.
 - Adicionados testes de configuração, serialização, valores falsos, `getMultiple()`, prefixos, TTL e falhas de limpeza do Redis.
+- Adicionados testes para cache hit, aquisição/liberação de lock, espera por outro processo e validação de TTL no `remember()`.
 
 ### Migração
 

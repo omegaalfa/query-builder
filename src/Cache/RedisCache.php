@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder\Cache;
 
+use Closure;
 use JsonException;
 use Omegaalfa\QueryBuilder\Exceptions\CacheException;
 use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
@@ -14,6 +15,10 @@ use RedisException;
 
 class RedisCache implements CacheInterface
 {
+
+    private const int LOCK_WAIT_ATTEMPTS = 5;
+
+    private const int LOCK_WAIT_MICROSECONDS = 10_000;
 
     /**
      * @var Redis
@@ -205,6 +210,72 @@ class RedisCache implements CacheInterface
             throw new CacheException("Failed to decode cached value", $key, $e);
         } catch (RedisException $e) {
             throw new CacheException("Redis error getting key", $key, $e);
+        }
+    }
+
+    /**
+     * Recupera um valor do cache ou calcula e salva o resultado uma única vez.
+     *
+     * Um lock curto por chave reduz o cache stampede quando uma entrada expira.
+     * Se outro processo possuir o lock, aguarda uma pequena janela pelo valor
+     * preenchido e usa o resolver como fallback caso ele não apareça.
+     *
+     * @param Closure(): mixed $resolver
+     */
+    public function remember(string $key, int $ttl, Closure $resolver): mixed
+    {
+        if ($ttl <= 0) {
+            throw new CacheException('Redis cache TTL must be greater than zero.', $key);
+        }
+
+        $cached = $this->get($key);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $lockKey = $this->prefixKey($key . ':lock');
+        $token = bin2hex(random_bytes(16));
+
+        try {
+            $acquired = $this->redis->set(
+                $lockKey,
+                $token,
+                ['nx', 'ex' => min(max($ttl, 1), 30)],
+            );
+
+            if (!$acquired) {
+                for ($attempt = 0; $attempt < self::LOCK_WAIT_ATTEMPTS; ++$attempt) {
+                    usleep(self::LOCK_WAIT_MICROSECONDS);
+                    $cached = $this->get($key);
+                    if ($cached !== null) {
+                        return $cached;
+                    }
+                }
+
+                return $resolver();
+            }
+
+            $value = $resolver();
+            $this->set($key, $value, $ttl);
+
+            return $value;
+        } catch (RedisException $e) {
+            throw new CacheException('Redis error acquiring cache lock', $key, $e);
+        } finally {
+            if (isset($acquired) && $acquired) {
+                $this->releaseLock($lockKey, $token);
+            }
+        }
+    }
+
+    private function releaseLock(string $lockKey, string $token): void
+    {
+        try {
+            if ($this->redis->get($lockKey) === $token) {
+                $this->redis->del($lockKey);
+            }
+        } catch (RedisException) {
+            // O lock expira automaticamente; falha na limpeza não invalida o resultado.
         }
     }
 }

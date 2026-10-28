@@ -1124,6 +1124,14 @@ $cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
 ```
 
 `getMultiple()` usa uma única operação `mGet()` para reduzir round-trips ao Redis, preserva valores válidos como `false`, `0` e `''` e omite somente chaves ausentes. Erros de conexão, serialização e limpeza são convertidos em `CacheException`.
+
+Para evitar o recálculo simultâneo quando uma chave expira, use `remember()`. Ele aplica um lock distribuído curto, aguarda o preenchimento feito por outro processo e usa o resolver como fallback:
+
+```php
+$value = $cache->remember('dashboard:summary', 300, static function (): array {
+    return $repository->loadSummary();
+});
+```
              ->execute();
 ```
 
