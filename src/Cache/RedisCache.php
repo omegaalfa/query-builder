@@ -99,6 +99,42 @@ class RedisCache implements CacheInterface
         return $this->prefix . $key;
     }
 
+    /** @param array<int, string> $tags @return list<string> */
+    private function normalizeTags(array $tags): array
+    {
+        $normalized = [];
+        foreach ($tags as $tag) {
+            $tag = trim($tag);
+            if ($tag !== '') {
+                $normalized[] = $tag;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    /** @param list<string> $tags */
+    private function replaceTagAssociations(string $key, array $tags): void
+    {
+        $cacheKey = $this->prefixKey($key);
+        $keyTagsKey = $this->prefix . 'key-tags:' . $key;
+        $oldTags = $this->redis->sMembers($keyTagsKey);
+
+        if (is_array($oldTags)) {
+            foreach ($oldTags as $oldTag) {
+                $this->redis->sRem($this->prefix . 'tag:' . $oldTag, $cacheKey);
+            }
+        }
+        $this->redis->del($keyTagsKey);
+
+        foreach ($tags as $tag) {
+            if (!$this->redis->sAdd($this->prefix . 'tag:' . $tag, $cacheKey)
+                || !$this->redis->sAdd($keyTagsKey, $tag)) {
+                throw new CacheException("Failed to index cache tag", $tag);
+            }
+        }
+    }
+
     /**
      * @param string $key
      * @param mixed $value
@@ -106,7 +142,8 @@ class RedisCache implements CacheInterface
      *
      * @return void
      */
-    public function set(string $key, mixed $value, int $ttl): void
+    /** @param array<int, string> $tags */
+    public function set(string $key, mixed $value, int $ttl, array $tags = []): void
     {
         try {
             $encoded = json_encode($value, JSON_THROW_ON_ERROR);
@@ -114,6 +151,8 @@ class RedisCache implements CacheInterface
             if (!$this->redis->setex($this->prefixKey($key), $ttl, $encoded)) {
                 throw new CacheException("Failed to set cache value", $key);
             }
+
+            $this->replaceTagAssociations($key, $this->normalizeTags($tags));
         } catch (JsonException $e) {
             throw new CacheException("Failed to encode value for cache", $key, $e);
         } catch (RedisException $e) {
@@ -129,9 +168,33 @@ class RedisCache implements CacheInterface
     public function delete(string $key): void
     {
         try {
+            $this->replaceTagAssociations($key, []);
             $this->redis->del($this->prefixKey($key));
         } catch (RedisException $e) {
             throw new CacheException("Redis error deleting key", $key, $e);
+        }
+    }
+
+    /** @param array<int, string> $tags */
+    public function flushTags(array $tags): bool
+    {
+        try {
+            foreach ($this->normalizeTags($tags) as $tag) {
+                $tagKey = $this->prefix . 'tag:' . $tag;
+                $keys = $this->redis->sMembers($tagKey);
+                if (is_array($keys) && $keys !== []) {
+                    foreach ($keys as $cacheKey) {
+                        $key = substr($cacheKey, strlen($this->prefix));
+                        $this->replaceTagAssociations($key, []);
+                    }
+                    $this->redis->del(...$keys);
+                }
+                $this->redis->del($tagKey);
+            }
+
+            return true;
+        } catch (RedisException $e) {
+            throw new CacheException('Redis error flushing cache tags', implode(',', $tags), $e);
         }
     }
 

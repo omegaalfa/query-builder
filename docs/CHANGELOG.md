@@ -24,6 +24,7 @@
 - `RedisCache::getMultiple()` passou a usar `mGet()` em uma única operação, reduzindo round-trips sem alterar o tratamento de valores válidos.
 - Adicionado `RedisCache::remember()` com lock distribuído curto para reduzir cache stampede após expiração de chaves.
 - A liberação do lock do `remember()` passou a ser atômica via Lua, impedindo a remoção de locks reassumidos por outro processo.
+- Adicionada invalidação por tags com `RedisCache::flushTags()` e tags opcionais em `RedisCache::set()`.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -56,6 +57,7 @@
 - Adicionados testes para cache hit, aquisição/liberação de lock, espera por outro processo e validação de TTL no `remember()`.
 - Adicionados testes para garantir a comparação do token e a não remoção de locks substituídos.
 - Adicionada suíte de integração Redis, com cobertura de leitura, exclusão, `mGet()`, TTL e `remember()`.
+- Adicionados testes de associação, deduplicação e invalidação de entradas por tags.
 
 ### Migração
 

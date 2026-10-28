@@ -1134,6 +1134,15 @@ $value = $cache->remember('dashboard:summary', 300, static function (): array {
 ```
 
 A liberação do lock é feita por um script Lua atômico que compara o token do proprietário antes de remover a chave. Assim, um processo atrasado não remove o lock que já foi assumido por outro processo.
+
+Também é possível associar entradas a tags e invalidá-las em conjunto:
+
+```php
+$cache->set('user:1', $user, 300, tags: ['users', 'tenant:10']);
+$cache->flushTags(['users']);
+```
+
+Tags vazias são ignoradas e duplicatas são removidas. A invalidação remove todas as chaves indexadas pelas tags informadas.
              ->execute();
 ```
 

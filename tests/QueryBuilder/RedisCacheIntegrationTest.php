@@ -78,6 +78,35 @@ final class RedisCacheIntegrationTest extends TestCase
         self::assertSame(1, $calls);
     }
 
+    public function testFlushTagsRemovesAssociatedValues(): void
+    {
+        $this->cache->set('user:1', ['id' => 1], 30, ['users', 'tenant:10']);
+        $this->cache->set('user:2', ['id' => 2], 30, ['users']);
+
+        self::assertTrue($this->cache->flushTags(['users']));
+        self::assertNull($this->cache->get('user:1'));
+        self::assertNull($this->cache->get('user:2'));
+    }
+
+    public function testEmptyAndDuplicateTagsAreIgnored(): void
+    {
+        $this->cache->set('item', 'value', 30, ['', 'items', 'items', '  ']);
+
+        self::assertTrue($this->cache->flushTags(['items']));
+        self::assertNull($this->cache->get('item'));
+    }
+
+    public function testReplacingTagsRemovesTheOldAssociation(): void
+    {
+        $this->cache->set('item', 'value', 30, ['old']);
+        $this->cache->set('item', 'value', 30, ['new']);
+
+        self::assertTrue($this->cache->flushTags(['old']));
+        self::assertSame('value', $this->cache->get('item'));
+        self::assertTrue($this->cache->flushTags(['new']));
+        self::assertNull($this->cache->get('item'));
+    }
+
     public function testExpirationRemovesValueFromRedis(): void
     {
         $this->cache->set('short-lived', 'value', 1);
