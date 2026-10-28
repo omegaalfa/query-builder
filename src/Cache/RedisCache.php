@@ -20,6 +20,13 @@ class RedisCache implements CacheInterface
 
     private const int LOCK_WAIT_MICROSECONDS = 10_000;
 
+    private const string RELEASE_LOCK_SCRIPT = <<<'LUA'
+        if redis.call('get', KEYS[1]) == ARGV[1] then
+            return redis.call('del', KEYS[1])
+        end
+        return 0
+        LUA;
+
     /**
      * @var Redis
      */
@@ -271,9 +278,7 @@ class RedisCache implements CacheInterface
     private function releaseLock(string $lockKey, string $token): void
     {
         try {
-            if ($this->redis->get($lockKey) === $token) {
-                $this->redis->del($lockKey);
-            }
+            $this->redis->eval(self::RELEASE_LOCK_SCRIPT, [$lockKey, $token], 1);
         } catch (RedisException) {
             // O lock expira automaticamente; falha na limpeza não invalida o resultado.
         }

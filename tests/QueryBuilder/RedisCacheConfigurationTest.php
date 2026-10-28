@@ -105,10 +105,7 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $token = null;
-        $redis->expects(self::exactly(2))->method('get')
-            ->willReturnCallback(function (string $key) use (&$token): string|false {
-                return $key === 'test:item' ? false : $token;
-            });
+        $redis->expects(self::once())->method('get')->with('test:item')->willReturn(false);
         $redis->expects(self::once())->method('set')
             ->with(
                 'test:item:lock',
@@ -122,10 +119,37 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::once())->method('setex')
             ->with('test:item', 30, '{"value":2}')
             ->willReturn(true);
-        $redis->expects(self::once())->method('del')->with('test:item:lock');
+        $redis->expects(self::once())->method('eval')
+            ->with(
+                self::stringContains("redis.call('get', KEYS[1]) == ARGV[1]"),
+                self::callback(static fn(array $arguments): bool => $arguments[0] === 'test:item:lock'
+                    && is_string($arguments[1])
+                    && strlen($arguments[1]) === 32),
+                1,
+            )
+            ->willReturn(1);
         $cache = $this->cacheWithRedis($redis);
 
         self::assertSame(['value' => 2], $cache->remember('item', 30, static fn(): array => ['value' => 2]));
+    }
+
+    public function testRememberDoesNotDeleteAReplacedLock(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('get')->with('test:item')->willReturn(false);
+        $redis->expects(self::once())->method('set')->willReturn(true);
+        $redis->expects(self::once())->method('setex')->willReturn(true);
+        $redis->expects(self::once())->method('eval')
+            ->with(
+                self::stringContains('ARGV[1]'),
+                self::isType('array'),
+                1,
+            )
+            ->willReturn(0);
+        $redis->expects(self::never())->method('del');
+        $cache = $this->cacheWithRedis($redis);
+
+        self::assertSame('value', $cache->remember('item', 30, static fn(): string => 'value'));
     }
 
     public function testRememberWaitsForAnotherProcessToPopulateTheValue(): void

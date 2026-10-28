@@ -23,6 +23,7 @@
 - `RedisCache::clear()` converte falhas do Redis em `CacheException`.
 - `RedisCache::getMultiple()` passou a usar `mGet()` em uma única operação, reduzindo round-trips sem alterar o tratamento de valores válidos.
 - Adicionado `RedisCache::remember()` com lock distribuído curto para reduzir cache stampede após expiração de chaves.
+- A liberação do lock do `remember()` passou a ser atômica via Lua, impedindo a remoção de locks reassumidos por outro processo.
 - Operadores textuais como `EQUALS` agora são normalizados tanto pelo nome do enum quanto pelo valor SQL (`=`), inclusive em execução aleatória dos testes.
 
 ### Conexão e transações
@@ -51,6 +52,7 @@
 - Removido o uso de `Reflection::setAccessible()` dos testes.
 - Adicionados testes de configuração, serialização, valores falsos, `getMultiple()`, prefixos, TTL e falhas de limpeza do Redis.
 - Adicionados testes para cache hit, aquisição/liberação de lock, espera por outro processo e validação de TTL no `remember()`.
+- Adicionados testes para garantir a comparação do token e a não remoção de locks substituídos.
 
 ### Migração
 

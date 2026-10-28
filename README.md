@@ -1132,6 +1132,8 @@ $value = $cache->remember('dashboard:summary', 300, static function (): array {
     return $repository->loadSummary();
 });
 ```
+
+A liberação do lock é feita por um script Lua atômico que compara o token do proprietário antes de remover a chave. Assim, um processo atrasado não remove o lock que já foi assumido por outro processo.
              ->execute();
 ```
 
