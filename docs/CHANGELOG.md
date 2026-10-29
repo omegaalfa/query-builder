@@ -16,6 +16,7 @@
 - Adicionado `selectRaw(string $table, string|array $expressions)`.
 - Adicionado `with()` para CTEs com SQL raw ou subquery builder, incluindo remapeamento seguro de placeholders.
 - Adicionados `whereExists()`, `whereNotExists()`, `whereInSubquery()`, `whereNotInSubquery()` e `fromSubquery()`.
+- Adicionada paginação por cursor com `paginateCursor()` e `CursorPaginationDTO`.
 - Adicionado `whereGroup(Closure $callback)` para grupos de condições compostas.
 - `having()` aceita expressões como `COUNT(id)` e `SUM(price)`.
 - Agregadores executam uma cópia do builder e não alteram a query original.
@@ -70,6 +71,7 @@
 - Adicionada suíte de integração Redis, com cobertura de leitura, exclusão, `mGet()`, TTL e `remember()`.
 - Adicionados testes de associação, deduplicação e invalidação de entradas por tags.
 - Adicionados testes de subconsultas em filtros, `fromSubquery()` e remapeamento de bindings.
+- Adicionados testes de ordenação, lookahead e validação de cursor.
 - Adicionados testes de cache fresco, refresh stale e validação das janelas do `rememberStale()`.
 - Adicionado teste dos contadores e da reinicialização das métricas do cache.
 - Adicionados testes de health check com Redis disponível e indisponível.

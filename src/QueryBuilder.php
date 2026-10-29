@@ -184,6 +184,36 @@ final class QueryBuilder extends QueryBuilderOperations
 
             $isCacheEnabled = $this->cacheTtl > 0 && $this->cache !== null;
             $data = $this->streamData($stmt);
+            if ($this->cursorPagination !== null) {
+                $rows = iterator_to_array($data, false);
+                $hasMore = count($rows) > $this->cursorPagination['perPage'];
+                if ($hasMore) {
+                    array_pop($rows);
+                }
+                $nextCursor = null;
+                if ($hasMore && $rows !== []) {
+                    $column = $this->cursorPagination['column'];
+                    $column = str_contains($column, '.') ? substr($column, strrpos($column, '.') + 1) : $column;
+                    $value = $rows[array_key_last($rows)][$column] ?? null;
+                    if ($value !== null) {
+                        try {
+                            $nextCursor = base64_encode(json_encode($value, JSON_THROW_ON_ERROR));
+                        } catch (\JsonException $e) {
+                            throw new QueryException(
+                                message: 'Unable to encode cursor.',
+                                previousException: $e
+                            );
+                        }
+                    }
+                }
+                $pagination = new CursorPaginationDTO(
+                    $this->cursorPagination['perPage'],
+                    $nextCursor,
+                    $hasMore,
+                );
+                $count = count($rows);
+                $data = $rows;
+            }
             if ($isCacheEnabled) {
                 $result = new QueryResultDTO(iterator_to_array($data, false), $count, $pagination, $this->insertId);
                 $this->saveToCache($result);

@@ -88,6 +88,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /** @var list<array{alias: string, sql: string}> */
     protected array $ctes = [];
 
+    /** @var array{perPage: int, column: string}|null */
+    protected ?array $cursorPagination = null;
+
 
     /**
      * @var bool
@@ -312,6 +315,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->table = null;
         $this->limit = null;
         $this->paginationRequested = false;
+        $this->cursorPagination = null;
         $this->insertColumns = [];
         $this->conflictColumns = null;
         $this->conflictActionDefined = false;
@@ -1003,6 +1007,33 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->limit = [$perPage, ($currentPage - 1) * $perPage];
         $this->paginationRequested = true;
 
+        return $this;
+    }
+
+    public function paginateCursor(int $perPage, mixed $after = null, string $column = 'id'): self
+    {
+        if ($perPage < 1) {
+            throw new QueryException('Cursor page size must be greater than zero.');
+        }
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_.]*$/D', $column)) {
+            throw new QueryException('Invalid cursor column: ' . $column);
+        }
+        if (is_string($after) && $after !== '') {
+            $decoded = base64_decode($after, true);
+            if ($decoded === false) {
+                throw new QueryException('Invalid cursor.');
+            }
+            $after = json_decode($decoded, true);
+            if (json_last_error() !== JSON_ERROR_NONE || (!is_int($after) && !is_float($after) && !is_string($after))) {
+                throw new QueryException('Invalid cursor.');
+            }
+        }
+        $this->cursorPagination = ['perPage' => $perPage, 'column' => $column];
+        if ($after !== null) {
+            $this->where($column, SqlOperator::GREATER_THAN, $after);
+        }
+        $this->orderBy($column, OrderDirection::ASC);
+        $this->limit($perPage + 1);
         return $this;
     }
 

@@ -1868,6 +1868,19 @@ $recent = $builder->fromSubquery(
 
 Também estão disponíveis `whereNotExists()` e `whereNotInSubquery()`. Os bindings das subconsultas são remapeados para os placeholders da consulta principal.
 
+Para grandes volumes, use paginação por cursor:
+
+```php
+$page = $builder
+    ->select('users')
+    ->paginateCursor(perPage: 50, after: $cursor, column: 'id')
+    ->execute();
+
+$nextCursor = $page->pagination?->nextCursor;
+```
+
+O builder busca uma linha adicional para calcular `hasMore`, ordena pelo campo informado e devolve o próximo cursor opaco em `CursorPaginationDTO`.
+
 ### Agregadores
 
 `count()`, `sum()`, `avg()`, `min()` e `max()` executam uma cópia interna do builder. A query original permanece disponível depois da agregação.

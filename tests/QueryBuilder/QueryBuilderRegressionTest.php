@@ -144,6 +144,34 @@ final class QueryBuilderRegressionTest extends TestCase
         self::assertStringContainsString('WHERE NOT EXISTS (SELECT 1 FROM bans WHERE bans.user_id = users.id)', $sql);
     }
 
+    public function testCursorPaginationAddsOrderedLookaheadLimit(): void
+    {
+        $firstPage = (new QueryBuilderOperations())
+            ->select('users')
+            ->paginateCursor(2, null, 'id')
+            ->getQuerySql();
+        $nextPage = (new QueryBuilderOperations())
+            ->select('users')
+            ->paginateCursor(2, base64_encode('2'), 'id')
+            ->getQuerySql();
+
+        self::assertSame('SELECT * FROM `users` ORDER BY `id` ASC LIMIT 0 , 3', $firstPage);
+        self::assertStringContainsString('WHERE `id` > :param0', $nextPage);
+        self::assertStringContainsString('LIMIT 0 , 3', $nextPage);
+    }
+
+    public function testCursorPaginationRejectsInvalidCursorColumnAndCursor(): void
+    {
+        $this->expectException(QueryException::class);
+        (new QueryBuilderOperations())->select('users')->paginateCursor(10, null, 'id; DROP TABLE users');
+    }
+
+    public function testCursorPaginationRejectsInvalidEncodedCursor(): void
+    {
+        $this->expectException(QueryException::class);
+        (new QueryBuilderOperations())->select('users')->paginateCursor(10, 'not-a-cursor');
+    }
+
     public function testRawPositionalAndNamedParametersAreNormalized(): void
     {
         $builder = new QueryBuilderOperations();

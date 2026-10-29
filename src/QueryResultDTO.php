@@ -10,13 +10,13 @@ readonly class QueryResultDTO
     /**
      * @param iterable<mixed> $data
      * @param int $count
-     * @param PaginationDTO|null $pagination
+     * @param PaginationDTO|CursorPaginationDTO|null $pagination
      * @param false|string $insertId Present only when returnLastInsertId() was requested.
      */
     public function __construct(
         public iterable       $data,
         public int            $count,
-        public ?PaginationDTO $pagination = null,
+        public PaginationDTO|CursorPaginationDTO|null $pagination = null,
         public false|string   $insertId = false
     ){}
 }
