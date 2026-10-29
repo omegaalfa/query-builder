@@ -233,6 +233,21 @@ interface QueryBuilderInterface
      */
     public function with(string $alias, Closure|string|QueryBuilderInterface $query, array $params = []): self;
 
+    /** @param array<int|string, mixed> $params */
+    public function whereExists(Closure|string|QueryBuilderInterface $subquery, array $params = []): self;
+
+    /** @param array<int|string, mixed> $params */
+    public function whereNotExists(Closure|string|QueryBuilderInterface $subquery, array $params = []): self;
+
+    /** @param array<int|string, mixed> $params */
+    public function whereInSubquery(string $column, Closure|string|QueryBuilderInterface $subquery, array $params = []): self;
+
+    /** @param array<int|string, mixed> $params */
+    public function whereNotInSubquery(string $column, Closure|string|QueryBuilderInterface $subquery, array $params = []): self;
+
+    /** @param array<int|string, mixed> $params */
+    public function fromSubquery(string $alias, Closure|string|QueryBuilderInterface $subquery, array $params = []): self;
+
     /**
      * Adiciona uma condição OR WHERE.
      *

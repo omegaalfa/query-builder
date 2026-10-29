@@ -1851,6 +1851,23 @@ $query
 
 O alias da CTE aceita somente identificadores seguros. Para consultas compostas, uma closure também pode configurar um `QueryBuilderOperations`.
 
+Subconsultas podem ser usadas diretamente nos filtros ou como origem da consulta:
+
+```php
+$query
+    ->select('users')
+    ->whereExists('SELECT 1 FROM orders WHERE orders.user_id = users.id')
+    ->whereInSubquery('id', 'SELECT user_id FROM memberships WHERE active = ?', [1]);
+
+$recent = $builder->fromSubquery(
+    'recent_users',
+    'SELECT id, name FROM users WHERE created_at > ?',
+    ['2026-01-01'],
+);
+```
+
+Também estão disponíveis `whereNotExists()` e `whereNotInSubquery()`. Os bindings das subconsultas são remapeados para os placeholders da consulta principal.
+
 ### Agregadores
 
 `count()`, `sum()`, `avg()`, `min()` e `max()` executam uma cópia interna do builder. A query original permanece disponível depois da agregação.

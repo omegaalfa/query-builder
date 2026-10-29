@@ -135,6 +135,86 @@ class QueryBuilderOperations implements QueryBuilderInterface
         return $this;
     }
 
+    /** @param array<int|string, mixed> $params */
+    public function whereExists(Closure|string|QueryBuilderInterface $subquery, array $params = []): self
+    {
+        $this->where[] = 'EXISTS (' . $this->compileSubquery($subquery, $params) . ')';
+        return $this;
+    }
+
+    /** @param array<int|string, mixed> $params */
+    public function whereNotExists(Closure|string|QueryBuilderInterface $subquery, array $params = []): self
+    {
+        $this->where[] = 'NOT EXISTS (' . $this->compileSubquery($subquery, $params) . ')';
+        return $this;
+    }
+
+    /** @param array<int|string, mixed> $params */
+    public function whereInSubquery(
+        string $column,
+        Closure|string|QueryBuilderInterface $subquery,
+        array $params = [],
+    ): self {
+        $this->where[] = sprintf(
+            '%s IN (%s)',
+            $this->quoteIdentifier($column),
+            $this->compileSubquery($subquery, $params),
+        );
+        return $this;
+    }
+
+    /** @param array<int|string, mixed> $params */
+    public function whereNotInSubquery(
+        string $column,
+        Closure|string|QueryBuilderInterface $subquery,
+        array $params = [],
+    ): self {
+        $this->where[] = sprintf(
+            '%s NOT IN (%s)',
+            $this->quoteIdentifier($column),
+            $this->compileSubquery($subquery, $params),
+        );
+        return $this;
+    }
+
+    /** @param array<int|string, mixed> $params */
+    public function fromSubquery(
+        string $alias,
+        Closure|string|QueryBuilderInterface $subquery,
+        array $params = [],
+    ): self {
+        $this->assertSafeCteAlias($alias);
+        $this->resetOperationsState();
+        $this->table = $this->quoteIdentifier($alias);
+        $this->sql = [
+            'SELECT * FROM (' . $this->compileSubquery($subquery, $params) . ') AS ' . $this->table,
+        ];
+        return $this;
+    }
+
+    /** @param array<int|string, mixed> $params */
+    private function compileSubquery(
+        Closure|string|QueryBuilderInterface $query,
+        array $params = [],
+    ): string {
+        $subquery = $query instanceof Closure ? $query(new self()) : $query;
+        if (is_string($subquery)) {
+            $builder = new self();
+            $builder->raw($subquery, $params);
+            $subquery = $builder;
+        }
+        if (!$subquery instanceof self) {
+            throw new QueryException('Subquery must use the QueryBuilder implementation.');
+        }
+
+        $subquery->driver = $this->driver;
+        $sql = $subquery->getQuerySql();
+        foreach ($subquery->params as $placeholder => $value) {
+            $sql = str_replace($placeholder, $this->bindValue($value), $sql);
+        }
+        return $sql;
+    }
+
     private function assertSafeCteAlias(string $alias): void
     {
         if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $alias)) {

@@ -96,6 +96,54 @@ final class QueryBuilderRegressionTest extends TestCase
             ->with('users; DROP TABLE users', 'SELECT 1');
     }
 
+    public function testWhereExistsRemapsSubqueryBindings(): void
+    {
+        $builder = new QueryBuilderOperations();
+
+        $sql = $builder
+            ->select('users')
+            ->whereExists('SELECT 1 FROM orders WHERE orders.user_id = users.id AND total > ?', [100])
+            ->getQuerySql();
+
+        self::assertSame(
+            'SELECT * FROM `users` WHERE EXISTS (SELECT 1 FROM orders WHERE orders.user_id = users.id AND total > :param0)',
+            $sql,
+        );
+    }
+
+    public function testWhereInSubqueryAndFromSubqueryCompileSafely(): void
+    {
+        $inSql = (new QueryBuilderOperations())
+            ->select('users')
+            ->whereInSubquery('id', static function (QueryBuilderOperations $query): QueryBuilderOperations {
+                return $query->select('orders', ['user_id'])->where('status', '=', 'paid');
+            })
+            ->getQuerySql();
+
+        $fromSql = (new QueryBuilderOperations())
+            ->fromSubquery('recent', 'SELECT id, name FROM users WHERE active = ?', [1])
+            ->getQuerySql();
+
+        self::assertStringContainsString(
+            'WHERE `id` IN (SELECT `user_id` FROM `orders` WHERE `status` = :param0)',
+            $inSql,
+        );
+        self::assertSame(
+            'SELECT * FROM (SELECT id, name FROM users WHERE active = :param0) AS `recent`',
+            $fromSql,
+        );
+    }
+
+    public function testWhereNotExistsIsSupported(): void
+    {
+        $sql = (new QueryBuilderOperations())
+            ->select('users')
+            ->whereNotExists('SELECT 1 FROM bans WHERE bans.user_id = users.id')
+            ->getQuerySql();
+
+        self::assertStringContainsString('WHERE NOT EXISTS (SELECT 1 FROM bans WHERE bans.user_id = users.id)', $sql);
+    }
+
     public function testRawPositionalAndNamedParametersAreNormalized(): void
     {
         $builder = new QueryBuilderOperations();
