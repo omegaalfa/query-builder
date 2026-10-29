@@ -8,6 +8,7 @@ use Omegaalfa\QueryBuilder\Enums\SqlOperator;
 use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use Omegaalfa\QueryBuilder\QueryBuilderOperations;
+use Omegaalfa\QueryBuilder\Exceptions\QueryException;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PDO;
@@ -52,6 +53,47 @@ final class QueryBuilderRegressionTest extends TestCase
         $builder->select('users')->where('status', 'EQUALS', 1);
 
         self::assertStringContainsString('`status` = :param0', $builder->getQuerySql());
+    }
+
+    public function testWithBuildsCteAndRemapsSubqueryBindings(): void
+    {
+        $builder = new QueryBuilderOperations();
+
+        $sql = $builder
+            ->select('active_users')
+            ->with('active_users', 'SELECT id FROM users WHERE status = ?', [1])
+            ->getQuerySql();
+
+        self::assertSame(
+            'WITH `active_users` AS (SELECT id FROM users WHERE status = :param0) SELECT * FROM `active_users`',
+            $sql,
+        );
+    }
+
+    public function testWithAcceptsAConfiguredSubqueryBuilder(): void
+    {
+        $builder = new QueryBuilderOperations();
+
+        $sql = $builder
+            ->select('recent_users')
+            ->with('recent_users', static function (QueryBuilderOperations $query): QueryBuilderOperations {
+                return $query->select('users', ['id'])->where('created_at', '>', '2026-01-01');
+            })
+            ->getQuerySql();
+
+        self::assertStringContainsString(
+            'WITH `recent_users` AS (SELECT `id` FROM `users` WHERE `created_at` > :param0)',
+            $sql,
+        );
+    }
+
+    public function testWithRejectsUnsafeAliases(): void
+    {
+        $this->expectException(QueryException::class);
+
+        (new QueryBuilderOperations())
+            ->select('users')
+            ->with('users; DROP TABLE users', 'SELECT 1');
     }
 
     public function testRawPositionalAndNamedParametersAreNormalized(): void

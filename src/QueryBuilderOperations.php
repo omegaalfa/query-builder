@@ -85,6 +85,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /** @var array<int, mixed> */
     protected array $whereGroups = [];
 
+    /** @var list<array{alias: string, sql: string}> */
+    protected array $ctes = [];
+
 
     /**
      * @var bool
@@ -95,6 +98,48 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function cacheTags(array $tags): self
     {
         return $this;
+    }
+
+    /**
+     * Adiciona uma CTE usando outro builder, uma closure de configuração ou SQL confiável.
+     *
+     * @param Closure(self): self|string|self $query
+     * @param array<int|string, mixed> $params
+     */
+    public function with(string $alias, Closure|string|QueryBuilderInterface $query, array $params = []): self
+    {
+        $this->assertSafeCteAlias($alias);
+        $subquery = $query instanceof Closure ? $query(new self()) : $query;
+        if (is_string($subquery)) {
+            $builder = new self();
+            $builder->raw($subquery, $params);
+            $subquery = $builder;
+        }
+
+        if (!$subquery instanceof self) {
+            throw new QueryException('CTE query must use the QueryBuilder implementation.');
+        }
+
+        $subquery->driver = $this->driver;
+        $sql = $subquery->getQuerySql();
+        foreach ($subquery->params as $placeholder => $value) {
+            $replacement = $this->bindValue($value);
+            $sql = str_replace($placeholder, $replacement, $sql);
+        }
+
+        $this->ctes[] = [
+            'alias' => $this->quoteIdentifier($alias),
+            'sql' => $sql,
+        ];
+
+        return $this;
+    }
+
+    private function assertSafeCteAlias(string $alias): void
+    {
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $alias)) {
+            throw new QueryException('Invalid CTE alias: ' . $alias);
+        }
     }
 
     public function __clone(): void
@@ -997,7 +1042,15 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->whereGroups = [];
         $this->isOrGroup = false;
 
-        return implode(' ', $query);
+        $compiled = implode(' ', $query);
+        if ($this->ctes !== []) {
+            $compiled = 'WITH ' . implode(', ', array_map(
+                static fn (array $cte): string => sprintf('%s AS (%s)', $cte['alias'], $cte['sql']),
+                $this->ctes,
+            )) . ' ' . $compiled;
+        }
+
+        return $compiled;
     }
 
     protected function flushOrGroup(): void

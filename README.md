@@ -1839,6 +1839,18 @@ $query
     });
 ```
 
+### CTEs
+
+Use `with()` para adicionar CTEs com SQL confiável ou outro builder. Os parâmetros da subconsulta são remapeados automaticamente para evitar colisões:
+
+```php
+$query
+    ->select('active_users')
+    ->with('active_users', 'SELECT id FROM users WHERE status = ?', [1]);
+```
+
+O alias da CTE aceita somente identificadores seguros. Para consultas compostas, uma closure também pode configurar um `QueryBuilderOperations`.
+
 ### Agregadores
 
 `count()`, `sum()`, `avg()`, `min()` e `max()` executam uma cópia interna do builder. A query original permanece disponível depois da agregação.

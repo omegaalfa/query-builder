@@ -14,6 +14,7 @@
 ### API
 
 - Adicionado `selectRaw(string $table, string|array $expressions)`.
+- Adicionado `with()` para CTEs com SQL raw ou subquery builder, incluindo remapeamento seguro de placeholders.
 - Adicionado `whereGroup(Closure $callback)` para grupos de condições compostas.
 - `having()` aceita expressões como `COUNT(id)` e `SUM(price)`.
 - Agregadores executam uma cópia do builder e não alteram a query original.

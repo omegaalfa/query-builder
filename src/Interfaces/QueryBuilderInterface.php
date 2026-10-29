@@ -228,6 +228,12 @@ interface QueryBuilderInterface
     public function cacheTags(array $tags): self;
 
     /**
+     * @param Closure|string|QueryBuilderInterface $query
+     * @param array<int|string, mixed> $params
+     */
+    public function with(string $alias, Closure|string|QueryBuilderInterface $query, array $params = []): self;
+
+    /**
      * Adiciona uma condição OR WHERE.
      *
      * Exemplo: ->orWhere('nome', 'LIKE', '%botulismo%')
