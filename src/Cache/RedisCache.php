@@ -11,6 +11,7 @@ use Omegaalfa\QueryBuilder\Exceptions\CacheException;
 use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
 use Redis;
 use RedisException;
+use Throwable;
 
 
 class RedisCache implements CacheInterface
@@ -42,6 +43,11 @@ class RedisCache implements CacheInterface
     private readonly int $retryDelayMs;
 
     private readonly float $retryBackoffMultiplier;
+
+    /** @var Closure(string, array<string, mixed>): void|null */
+    private readonly ?Closure $observer;
+
+    private float $lastHealthLatencyMs = 0.0;
 
     private const int LOCK_WAIT_ATTEMPTS = 5;
 
@@ -85,6 +91,7 @@ class RedisCache implements CacheInterface
         int $retryAttempts = 2,
         int $retryDelayMs = 50,
         float $retryBackoffMultiplier = 2.0,
+        ?Closure $observer = null,
     ) {
         if ($port < 1 || $port > 65535) {
             throw new CacheException('Redis port must be between 1 and 65535.');
@@ -110,6 +117,7 @@ class RedisCache implements CacheInterface
         $this->retryAttempts = $retryAttempts;
         $this->retryDelayMs = $retryDelayMs;
         $this->retryBackoffMultiplier = $retryBackoffMultiplier;
+        $this->observer = $observer;
         try {
             if (!$this->redis->connect($host, $port, $timeout)) {
                 throw new CacheException("Cannot connect to Redis at {$host}:{$port}.");
@@ -303,14 +311,16 @@ class RedisCache implements CacheInterface
         $startedAt = microtime(true);
         try {
             $available = $this->withRetry(fn(): bool => $this->redis->ping() !== false);
+            $this->lastHealthLatencyMs = round((microtime(true) - $startedAt) * 1_000, 3);
             return [
                 'available' => $available,
-                'latency_ms' => round((microtime(true) - $startedAt) * 1_000, 3),
+                'latency_ms' => $this->lastHealthLatencyMs,
             ];
         } catch (RedisException $e) {
+            $this->lastHealthLatencyMs = round((microtime(true) - $startedAt) * 1_000, 3);
             return [
                 'available' => false,
-                'latency_ms' => round((microtime(true) - $startedAt) * 1_000, 3),
+                'latency_ms' => $this->lastHealthLatencyMs,
                 'error' => $e->getMessage(),
             ];
         }
@@ -332,6 +342,17 @@ class RedisCache implements CacheInterface
         foreach ($this->stats as $metric => $_value) {
             $this->stats[$metric] = 0;
         }
+    }
+
+    public function prometheusMetrics(string $namespace = 'omegaalfa_redis_cache'): string
+    {
+        $lines = [];
+        foreach ($this->stats as $metric => $value) {
+            $lines[] = sprintf('%s_%s %d', $namespace, $metric, $value);
+        }
+        $lines[] = sprintf('%s_health_latency_ms %s', $namespace, $this->lastHealthLatencyMs);
+
+        return implode("\n", $lines) . "\n";
     }
 
     /** @return array{state: 'closed'|'open', failures: int, opened_at: int|null} */
@@ -379,6 +400,7 @@ class RedisCache implements CacheInterface
         ++$this->circuitFailures;
         if ($this->circuitFailures >= $this->circuitFailureThreshold) {
             $this->circuitOpenedAt = time();
+            $this->emit('redis.circuit_opened', ['failures' => $this->circuitFailures]);
         }
     }
 
@@ -393,11 +415,25 @@ class RedisCache implements CacheInterface
                     throw $e;
                 }
                 ++$this->stats['retries'];
+                $this->emit('redis.retry', ['attempt' => $attempt + 1, 'delay_ms' => $delayMs]);
                 if ($delayMs > 0) {
                     usleep($delayMs * 1_000);
                 }
                 $delayMs = (int)ceil($delayMs * $this->retryBackoffMultiplier);
             }
+        }
+    }
+
+    /** @param array<string, mixed> $context */
+    private function emit(string $event, array $context = []): void
+    {
+        if ($this->observer === null) {
+            return;
+        }
+        try {
+            ($this->observer)($event, $context);
+        } catch (Throwable) {
+            // Observabilidade nunca deve interromper o fluxo do cache.
         }
     }
 

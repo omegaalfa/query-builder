@@ -1211,6 +1211,25 @@ $cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
 
 As tentativas realizadas aparecem na métrica `retries`.
 
+Para expor as métricas em formato Prometheus, use `prometheusMetrics()`:
+
+```php
+$payload = $cache->prometheusMetrics('app_cache');
+```
+
+Também é possível receber eventos de observabilidade sem dependências externas:
+
+```php
+$cache = new \Omegaalfa\QueryBuilder\Cache\RedisCache(
+    host: '127.0.0.1',
+    observer: static function (string $event, array $context): void {
+        // enviar para o logger ou tracer da aplicação
+    },
+);
+```
+
+Os eventos atuais incluem `redis.retry` e `redis.circuit_opened`; falhas no callback são ignoradas para não interromper o cache.
+
 Também é possível associar entradas a tags e invalidá-las em conjunto:
 
 ```php

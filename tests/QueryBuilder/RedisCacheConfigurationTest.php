@@ -320,6 +320,20 @@ final class RedisCacheConfigurationTest extends TestCase
         new RedisCache('127.0.0.1', retryAttempts: -1);
     }
 
+    public function testPrometheusMetricsExposeCounters(): void
+    {
+        $redis = $this->redisMock();
+        $redis->expects(self::once())->method('get')->willReturn('"value"');
+        $cache = $this->cacheWithRedis($redis);
+
+        $cache->get('item');
+        $metrics = $cache->prometheusMetrics('app_cache');
+
+        self::assertStringContainsString('app_cache_hits 0', $metrics);
+        self::assertStringContainsString('app_cache_health_latency_ms 0', $metrics);
+        self::assertStringContainsString('app_cache_retries 0', $metrics);
+    }
+
     public function testSetUsesPrefixedKeyJsonAndTtl(): void
     {
         $redis = $this->redisMock();
@@ -380,6 +394,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $reflection->getProperty('retryAttempts')->setValue($cache, $retryAttempts);
         $reflection->getProperty('retryDelayMs')->setValue($cache, 0);
         $reflection->getProperty('retryBackoffMultiplier')->setValue($cache, 2.0);
+        $reflection->getProperty('observer')->setValue($cache, null);
 
         return $cache;
     }
