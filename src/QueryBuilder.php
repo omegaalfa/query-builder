@@ -195,6 +195,12 @@ final class QueryBuilder extends QueryBuilderOperations
                     $column = $this->cursorPagination['column'];
                     $column = str_contains($column, '.') ? substr($column, strrpos($column, '.') + 1) : $column;
                     $value = $rows[array_key_last($rows)][$column] ?? null;
+                    if ($this->cursorPagination['tieBreaker'] !== null) {
+                        $tieBreaker = $this->cursorPagination['tieBreaker'];
+                        $tieBreaker = str_contains($tieBreaker, '.') ? substr($tieBreaker, strrpos($tieBreaker, '.') + 1) : $tieBreaker;
+                        $tieBreakerValue = $rows[array_key_last($rows)][$tieBreaker] ?? null;
+                        $value = $tieBreakerValue === null ? null : [$value, $tieBreakerValue];
+                    }
                     if ($value !== null) {
                         try {
                             $nextCursor = base64_encode(json_encode($value, JSON_THROW_ON_ERROR));

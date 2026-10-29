@@ -1881,6 +1881,17 @@ $nextCursor = $page->pagination?->nextCursor;
 
 O builder busca uma linha adicional para calcular `hasMore`, ordena pelo campo informado e devolve o próximo cursor opaco em `CursorPaginationDTO`.
 
+Quando a coluna principal não for única, informe uma coluna de desempate. Também é possível paginar em ordem decrescente:
+
+```php
+$page = $builder
+    ->select('events')
+    ->paginateCursor(50, $cursor, 'created_at', OrderDirection::DESC, 'id')
+    ->execute();
+```
+
+Nesse caso o cursor contém os valores de `created_at` e `id`, garantindo que registros com a mesma data não sejam repetidos ou ignorados.
+
 ### Agregadores
 
 `count()`, `sum()`, `avg()`, `min()` e `max()` executam uma cópia interna do builder. A query original permanece disponível depois da agregação.

@@ -204,7 +204,13 @@ interface QueryBuilderInterface
      */
     public function paginate(int $perPage, int $currentPage = 1): self;
 
-    public function paginateCursor(int $perPage, mixed $after = null, string $column = 'id'): self;
+    public function paginateCursor(
+        int $perPage,
+        mixed $after = null,
+        string $column = 'id',
+        OrderDirection $direction = OrderDirection::ASC,
+        ?string $tieBreaker = null,
+    ): self;
 
     /**
      * Define uma coluna ou expressão para agrupamento (GROUP BY).

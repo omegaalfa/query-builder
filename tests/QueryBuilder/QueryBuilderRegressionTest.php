@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\QueryBuilder;
 
 use Omegaalfa\QueryBuilder\Enums\SqlOperator;
+use Omegaalfa\QueryBuilder\Enums\OrderDirection;
 use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
 use Omegaalfa\QueryBuilder\QueryBuilder;
 use Omegaalfa\QueryBuilder\QueryBuilderOperations;
@@ -170,6 +171,22 @@ final class QueryBuilderRegressionTest extends TestCase
     {
         $this->expectException(QueryException::class);
         (new QueryBuilderOperations())->select('users')->paginateCursor(10, 'not-a-cursor');
+    }
+
+    public function testCursorPaginationSupportsCompositeDescendingCursor(): void
+    {
+        $cursor = base64_encode(json_encode([10, 42], JSON_THROW_ON_ERROR));
+        $sql = (new QueryBuilderOperations())
+            ->select('users')
+            ->paginateCursor(2, $cursor, 'created_at', OrderDirection::DESC, 'id')
+            ->getQuerySql();
+
+        self::assertStringContainsString(
+            'WHERE (`created_at` < :param0 OR (`created_at` = :param0 AND `id` < :param1))',
+            $sql,
+        );
+        self::assertStringContainsString('ORDER BY `created_at` DESC, `id` DESC', $sql);
+        self::assertStringContainsString('LIMIT 0 , 3', $sql);
     }
 
     public function testRawPositionalAndNamedParametersAreNormalized(): void

@@ -88,7 +88,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /** @var list<array{alias: string, sql: string}> */
     protected array $ctes = [];
 
-    /** @var array{perPage: int, column: string}|null */
+    /** @var array{perPage: int, column: string, tieBreaker: string|null, direction: OrderDirection}|null */
     protected ?array $cursorPagination = null;
 
 
@@ -1010,13 +1010,21 @@ class QueryBuilderOperations implements QueryBuilderInterface
         return $this;
     }
 
-    public function paginateCursor(int $perPage, mixed $after = null, string $column = 'id'): self
+    public function paginateCursor(
+        int $perPage,
+        mixed $after = null,
+        string $column = 'id',
+        OrderDirection $direction = OrderDirection::ASC,
+        ?string $tieBreaker = null,
+    ): self
     {
         if ($perPage < 1) {
             throw new QueryException('Cursor page size must be greater than zero.');
         }
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_.]*$/D', $column)) {
-            throw new QueryException('Invalid cursor column: ' . $column);
+        foreach ([$column, $tieBreaker] as $cursorColumn) {
+            if ($cursorColumn !== null && !preg_match('/^[A-Za-z_][A-Za-z0-9_.]*$/D', $cursorColumn)) {
+                throw new QueryException('Invalid cursor column: ' . $cursorColumn);
+            }
         }
         if (is_string($after) && $after !== '') {
             $decoded = base64_decode($after, true);
@@ -1024,15 +1032,51 @@ class QueryBuilderOperations implements QueryBuilderInterface
                 throw new QueryException('Invalid cursor.');
             }
             $after = json_decode($decoded, true);
-            if (json_last_error() !== JSON_ERROR_NONE || (!is_int($after) && !is_float($after) && !is_string($after))) {
+            if (json_last_error() !== JSON_ERROR_NONE || (!is_int($after) && !is_float($after) && !is_string($after) && !is_array($after))) {
                 throw new QueryException('Invalid cursor.');
             }
         }
-        $this->cursorPagination = ['perPage' => $perPage, 'column' => $column];
-        if ($after !== null) {
-            $this->where($column, SqlOperator::GREATER_THAN, $after);
+        if ($tieBreaker !== null && $after !== null && (!is_array($after) || count($after) !== 2)) {
+            throw new QueryException('A composite cursor must contain both cursor values.');
         }
-        $this->orderBy($column, OrderDirection::ASC);
+        if ($tieBreaker === null && is_array($after)) {
+            throw new QueryException('A tie-breaker column is required for a composite cursor.');
+        }
+        $this->cursorPagination = [
+            'perPage' => $perPage,
+            'column' => $column,
+            'tieBreaker' => $tieBreaker,
+            'direction' => $direction,
+        ];
+        if ($after !== null) {
+            $operator = $direction === OrderDirection::ASC ? SqlOperator::GREATER_THAN : SqlOperator::LESS_THAN;
+            if ($tieBreaker === null) {
+                $this->where($column, $operator, $after);
+            } else {
+                $this->flushOrGroup();
+                $primaryValue = $after[0];
+                $tieBreakerValue = $after[1];
+                $primaryParam = $this->bindValue($primaryValue);
+                $tieBreakerParam = $this->bindValue($tieBreakerValue);
+                $primaryIdentifier = $this->quoteIdentifier($column);
+                $tieBreakerIdentifier = $this->quoteIdentifier($tieBreaker);
+                $this->where[] = sprintf(
+                    '(%s %s %s OR (%s = %s AND %s %s %s))',
+                    $primaryIdentifier,
+                    $operator->value,
+                    $primaryParam,
+                    $primaryIdentifier,
+                    $primaryParam,
+                    $tieBreakerIdentifier,
+                    $operator->value,
+                    $tieBreakerParam,
+                );
+            }
+        }
+        $this->orderBy($column, $direction);
+        if ($tieBreaker !== null) {
+            $this->orderBy($tieBreaker, $direction);
+        }
         $this->limit($perPage + 1);
         return $this;
     }
