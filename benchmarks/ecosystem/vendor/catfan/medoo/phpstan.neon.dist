@@ -1,7 +1,0 @@
-parameters:
-    level: max
-    phpVersion: 70300
-    paths:
-        - src
-    stubFiles:
-        - phpstan/Medoo.stub
