@@ -1,0 +1,178 @@
+<?php
+
+namespace Medoo\Tests;
+
+#[\PHPUnit\Framework\Attributes\CoversClass(\Medoo\Medoo::class)]
+class RandTest extends MedooTestCase
+{
+    public function testSybaseRand(): void
+    {
+        $this->setType('sybase');
+
+        $this->database->rand("account", [
+            "user_name"
+        ]);
+
+        $this->assertQuery(<<<EOD
+            SELECT "user_name"
+            FROM "account"
+            ORDER BY RAND()
+            EOD, $this->database->queryString);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(MedooTestCase::class, 'typesProvider')]
+    public function testRand(string $type): void
+    {
+        $this->setType($type);
+
+        $this->database->rand("account", [
+            "user_name"
+        ]);
+
+        $this->assertQuery([
+            'default' => <<<EOD
+                SELECT "user_name"
+                FROM "account"
+                ORDER BY RANDOM()
+                EOD,
+            'mysql' => <<<EOD
+                SELECT `user_name`
+                FROM `account`
+                ORDER BY RAND()
+                EOD,
+            'mssql' => <<<EOD
+                SELECT [user_name]
+                FROM [account]
+                ORDER BY NEWID()
+                EOD,
+            'oracle' => <<<EOD
+                SELECT "user_name"
+                FROM "account"
+                ORDER BY DBMS_RANDOM.VALUE
+                EOD
+        ], $this->database->queryString);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(MedooTestCase::class, 'typesProvider')]
+    public function testWhereRand(string $type): void
+    {
+        $this->setType($type);
+
+        $this->database->rand("account", [
+            "user_name"
+        ], [
+            "location" => "Tokyo"
+        ]);
+
+        $this->assertQuery([
+            'default' => <<<EOD
+                SELECT "user_name"
+                FROM "account"
+                WHERE "location" = 'Tokyo'
+                ORDER BY RANDOM()
+                EOD,
+            'mysql' => <<<EOD
+                SELECT `user_name`
+                FROM `account`
+                WHERE `location` = 'Tokyo'
+                ORDER BY RAND()
+                EOD,
+            'mssql' => <<<EOD
+                SELECT [user_name]
+                FROM [account]
+                WHERE [location] = 'Tokyo'
+                ORDER BY NEWID()
+                EOD,
+            'oracle' => <<<EOD
+                SELECT "user_name"
+                FROM "account"
+                WHERE "location" = 'Tokyo'
+                ORDER BY DBMS_RANDOM.VALUE
+                EOD
+        ], $this->database->queryString);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(MedooTestCase::class, 'typesProvider')]
+    public function testWhereWithJoinRand(string $type): void
+    {
+        $this->setType($type);
+
+        $this->database->rand("account", [
+            "[>]album" => "user_id"
+        ], [
+            "account.user_name"
+        ], [
+            "album.location" => "Tokyo"
+        ]);
+
+        $this->assertQuery([
+            'default' => <<<EOD
+                SELECT "account"."user_name"
+                FROM "account"
+                LEFT JOIN "album" USING ("user_id")
+                WHERE "album"."location" = 'Tokyo'
+                ORDER BY RANDOM()
+                EOD,
+            'mysql' => <<<EOD
+                SELECT `account`.`user_name`
+                FROM `account`
+                LEFT JOIN `album` USING (`user_id`)
+                WHERE `album`.`location` = 'Tokyo'
+                ORDER BY RAND()
+                EOD,
+            'mssql' => <<<EOD
+                SELECT [account].[user_name]
+                FROM [account]
+                LEFT JOIN [album] USING ([user_id])
+                WHERE [album].[location] = 'Tokyo'
+                ORDER BY NEWID()
+                EOD,
+            'oracle' => <<<EOD
+                SELECT "account"."user_name"
+                FROM "account"
+                LEFT JOIN "album" USING ("user_id")
+                WHERE "album"."location" = 'Tokyo'
+                ORDER BY DBMS_RANDOM.VALUE
+                EOD
+        ], $this->database->queryString);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(MedooTestCase::class, 'typesProvider')]
+    public function testWithJoinRand(string $type): void
+    {
+        $this->setType($type);
+
+        $this->database->rand("account", [
+            "[>]album" => "user_id"
+        ], [
+            "account.user_name"
+        ]);
+
+        $this->assertQuery([
+            'default' => <<<EOD
+                SELECT "account"."user_name"
+                FROM "account"
+                LEFT JOIN "album" USING ("user_id")
+                ORDER BY RANDOM()
+                EOD,
+            'mysql' => <<<EOD
+                SELECT `account`.`user_name`
+                FROM `account`
+                LEFT JOIN `album` USING (`user_id`)
+                ORDER BY RAND()
+                EOD,
+            'mssql' => <<<EOD
+                SELECT [account].[user_name]
+                FROM [account]
+                LEFT JOIN [album] USING ([user_id])
+                ORDER BY NEWID()
+                EOD,
+            'oracle' => <<<EOD
+                SELECT "account"."user_name"
+                FROM "account"
+                LEFT JOIN "album" USING ("user_id")
+                ORDER BY DBMS_RANDOM.VALUE
+                EOD
+        ], $this->database->queryString);
+    }
+}

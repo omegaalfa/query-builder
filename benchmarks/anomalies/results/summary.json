@@ -1,0 +1,2391 @@
+{
+    "batches": {
+        "sqlite\/Omegaalfa": {
+            "total_ms": 89.338183,
+            "planning_ms": 1.314355,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 27.274462,
+            "pdo_bind_ms": 1.58226,
+            "pdo_execute_ms": 26.625788,
+            "tramsaction_ms": 0.146148,
+            "residual_ms": 32.3822
+        },
+        "sqlite\/Doctrine": {
+            "total_ms": 10.660316,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.287974,
+            "pdo_bind_ms": 2.635668,
+            "pdo_execute_ms": 1.920858,
+            "tramsaction_ms": 0,
+            "residual_ms": 3.782698
+        },
+        "sqlite\/Illuminate": {
+            "total_ms": 21.378632,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.419202,
+            "pdo_bind_ms": 1.431032,
+            "pdo_execute_ms": 1.604722,
+            "tramsaction_ms": 0,
+            "residual_ms": 16.030679
+        },
+        "sqlite\/Medoo": {
+            "total_ms": 1150.716568,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 575.899376,
+            "pdo_bind_ms": 3.19743,
+            "pdo_execute_ms": 555.726625,
+            "tramsaction_ms": 0,
+            "residual_ms": 12.842363
+        },
+        "sqlite\/PDO": {
+            "total_ms": 6.966069,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.294873,
+            "pdo_bind_ms": 0,
+            "pdo_execute_ms": 3.50468,
+            "tramsaction_ms": 0,
+            "residual_ms": 1.122197
+        },
+        "mysql\/Omegaalfa": {
+            "total_ms": 962.192804,
+            "planning_ms": 599.810923,
+            "get_sql_ms": 0.02226,
+            "pdo_prepare_ms": 12.731302,
+            "pdo_bind_ms": 315.257862,
+            "pdo_execute_ms": 26.186193,
+            "tramsaction_ms": 0,
+            "residual_ms": 7.068574
+        },
+        "mysql\/Doctrine": {
+            "total_ms": 43.48313,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 10.541327,
+            "pdo_bind_ms": 2.682606,
+            "pdo_execute_ms": 25.87143,
+            "tramsaction_ms": 0,
+            "residual_ms": 4.035981
+        },
+        "mysql\/Illuminate": {
+            "total_ms": 52.466201,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 10.713576,
+            "pdo_bind_ms": 1.718249,
+            "pdo_execute_ms": 22.87714,
+            "tramsaction_ms": 0,
+            "residual_ms": 16.389765
+        },
+        "mysql\/Cycle": {
+            "total_ms": 51.332784,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 10.538908,
+            "pdo_bind_ms": 2.248291,
+            "pdo_execute_ms": 22.536794,
+            "tramsaction_ms": 0,
+            "residual_ms": 15.050483
+        },
+        "mysql\/Medoo": {
+            "total_ms": 368.797037,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 11.435547,
+            "pdo_bind_ms": 312.451076,
+            "pdo_execute_ms": 25.75996,
+            "tramsaction_ms": 0,
+            "residual_ms": 16.690921
+        },
+        "mysql\/PDO": {
+            "total_ms": 38.507693,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 11.009662,
+            "pdo_bind_ms": 0,
+            "pdo_execute_ms": 26.321665,
+            "tramsaction_ms": 0,
+            "residual_ms": 1.088108
+        },
+        "pgsql\/Omegaalfa": {
+            "total_ms": 650.730952,
+            "planning_ms": 609.397279,
+            "get_sql_ms": 0.125708,
+            "pdo_prepare_ms": 3.739137,
+            "pdo_bind_ms": 3.348597,
+            "pdo_execute_ms": 27.991895,
+            "tramsaction_ms": 0,
+            "residual_ms": 5.317986
+        },
+        "pgsql\/Doctrine": {
+            "total_ms": 36.877752,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.737999,
+            "pdo_bind_ms": 2.559221,
+            "pdo_execute_ms": 27.158644,
+            "tramsaction_ms": 0,
+            "residual_ms": 4.109711
+        },
+        "pgsql\/Illuminate": {
+            "total_ms": 47.929443,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.262494,
+            "pdo_bind_ms": 1.634851,
+            "pdo_execute_ms": 27.57007,
+            "tramsaction_ms": 0,
+            "residual_ms": 16.208789
+        },
+        "pgsql\/Cycle": {
+            "total_ms": 68.07215,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.737618,
+            "pdo_bind_ms": 2.102167,
+            "pdo_execute_ms": 43.540422,
+            "tramsaction_ms": 0,
+            "residual_ms": 18.688555
+        },
+        "pgsql\/Medoo": {
+            "total_ms": 48.623445,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 4.679995,
+            "pdo_bind_ms": 3.476516,
+            "pdo_execute_ms": 27.57471,
+            "tramsaction_ms": 0,
+            "residual_ms": 12.204574
+        },
+        "pgsql\/PDO": {
+            "total_ms": 33.018292,
+            "planning_ms": 0,
+            "get_sql_ms": 0,
+            "pdo_prepare_ms": 2.709139,
+            "pdo_bind_ms": 0,
+            "pdo_execute_ms": 28.910395,
+            "tramsaction_ms": 0,
+            "residual_ms": 1.30527
+        }
+    },
+    "structure": {
+        "sqlite\/Omegaalfa": {
+            "rows_equal": true,
+            "prepares": 23,
+            "parameters": [
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                900,
+                200
+            ],
+            "rows_per_execute": [
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                450,
+                100
+            ],
+            "transactions": [
+                "begin",
+                "commit"
+            ],
+            "queries": [
+                "SELECT 1"
+            ],
+            "exec": [],
+            "sql_bytes": [
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                10732,
+                2332
+            ],
+            "sql_sha256": [
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "19b2a778e1c8a55b9964a959aeb3d2455188170ca4585928c6dd97e556e5fa1b",
+                "3a132e46fc79d6b795975c3a2bfb6174864b6259cfd95e4bfb0030257b82e55b"
+            ]
+        },
+        "sqlite\/Doctrine": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                70037
+            ],
+            "sql_sha256": [
+                "17c02ce043c561aa24aae524fc6382b669bb8ddf4c4fc148da3d69b27c8a8055"
+            ]
+        },
+        "sqlite\/Illuminate": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                80042
+            ],
+            "sql_sha256": [
+                "54f8d7a2aa7dc885cdf1100930bdda97a7543ac6aa95d9f136a1048f6ea7218e"
+            ]
+        },
+        "sqlite\/Medoo": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                288932
+            ],
+            "sql_sha256": [
+                "e8c72057a39c47e2e08d50f5fa5aef718817b275b647ef3402e566c3c8f56a5d"
+            ]
+        },
+        "sqlite\/PDO": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                70037
+            ],
+            "sql_sha256": [
+                "17c02ce043c561aa24aae524fc6382b669bb8ddf4c4fc148da3d69b27c8a8055"
+            ]
+        },
+        "mysql\/Omegaalfa": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                268932
+            ],
+            "sql_sha256": [
+                "4344ffeb6b7b67267b6dfd0d37678286fe9f2a3df42007ae1a9ab7188286ae49"
+            ]
+        },
+        "mysql\/Doctrine": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                70037
+            ],
+            "sql_sha256": [
+                "17c02ce043c561aa24aae524fc6382b669bb8ddf4c4fc148da3d69b27c8a8055"
+            ]
+        },
+        "mysql\/Illuminate": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                80042
+            ],
+            "sql_sha256": [
+                "d673506a70ec11f4ac38ca6a10743dae9dbc4f07efc01256013cf89355aa40e6"
+            ]
+        },
+        "mysql\/Cycle": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                80042
+            ],
+            "sql_sha256": [
+                "08df306c5f8706d29e106b5c6e2f35ff00ab6193dc044f7c1f58ef7e809060cd"
+            ]
+        },
+        "mysql\/Medoo": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                288932
+            ],
+            "sql_sha256": [
+                "e8c72057a39c47e2e08d50f5fa5aef718817b275b647ef3402e566c3c8f56a5d"
+            ]
+        },
+        "mysql\/PDO": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                70037
+            ],
+            "sql_sha256": [
+                "17c02ce043c561aa24aae524fc6382b669bb8ddf4c4fc148da3d69b27c8a8055"
+            ]
+        },
+        "pgsql\/Omegaalfa": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                268932
+            ],
+            "sql_sha256": [
+                "9e6bd789c7402c2225b2ebb3b667907cd85389de5109dd97fc1fd70dd6730a88"
+            ]
+        },
+        "pgsql\/Doctrine": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                70037
+            ],
+            "sql_sha256": [
+                "17c02ce043c561aa24aae524fc6382b669bb8ddf4c4fc148da3d69b27c8a8055"
+            ]
+        },
+        "pgsql\/Illuminate": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                80042
+            ],
+            "sql_sha256": [
+                "54f8d7a2aa7dc885cdf1100930bdda97a7543ac6aa95d9f136a1048f6ea7218e"
+            ]
+        },
+        "pgsql\/Cycle": {
+            "rows_equal": true,
+            "prepares": 7,
+            "parameters": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                20000
+            ],
+            "rows_per_execute": [
+                1,
+                1,
+                2,
+                1,
+                1,
+                0,
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                175,
+                175,
+                724,
+                792,
+                247,
+                618,
+                80057
+            ],
+            "sql_sha256": [
+                "053c05c4d122560abcbe2317fca6b17263b36cd5f18f12cc405978d556f37eff",
+                "053c05c4d122560abcbe2317fca6b17263b36cd5f18f12cc405978d556f37eff",
+                "3d06d0690cb7ea886f767e764e4ef069fbeac83d93ae83f4f16373ca68f99425",
+                "cafe986dfaa3b2cd5738bca56a29a0a404878ca3c980377b7f2ba38af979ee46",
+                "9b3279bbf594bfef6ad8deda0ad4d1b419e63f8e95b80da0b1db959358b68d09",
+                "43fa0301e44ae201c92cb911f38f29955d9a9dcb161a326a9fb9c865832a5161",
+                "073fb2d604d149216f7b1b53f44aca7de41a515df21520654a53d7844c3141b2"
+            ]
+        },
+        "pgsql\/Medoo": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                288932
+            ],
+            "sql_sha256": [
+                "e8c72057a39c47e2e08d50f5fa5aef718817b275b647ef3402e566c3c8f56a5d"
+            ]
+        },
+        "pgsql\/PDO": {
+            "rows_equal": true,
+            "prepares": 1,
+            "parameters": [
+                20000
+            ],
+            "rows_per_execute": [
+                10000
+            ],
+            "transactions": [],
+            "queries": [],
+            "exec": [],
+            "sql_bytes": [
+                70037
+            ],
+            "sql_sha256": [
+                "17c02ce043c561aa24aae524fc6382b669bb8ddf4c4fc148da3d69b27c8a8055"
+            ]
+        }
+    },
+    "unsupported": {
+        "sqlite\/Cycle": "SQLSTATE[HY000]: General error: 1 too many terms in compound SELECT"
+    },
+    "bind": {
+        "1000": {
+            "ms": 1.378124
+        },
+        "2000": {
+            "ms": 5.374708
+        },
+        "5000": {
+            "ms": 33.743278
+        },
+        "10000": {
+            "ms": 137.020231
+        },
+        "20000": {
+            "ms": 586.356409
+        }
+    },
+    "compile": {
+        "10000": {
+            "ms": 27.276593
+        }
+    },
+    "replay": {
+        "sqlite\/named": {
+            "prepare_ms": 28.168905,
+            "bind_ms": 1.510611,
+            "execute_ms": 26.86475,
+            "tramsaction_ms": 0.146328
+        },
+        "sqlite\/positional": {
+            "prepare_ms": 1.69396,
+            "bind_ms": 0.775838,
+            "execute_ms": 1.665827,
+            "tramsaction_ms": 0.133339
+        },
+        "mysql\/named": {
+            "prepare_ms": 12.259997,
+            "bind_ms": 307.690926,
+            "execute_ms": 24.863632,
+            "tramsaction_ms": 0.687685
+        },
+        "mysql\/positional": {
+            "prepare_ms": 11.103446,
+            "bind_ms": 1.715195,
+            "execute_ms": 21.96326,
+            "tramsaction_ms": 0.67379
+        },
+        "pgsql\/named": {
+            "prepare_ms": 4.141012,
+            "bind_ms": 2.817307,
+            "execute_ms": 26.70583,
+            "tramsaction_ms": 0.814047
+        },
+        "pgsql\/positional": {
+            "prepare_ms": 2.502591,
+            "bind_ms": 1.600071,
+            "execute_ms": 26.732769,
+            "tramsaction_ms": 0.953078
+        }
+    },
+    "memory": [
+        {
+            "mode": "memory",
+            "kind": "simple",
+            "gc": "off",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 591432,
+                    "after_gc": 591808,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 1,
+                    "before_gc": 592024,
+                    "after_gc": 592400,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 2,
+                    "before_gc": 592400,
+                    "after_gc": 592776,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 3,
+                    "before_gc": 592776,
+                    "after_gc": 593152,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 4,
+                    "before_gc": 593152,
+                    "after_gc": 593528,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 5,
+                    "before_gc": 593528,
+                    "after_gc": 593904,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 6,
+                    "before_gc": 593904,
+                    "after_gc": 594280,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 7,
+                    "before_gc": 594280,
+                    "after_gc": 594656,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 8,
+                    "before_gc": 594656,
+                    "after_gc": 595032,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 9,
+                    "before_gc": 595192,
+                    "after_gc": 595568,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                }
+            ],
+            "final_delta": 595568,
+            "final_collected": 0,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 0,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.023728812,
+                "collector_time": 6.65e-6,
+                "destructor_time": 0,
+                "free_time": 0
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "simple",
+            "gc": "each",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 591432,
+                    "after_gc": 591808,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 1,
+                    "before_gc": 592024,
+                    "after_gc": 592400,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 2,
+                    "before_gc": 592400,
+                    "after_gc": 592776,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 3,
+                    "before_gc": 592776,
+                    "after_gc": 593152,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 4,
+                    "before_gc": 593152,
+                    "after_gc": 593528,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 5,
+                    "before_gc": 593528,
+                    "after_gc": 593904,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 6,
+                    "before_gc": 593904,
+                    "after_gc": 594280,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 7,
+                    "before_gc": 594280,
+                    "after_gc": 594656,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 8,
+                    "before_gc": 594656,
+                    "after_gc": 595032,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 9,
+                    "before_gc": 595192,
+                    "after_gc": 595568,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                }
+            ],
+            "final_delta": 595568,
+            "final_collected": 0,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 12,
+                "collected": 0,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.026173456,
+                "collector_time": 1.617e-5,
+                "destructor_time": 0,
+                "free_time": 0
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "simple",
+            "gc": "auto",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 591432,
+                    "after_gc": 591808,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 1,
+                    "before_gc": 592024,
+                    "after_gc": 592400,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 2,
+                    "before_gc": 592400,
+                    "after_gc": 592776,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 3,
+                    "before_gc": 592776,
+                    "after_gc": 593152,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 4,
+                    "before_gc": 593152,
+                    "after_gc": 593528,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 5,
+                    "before_gc": 593528,
+                    "after_gc": 593904,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 6,
+                    "before_gc": 593904,
+                    "after_gc": 594280,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 7,
+                    "before_gc": 594280,
+                    "after_gc": 594656,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 8,
+                    "before_gc": 594656,
+                    "after_gc": 595032,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 9,
+                    "before_gc": 595192,
+                    "after_gc": 595568,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                }
+            ],
+            "final_delta": 595568,
+            "final_collected": 0,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 0,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.023697135,
+                "collector_time": 6.79e-6,
+                "destructor_time": 0,
+                "free_time": 0
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "filters",
+            "gc": "off",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 3782432,
+                    "after_gc": 3782808,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 6975792,
+                    "after_gc": 6976168,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 10201704,
+                    "after_gc": 10202080,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 13362080,
+                    "after_gc": 13362456,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 16522456,
+                    "after_gc": 16522832,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 19813904,
+                    "after_gc": 19814280,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 22974280,
+                    "after_gc": 22974656,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 26134656,
+                    "after_gc": 26135032,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 29295032,
+                    "after_gc": 29295408,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 32455568,
+                    "after_gc": 32455944,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 855944,
+            "final_collected": 70000,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 70000,
+                "threshold": 10001,
+                "buffer_size": 131072,
+                "roots": 2,
+                "application_time": 0.071717757,
+                "collector_time": 0.008136916,
+                "destructor_time": 0,
+                "free_time": 0.002767708
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "filters",
+            "gc": "each",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 3782432,
+                    "after_gc": 622808,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 3783024,
+                    "after_gc": 623400,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 3783400,
+                    "after_gc": 623776,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 3783776,
+                    "after_gc": 624152,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 3784152,
+                    "after_gc": 624528,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 3784528,
+                    "after_gc": 624904,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 3784904,
+                    "after_gc": 625280,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 3785280,
+                    "after_gc": 625656,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 3785656,
+                    "after_gc": 626032,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 3786192,
+                    "after_gc": 626568,
+                    "collected": 7000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 626568,
+            "final_collected": 0,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 12,
+                "collected": 70000,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.042714863,
+                "collector_time": 0.003051946,
+                "destructor_time": 0,
+                "free_time": 0.001326777
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "filters",
+            "gc": "auto",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 3782432,
+                    "after_gc": 3782808,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 6975792,
+                    "after_gc": 6976168,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 2242488,
+                    "after_gc": 2242864,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 5402864,
+                    "after_gc": 5403240,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 666400,
+                    "after_gc": 666776,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 3826776,
+                    "after_gc": 3827152,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 6987152,
+                    "after_gc": 6987528,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 2253848,
+                    "after_gc": 2254224,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 5414224,
+                    "after_gc": 5414600,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 677920,
+                    "after_gc": 678296,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 659336,
+            "final_collected": 42,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 6,
+                "collected": 70000,
+                "threshold": 10001,
+                "buffer_size": 32768,
+                "roots": 2,
+                "application_time": 0.04990469,
+                "collector_time": 0.003282883,
+                "destructor_time": 0,
+                "free_time": 0.001417895
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "complex",
+            "gc": "off",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 5074496,
+                    "after_gc": 5074872,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 9555856,
+                    "after_gc": 9556232,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 14069768,
+                    "after_gc": 14070144,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 18518144,
+                    "after_gc": 18518520,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 22966520,
+                    "after_gc": 22966896,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 27545968,
+                    "after_gc": 27546344,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 31994344,
+                    "after_gc": 31994720,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 36442720,
+                    "after_gc": 36443096,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 40891096,
+                    "after_gc": 40891472,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 45339632,
+                    "after_gc": 45340008,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 860008,
+            "final_collected": 100000,
+            "static_cache_entries": 6,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 100000,
+                "threshold": 10001,
+                "buffer_size": 131072,
+                "roots": 2,
+                "application_time": 0.120175324,
+                "collector_time": 0.011398227,
+                "destructor_time": 0,
+                "free_time": 0.004462618
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "complex",
+            "gc": "each",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 5074496,
+                    "after_gc": 626872,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 5075088,
+                    "after_gc": 627464,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 5075464,
+                    "after_gc": 627840,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 5075840,
+                    "after_gc": 628216,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 5076216,
+                    "after_gc": 628592,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 5076592,
+                    "after_gc": 628968,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 5076968,
+                    "after_gc": 629344,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 5077344,
+                    "after_gc": 629720,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 5077720,
+                    "after_gc": 630096,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 5078256,
+                    "after_gc": 630632,
+                    "collected": 10000,
+                    "alive_before": true,
+                    "alive_after": false,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 630632,
+            "final_collected": 0,
+            "static_cache_entries": 6,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 12,
+                "collected": 100000,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.061298078,
+                "collector_time": 0.004438418,
+                "destructor_time": 0,
+                "free_time": 0.001925517
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "complex",
+            "gc": "auto",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 5074496,
+                    "after_gc": 5074872,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 9555856,
+                    "after_gc": 9556232,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 2893128,
+                    "after_gc": 2893504,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 7341504,
+                    "after_gc": 7341880,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 678776,
+                    "after_gc": 679152,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 5127152,
+                    "after_gc": 5127528,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 9575528,
+                    "after_gc": 9575904,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 2912800,
+                    "after_gc": 2913176,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 7361176,
+                    "after_gc": 7361552,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 698608,
+                    "after_gc": 698984,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 663400,
+            "final_collected": 80,
+            "static_cache_entries": 6,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 6,
+                "collected": 100000,
+                "threshold": 10001,
+                "buffer_size": 32768,
+                "roots": 2,
+                "application_time": 0.072762898,
+                "collector_time": 0.005527648,
+                "destructor_time": 0,
+                "free_time": 0.002241965
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "unique",
+            "gc": "off",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 991744,
+                    "after_gc": 992120,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 1,
+                    "before_gc": 1393296,
+                    "after_gc": 1393672,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 2,
+                    "before_gc": 1835592,
+                    "after_gc": 1835968,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 3,
+                    "before_gc": 2195968,
+                    "after_gc": 2196344,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 4,
+                    "before_gc": 2720184,
+                    "after_gc": 2720560,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 5,
+                    "before_gc": 3080560,
+                    "after_gc": 3080936,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 6,
+                    "before_gc": 3440936,
+                    "after_gc": 3441312,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 7,
+                    "before_gc": 3801312,
+                    "after_gc": 3801688,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 8,
+                    "before_gc": 4489368,
+                    "after_gc": 4489744,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 9,
+                    "before_gc": 4849904,
+                    "after_gc": 4850280,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                }
+            ],
+            "final_delta": 4850280,
+            "final_collected": 0,
+            "static_cache_entries": 10002,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 0,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.034160993,
+                "collector_time": 1.833e-5,
+                "destructor_time": 0,
+                "free_time": 0
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "unique",
+            "gc": "each",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 991744,
+                    "after_gc": 992120,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 1,
+                    "before_gc": 1393296,
+                    "after_gc": 1393672,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 2,
+                    "before_gc": 1835592,
+                    "after_gc": 1835968,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 3,
+                    "before_gc": 2195968,
+                    "after_gc": 2196344,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 4,
+                    "before_gc": 2720184,
+                    "after_gc": 2720560,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 5,
+                    "before_gc": 3080560,
+                    "after_gc": 3080936,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 6,
+                    "before_gc": 3440936,
+                    "after_gc": 3441312,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 7,
+                    "before_gc": 3801312,
+                    "after_gc": 3801688,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 8,
+                    "before_gc": 4489368,
+                    "after_gc": 4489744,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 9,
+                    "before_gc": 4849904,
+                    "after_gc": 4850280,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                }
+            ],
+            "final_delta": 4850280,
+            "final_collected": 0,
+            "static_cache_entries": 10002,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 12,
+                "collected": 0,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.034273372,
+                "collector_time": 9.378e-5,
+                "destructor_time": 0,
+                "free_time": 0
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "unique",
+            "gc": "auto",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 991744,
+                    "after_gc": 992120,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 1,
+                    "before_gc": 1393296,
+                    "after_gc": 1393672,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 2,
+                    "before_gc": 1835592,
+                    "after_gc": 1835968,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 3,
+                    "before_gc": 2195968,
+                    "after_gc": 2196344,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 4,
+                    "before_gc": 2720184,
+                    "after_gc": 2720560,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 5,
+                    "before_gc": 3080560,
+                    "after_gc": 3080936,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 6,
+                    "before_gc": 3440936,
+                    "after_gc": 3441312,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 7,
+                    "before_gc": 3801312,
+                    "after_gc": 3801688,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 8,
+                    "before_gc": 4489368,
+                    "after_gc": 4489744,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                },
+                {
+                    "block": 9,
+                    "before_gc": 4849904,
+                    "after_gc": 4850280,
+                    "collected": 0,
+                    "alive_before": false,
+                    "alive_after": false,
+                    "closure_cycle": false
+                }
+            ],
+            "final_delta": 4850280,
+            "final_collected": 0,
+            "static_cache_entries": 10002,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 0,
+                "threshold": 10001,
+                "buffer_size": 16384,
+                "roots": 1,
+                "application_time": 0.03271847,
+                "collector_time": 3.0809e-5,
+                "destructor_time": 0,
+                "free_time": 0
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "held",
+            "gc": "off",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 3802968,
+                    "after_gc": 3803344,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 7012712,
+                    "after_gc": 7013088,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 10271392,
+                    "after_gc": 10271768,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 13431768,
+                    "after_gc": 13432144,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 16657680,
+                    "after_gc": 16658056,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 19949128,
+                    "after_gc": 19949504,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 23109504,
+                    "after_gc": 23109880,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 26269880,
+                    "after_gc": 26270256,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 29561328,
+                    "after_gc": 29561704,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 32721864,
+                    "after_gc": 32722240,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 855944,
+            "final_collected": 70000,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 2,
+                "collected": 70000,
+                "threshold": 10001,
+                "buffer_size": 131072,
+                "roots": 2,
+                "application_time": 0.081976558,
+                "collector_time": 0.00694239,
+                "destructor_time": 0,
+                "free_time": 0.002216924
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "held",
+            "gc": "each",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 3802968,
+                    "after_gc": 3803344,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 7012712,
+                    "after_gc": 7013088,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 10271392,
+                    "after_gc": 10271768,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 13431768,
+                    "after_gc": 13432144,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 16657680,
+                    "after_gc": 16658056,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 19949128,
+                    "after_gc": 19949504,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 23109504,
+                    "after_gc": 23109880,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 26269880,
+                    "after_gc": 26270256,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 29561328,
+                    "after_gc": 29561704,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 32721864,
+                    "after_gc": 32722240,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 855944,
+            "final_collected": 7,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 13,
+                "collected": 70000,
+                "threshold": 10001,
+                "buffer_size": 131072,
+                "roots": 2,
+                "application_time": 0.072922253,
+                "collector_time": 0.008193034,
+                "destructor_time": 0,
+                "free_time": 0.002364333
+            }
+        },
+        {
+            "mode": "memory",
+            "kind": "held",
+            "gc": "auto",
+            "records": [
+                {
+                    "block": 0,
+                    "before_gc": 3802968,
+                    "after_gc": 3803344,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 1,
+                    "before_gc": 7012712,
+                    "after_gc": 7013088,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 2,
+                    "before_gc": 10271392,
+                    "after_gc": 10271768,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 3,
+                    "before_gc": 13431768,
+                    "after_gc": 13432144,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 4,
+                    "before_gc": 16657680,
+                    "after_gc": 16658056,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 5,
+                    "before_gc": 19949128,
+                    "after_gc": 19949504,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 6,
+                    "before_gc": 23109504,
+                    "after_gc": 23109880,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 7,
+                    "before_gc": 26269880,
+                    "after_gc": 26270256,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 8,
+                    "before_gc": 29561328,
+                    "after_gc": 29561704,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                },
+                {
+                    "block": 9,
+                    "before_gc": 32721864,
+                    "after_gc": 32722240,
+                    "collected": 0,
+                    "alive_before": true,
+                    "alive_after": true,
+                    "closure_cycle": true
+                }
+            ],
+            "final_delta": 855944,
+            "final_collected": 70000,
+            "static_cache_entries": 3,
+            "gc_status": {
+                "running": false,
+                "protected": false,
+                "full": false,
+                "runs": 4,
+                "collected": 70000,
+                "threshold": 30001,
+                "buffer_size": 131072,
+                "roots": 2,
+                "application_time": 0.062036699,
+                "collector_time": 0.007149276,
+                "destructor_time": 0,
+                "free_time": 0.002157625
+            }
+        }
+    ]
+}

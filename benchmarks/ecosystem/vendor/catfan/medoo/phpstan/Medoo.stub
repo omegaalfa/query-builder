@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Medoo;
+
+use PDO;
+
+/**
+ * PHPStan metadata without the IDE-only method overloads.
+ *
+ * @phpstan-type Parameter array{mixed, int}
+ * @phpstan-type ParameterMap array<string, Parameter>
+ * @phpstan-type QueryLog array{string, ParameterMap, float}
+ * @phpstan-type ColumnMetadata array{0: string, 1?: string}
+ * @phpstan-type ColumnMap array<array-key, ColumnMetadata>
+ * @phpstan-type Row array<array-key, mixed>
+ * @phpstan-type Condition array<array-key, mixed>
+ */
+class Medoo
+{
+    /** @var PDO|null Test-mode instances may not initialize a connection. */
+    public $pdo;
+}

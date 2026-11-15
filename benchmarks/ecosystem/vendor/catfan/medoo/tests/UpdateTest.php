@@ -1,0 +1,86 @@
+<?php
+
+namespace Medoo\Tests;
+
+use Medoo\Medoo;
+
+#[\PHPUnit\Framework\Attributes\CoversClass(\Medoo\Medoo::class)]
+class UpdateTest extends MedooTestCase
+{
+    #[\PHPUnit\Framework\Attributes\DataProviderExternal(MedooTestCase::class, 'typesProvider')]
+    public function testUpdate(string $type): void
+    {
+        $this->setType($type);
+
+        $objectData = new Foo();
+
+        $this->database->update("account", [
+            "type" => "user",
+            "money" => 23.2,
+            "age[+]" => 1,
+            "level[-]" => 5,
+            "score[*]" => 2,
+            "lang" => ["en", "fr"],
+            "lang [JSON]" => ["en", "fr"],
+            "is_locked" => true,
+            "uuid" => Medoo::raw("UUID()"),
+            "object" => $objectData
+        ], [
+            "user_id[<]" => 1000
+        ]);
+
+        $this->assertQuery([
+            'default' => <<<EOD
+                UPDATE "account"
+                SET "type" = 'user',
+                "money" = '23.2',
+                "age" = "age" + 1,
+                "level" = "level" - 5,
+                "score" = "score" * 2,
+                "lang" = 'a:2:{i:0;s:2:"en";i:1;s:2:"fr";}',
+                "lang" = '["en","fr"]',
+                "is_locked" = 1,
+                "uuid" = UUID(),
+                "object" = :MeD5_mK
+                WHERE "user_id" < 1000
+                EOD,
+            'mysql' => <<<EOD
+                UPDATE "account"
+                SET "type" = 'user',
+                "money" = '23.2',
+                "age" = "age" + 1,
+                "level" = "level" - 5,
+                "score" = "score" * 2,
+                "lang" = 'a:2:{i:0;s:2:\"en\";i:1;s:2:\"fr\";}',
+                "lang" = '[\"en\",\"fr\"]',
+                "is_locked" = 1,
+                "uuid" = UUID(),
+                "object" = :MeD5_mK
+                WHERE "user_id" < 1000
+                EOD,
+        ], $this->database->queryString);
+    }
+
+    public function testOracleLOBsUpdate(): void
+    {
+        $this->setType("oracle");
+
+        $fp = fopen('README.md', 'r');
+
+        $this->database->update("ACCOUNT", [
+            "DATA" => $fp
+        ], [
+            "ID" => 1
+        ]);
+
+        $this->assertQuery(
+            <<<EOD
+            UPDATE "ACCOUNT"
+            SET "DATA" = EMPTY_BLOB()
+            WHERE "ID" = 1
+            RETURNING "DATA" INTO :MeD0_mK
+            EOD,
+            $this->database->queryString
+        );
+    }
+}
