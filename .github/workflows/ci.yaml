@@ -82,8 +82,16 @@ jobs:
         id: commit-range
         run: |
           git fetch --prune
-          LAST_COMMIT=$(git rev-parse ${{ github.event.before }} 2>/dev/null || git rev-parse HEAD~1)
-          CURRENT_COMMIT=$(git rev-parse HEAD)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            LAST_COMMIT="${{ github.event.pull_request.base.sha }}"
+            CURRENT_COMMIT="${{ github.event.pull_request.head.sha }}"
+          else
+            LAST_COMMIT="${{ github.event.before }}"
+            CURRENT_COMMIT="${{ github.sha }}"
+          fi
+          if [ -z "$LAST_COMMIT" ] || [ "$LAST_COMMIT" = "0000000000000000000000000000000000000000" ]; then
+            LAST_COMMIT=$(git rev-list --max-parents=0 "$CURRENT_COMMIT")
+          fi
           echo "LAST_COMMIT=$LAST_COMMIT" >> $GITHUB_ENV
           echo "CURRENT_COMMIT=$CURRENT_COMMIT" >> $GITHUB_ENV
           echo "Debug: Commit range $LAST_COMMIT..$CURRENT_COMMIT"
@@ -104,21 +112,12 @@ jobs:
           COMMITS=$(git log --format='%s' "${LAST_COMMIT}..${CURRENT_COMMIT}")
           echo "Debug: All commits in range:"
           echo "$COMMITS"
-          CONVENTIONAL_COMMITS=$(echo "$COMMITS" | grep -E '^(feat|fix|docs|style|refactor|test|build|perf|ci|chore|revert|merge|wip): ' || true)
-          echo "Debug: Conventional commits found:"
-          echo "$CONVENTIONAL_COMMITS"
-          echo "stdout<<EOF" >> $GITHUB_OUTPUT
-          echo "$CONVENTIONAL_COMMITS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Verify commit messages
-        run: |
-          echo "Debug: Commit check output: '${{ steps.commit-check.outputs.stdout }}'"
-          if [ -n "${{ steps.commit-check.outputs.stdout }}" ]; then
+          INVALID_COMMITS=$(echo "$COMMITS" | grep -Ev '^(feat|fix|docs|style|refactor|test|build|perf|ci|chore|revert|merge|wip): ' || true)
+          if [ -z "$INVALID_COMMITS" ]; then
             echo "✅ Commit messages follow Conventional Commits specification."
           else
             echo "❌ Some commit messages do not follow Conventional Commits specification."
-            git log --format='%s' "${LAST_COMMIT}..${CURRENT_COMMIT}"
+            echo "$INVALID_COMMITS"
             exit 1
           fi
 
