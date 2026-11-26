@@ -2,7 +2,9 @@
 
 The pgvector integration is PostgreSQL-specific and adds no runtime dependency. It was validated against the published `pgvector/pgvector:0.8.5-pg17-bookworm` image, pinned by digest in the optional Docker Compose file. The effective extension version must still be verified from the database. The base query builder remains usable when the extension is absent; pgvector SQL is emitted only when its API is called. Applications can explicitly probe it once with:
 
-Copy `.env.example` to `.env` before starting the optional environment. Docker Compose and `vectorPgsql.php` read the same `PGVECTOR_*` values; credentials are not stored in the Compose file.
+Copy `.env.example` to `.env` before starting the optional environment. Docker
+Compose reads the `PGVECTOR_*` values; credentials are not stored in the
+Compose file.
 
 ```sql
 SELECT extversion FROM pg_extension WHERE extname = 'vector';
@@ -121,19 +123,16 @@ Filtered ANN queries should have normal B-tree indexes for selective relational 
 
 ## Testing
 
+Run the regular suite with the pgvector service when PostgreSQL integration is
+available:
+
 ```bash
-cp .env.example .env
-composer test
-docker compose up -d --wait pgvector
-php vectorPgsql.php
-php benchmarks/pgvector.php
-composer benchmark:pgvector-overhead
-BENCH_ROWS=10000 BENCH_DIMENSIONS=384 composer benchmark:pgvector-search
-composer benchmark:database
-docker compose down
+docker compose -f docker-compose.test.yml run --build --rm php-test composer test
 ```
 
-The detailed methodology, parameters, units, build cost, indexed-ingestion cost, filtered ANN plans, and recall results are in [Benchmarks](benchmarks.md). These are PHP/client and local-database measurements, not universal pgvector results.
+The reproducible ecosystem benchmark is documented in
+[`benchmarks/ecosystem/README.md`](../benchmarks/ecosystem/README.md). Local
+exploratory pgvector scripts are intentionally not part of the public package.
 
 See [Environment configuration](environment.md) for production permission checks and secret-injection guidance.
 

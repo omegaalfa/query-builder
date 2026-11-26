@@ -53,6 +53,8 @@ class RedisCache implements CacheInterface
 
     private const int LOCK_WAIT_MICROSECONDS = 10_000;
 
+    private const int SCAN_BATCH_SIZE = 500;
+
     private const string RELEASE_LOCK_SCRIPT = <<<'LUA'
         if redis.call('get', KEYS[1]) == ARGV[1] then
             return redis.call('del', KEYS[1])
@@ -69,6 +71,8 @@ class RedisCache implements CacheInterface
      * @var string
      */
     private readonly string $prefix;
+
+    private readonly string $namespaceRoot;
 
     /**
      * @param string $host
@@ -111,6 +115,7 @@ class RedisCache implements CacheInterface
 
         $this->redis = new Redis();
         $this->prefix = $prefix;
+        $this->namespaceRoot = 'qb:v2:{' . hash('sha256', $prefix) . '}:';
         $this->circuitFailureThreshold = $circuitFailureThreshold;
         $this->circuitRecoverySeconds = $circuitRecoverySeconds;
         $this->failOpen = $failOpen;
@@ -155,7 +160,22 @@ class RedisCache implements CacheInterface
 
     private function prefixKey(string $key): string
     {
-        return $this->prefix . $key;
+        return $this->namespaceRoot . 'value:' . $key;
+    }
+
+    private function lockKey(string $purpose, string $key): string
+    {
+        return $this->namespaceRoot . 'lock:' . $purpose . ':' . $key;
+    }
+
+    private function tagKey(string $tag): string
+    {
+        return $this->namespaceRoot . 'tag:' . $tag;
+    }
+
+    private function keyTagsKey(string $key): string
+    {
+        return $this->namespaceRoot . 'key-tags:' . $key;
     }
 
     /**
@@ -179,20 +199,28 @@ class RedisCache implements CacheInterface
     private function replaceTagAssociations(string $key, array $tags): void
     {
         $cacheKey = $this->prefixKey($key);
-        $keyTagsKey = $this->prefix . 'key-tags:' . $key;
+        $keyTagsKey = $this->keyTagsKey($key);
         $oldTags = $this->redis->sMembers($keyTagsKey);
+        if ($oldTags === false) {
+            throw new RedisException('Redis SMEMBERS failed while reading cache tags.');
+        }
+        if (!is_array($oldTags)) {
+            $oldTags = [];
+        }
 
-        if (is_array($oldTags)) {
-            foreach ($oldTags as $oldTag) {
-                $this->redis->sRem($this->prefix . 'tag:' . $oldTag, $cacheKey);
+        foreach ($oldTags as $oldTag) {
+            if ($this->redis->sRem($this->tagKey($oldTag), $cacheKey) === false) {
+                throw new RedisException('Redis SREM failed while replacing cache tags.');
             }
         }
-        $this->redis->del($keyTagsKey);
+        if ($this->redis->del($keyTagsKey) === false) {
+            throw new RedisException('Redis DEL failed while replacing cache tags.');
+        }
 
         foreach ($tags as $tag) {
-            if (!$this->redis->sAdd($this->prefix . 'tag:' . $tag, $cacheKey)
-                || !$this->redis->sAdd($keyTagsKey, $tag)) {
-                throw new CacheException("Failed to index cache tag", $tag);
+            if ($this->redis->sAdd($this->tagKey($tag), $cacheKey) === false
+                || $this->redis->sAdd($keyTagsKey, $tag) === false) {
+                throw new RedisException("Redis SADD failed while indexing cache tag '{$tag}'.");
             }
         }
     }
@@ -243,7 +271,9 @@ class RedisCache implements CacheInterface
     {
         try {
             $this->replaceTagAssociations($key, []);
-            $this->redis->del($this->prefixKey($key));
+            if ($this->redis->del($this->prefixKey($key)) === false) {
+                throw new RedisException('Redis DEL failed while deleting cache value.');
+            }
         } catch (RedisException $e) {
             throw new CacheException("Redis error deleting key", $key, $e);
         }
@@ -254,16 +284,31 @@ class RedisCache implements CacheInterface
     {
         try {
             foreach ($this->normalizeTags($tags) as $tag) {
-                $tagKey = $this->prefix . 'tag:' . $tag;
+                $tagKey = $this->tagKey($tag);
                 $keys = $this->redis->sMembers($tagKey);
-                if (is_array($keys) && $keys !== []) {
+                if (!is_array($keys)) {
+                    throw new RedisException('Redis SMEMBERS failed while flushing cache tags.');
+                }
+                if ($keys !== []) {
+                    $validatedKeys = [];
+                    $valuePrefix = $this->namespaceRoot . 'value:';
                     foreach ($keys as $cacheKey) {
-                        $key = substr($cacheKey, strlen($this->prefix));
+                        if (!str_starts_with($cacheKey, $valuePrefix)) {
+                            continue;
+                        }
+                        $validatedKeys[] = $cacheKey;
+                    }
+                    foreach ($validatedKeys as $cacheKey) {
+                        $key = substr($cacheKey, strlen($valuePrefix));
                         $this->replaceTagAssociations($key, []);
                     }
-                    $this->redis->del(...$keys);
+                    if ($validatedKeys !== [] && $this->redis->del(...$validatedKeys) === false) {
+                        throw new RedisException('Redis DEL failed while flushing tagged cache values.');
+                    }
                 }
-                $this->redis->del($tagKey);
+                if ($this->redis->del($tagKey) === false) {
+                    throw new RedisException('Redis DEL failed while removing cache tag index.');
+                }
             }
 
             return true;
@@ -279,11 +324,8 @@ class RedisCache implements CacheInterface
     public function deletePattern(string $pattern): bool
     {
         try {
-            $keys = $this->redis->keys($this->prefixKey($pattern));
-            if (empty($keys)) {
-                return true;
-            }
-            return $this->redis->del(...$keys) > 0;
+            $this->scanAndDelete($this->namespaceRoot . 'value:' . $pattern);
+            return true;
         } catch (RedisException $e) {
             throw new CacheException("Redis error deleting pattern", $pattern, $e);
         }
@@ -294,10 +336,51 @@ class RedisCache implements CacheInterface
      */
     public function clear(): bool
     {
+        if ($this->prefix === '') {
+            throw new CacheException('Redis cache namespace cannot be cleared when the prefix is empty.');
+        }
+
         try {
-            return $this->redis->flushDB();
+            $this->scanAndDelete($this->namespaceRoot . '*');
+            return true;
         } catch (RedisException $e) {
             throw new CacheException('Redis error clearing database.', previous: $e);
+        }
+    }
+
+    private function scanAndDelete(string $pattern): void
+    {
+        $iterator = null;
+        do {
+            $keys = $this->redis->scan($iterator, $pattern, self::SCAN_BATCH_SIZE);
+            if ($keys === false) {
+                throw new RedisException('Redis SCAN failed.');
+            }
+            foreach (array_chunk($keys, self::SCAN_BATCH_SIZE) as $batch) {
+                if ($batch !== []) {
+                    $this->unlinkOrDelete($batch);
+                }
+            }
+        } while ($iterator !== 0 && $iterator !== '0');
+    }
+
+    /** @param list<string> $keys */
+    private function unlinkOrDelete(array $keys): void
+    {
+        try {
+            $removed = $this->redis->unlink(...$keys);
+            if ($removed === false || !is_int($removed) || $removed < 0) {
+                throw new RedisException('Redis UNLINK failed.');
+            }
+            return;
+        } catch (RedisException $e) {
+            if (!preg_match('/unknown command.*UNLINK/i', $e->getMessage())) {
+                throw $e;
+            }
+        }
+        $removed = $this->redis->del(...$keys);
+        if ($removed === false || !is_int($removed) || $removed < 0) {
+            throw new RedisException('Redis DEL failed.');
         }
     }
 
@@ -532,7 +615,7 @@ class RedisCache implements CacheInterface
         }
         ++$this->stats['misses'];
 
-        $lockKey = $this->prefixKey($key . ':lock');
+                $lockKey = $this->lockKey('remember', $key);
         $token = bin2hex(random_bytes(16));
 
         try {
@@ -617,7 +700,7 @@ class RedisCache implements CacheInterface
             }
             if ($now < $cached['stale_until']) {
                 ++$this->stats['stale_hits'];
-                $lockKey = $this->prefixKey($key . ':swr-lock');
+                $lockKey = $this->lockKey('swr', $key);
                 $token = bin2hex(random_bytes(16));
                 try {
                     if (!$this->redis->set($lockKey, $token, ['nx', 'ex' => min($staleTtl, 30)])) {
@@ -650,7 +733,7 @@ class RedisCache implements CacheInterface
 
         ++$this->stats['misses'];
 
-        $lockKey = $this->prefixKey($key . ':swr-lock');
+        $lockKey = $this->lockKey('swr', $key);
         $token = bin2hex(random_bytes(16));
         try {
             if (!$this->redis->set($lockKey, $token, ['nx', 'ex' => min($ttl, 30)])) {

@@ -30,7 +30,7 @@ Prefer environment variables or secrets injected by the deployment platform. The
 
 ```bash
 chmod 600 /path/to/application/.env
-ENV_STRICT_PERMISSIONS=1 php vectorPgsql.php
+ENV_STRICT_PERMISSIONS=1 php -r "require 'vendor/autoload.php'; Omegaalfa\\QueryBuilder\\Utils\\EnvLoader::load('.', required: true, strictPermissions: true);"
 ```
 
 ```php

@@ -46,9 +46,12 @@ docker compose up -d --wait
 ## Validation
 
 ```bash
-php vectorPgsql.php
-php dockerServices.php
-PGVECTOR_INTEGRATION=1 composer test
+docker compose up -d --wait pgvector
+PGVECTOR_INTEGRATION=1 docker compose -f docker-compose.test.yml run --build --rm php-test composer test
 ```
+
+For the optional pgvector checks, use the commands documented in
+[`DATABASE_SETUP.md`](DATABASE_SETUP.md); the root exploratory scripts are kept
+local and are not part of the public package.
 
 The Compose file is intended for local development and CI. For production, inject secrets from the deployment platform instead of storing real credentials in the project `.env`.

@@ -17,7 +17,7 @@ The pre-change blockers were:
 - debug and EXPLAIN did not understand typed database values.
 - driver capability checks existed in several places but no feature-specific exception existed.
 
-Existing architectural debt remains outside this change: `composer.json` says PHP 8.2 and includes mandatory Redis/Illuminate dependencies despite the requested PHP 8.4/zero-extra-dependency direction; `ConnectionInterface::pdo()` does not declare the buffered argument passed by `QueryBuilder`; select string-expression heuristics and raw APIs remain trusted escape hatches; single-row INSERT historically does not quote its field list; cache TTL persists across query resets; and no PHPStan or PSR-12 script is configured.
+Existing architectural debt remains outside this change: `ConnectionInterface::pdo()` does not declare every implementation-specific option exposed by `QueryBuilder`; select string-expression heuristics and raw APIs remain trusted escape hatches; and single-row INSERT historically does not quote its field list. Cache TTL persistence across successful operations was corrected later; TTL is now consumed per successful operation.
 
 ## Alternatives
 

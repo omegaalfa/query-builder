@@ -39,6 +39,7 @@
   },
   "scripts": {
     "test": "phpunit --no-coverage",
+    "test:docker": "docker compose -f docker-compose.test.yml run --build --rm php-test composer test",
     "quality:stan": "phpstan analyse --configuration=phpstan.neon",
     "quality:cs": "php-cs-fixer fix --dry-run --diff --allow-risky=yes --config=.php-cs-fixer.php",
     "quality:mutation": "infection --configuration=infection.json5 --test-framework=phpunit --only-covered --threads=1 --min-msi=60",
@@ -46,11 +47,9 @@
       "@quality:stan",
       "@quality:cs"
     ],
-    "benchmark:compare": "php -d xdebug.mode=off benchmarks/compare-doctrine.php",
-    "benchmark:pgvector": "php -d xdebug.mode=off benchmarks/pgvector.php",
-    "benchmark:pgvector-overhead": "php -d xdebug.mode=off benchmarks/pgvector-overhead.php",
-    "benchmark:database": "php -d xdebug.mode=off benchmarks/database-workloads.php",
-    "benchmark:pgvector-search": "php -d xdebug.mode=off benchmarks/pgvector-search.php"
+    "quality:docker": "docker compose -f docker-compose.test.yml run --build --rm php-test composer quality",
+    "docker:test:down": "docker compose -f docker-compose.test.yml down",
+    "docker:test:reset": "docker compose -f docker-compose.test.yml down --volumes"
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
@@ -63,9 +62,7 @@
     "friendsofphp/php-cs-fixer": "^3.75",
     "infection/infection": "^0.29",
     "phpstan/phpstan": "^2.1",
-    "phpunit/phpunit": "^12.5.8",
-    "doctrine/dbal": "^4.4",
-    "illuminate/database": "^12.37"
+    "phpunit/phpunit": "^12.5.8"
   },
   "suggest": {
     "ext-redis": "Required only when using RedisCache"

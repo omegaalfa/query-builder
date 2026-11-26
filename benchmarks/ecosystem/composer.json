@@ -1,0 +1,8 @@
+{
+  "name": "omegaalfa/ecosystem-benchmark",
+  "type": "project",
+  "require": {"php": ">=8.4", "doctrine/dbal": "^4", "illuminate/database": "*", "cycle/database": "*", "catfan/medoo": "*"},
+  "autoload": {"psr-4": {"Omegaalfa\\QueryBuilder\\": "/project/src/"}},
+  "minimum-stability": "stable",
+  "config": {"sort-packages": true}
+}

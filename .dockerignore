@@ -1,0 +1,15 @@
+**
+!composer.json
+!composer.lock
+!.env.example
+!phpunit.xml
+!phpstan.neon
+!.php-cs-fixer.php
+!infection.json5
+!src/
+!src/**
+!tests/
+!tests/**
+!benchmarks/
+!benchmarks/**
+benchmarks/vendor/

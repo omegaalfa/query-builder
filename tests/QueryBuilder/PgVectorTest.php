@@ -76,8 +76,8 @@ final class PgVectorTest extends TestCase
 
         self::assertStringContainsString($metric->value . ' CAST(:param0 AS vector)', $sql);
         self::assertStringContainsString('AS "distance"', $sql);
-        self::assertStringContainsString('ORDER BY "embedding" ' . $metric->value . ' CAST(:param1 AS vector) ASC', $sql);
-        self::assertStringContainsString('WHERE "tenant_id" = :param2', $sql);
+        self::assertStringContainsString('ORDER BY "embedding" ' . $metric->value . ' CAST(:param2 AS vector) ASC', $sql);
+        self::assertStringContainsString('WHERE "tenant_id" = :param1', $sql);
     }
 
     public static function metrics(): iterable
