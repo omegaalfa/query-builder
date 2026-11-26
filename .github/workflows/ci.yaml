@@ -22,7 +22,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup PHP with PCOV
         uses: shivammathur/setup-php@v2
         with:
@@ -40,7 +40,7 @@ jobs:
     name: Quality checks
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -57,4 +57,4 @@ jobs:
     name: ⚙️ Docker integration suite (PHP 8.5)
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
