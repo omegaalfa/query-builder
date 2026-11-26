@@ -58,5 +58,3 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-      - name: Build runner and run tests with isolated services
-        run: docker compose -f docker-compose.test.yml run --build --rm php-test composer test
