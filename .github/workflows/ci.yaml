@@ -26,9 +26,9 @@ jobs:
       - name: Setup PHP with PCOV
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: "8.5"
           coverage: pcov
-          extensions: redis
+          extensions: pdo_sqlite, redis
           tools: composer:v2
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
@@ -44,7 +44,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: "8.5"
           extensions: redis
           tools: composer:v2
       - name: Install dependencies
@@ -54,104 +54,7 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    strategy:
-      matrix:
-        php: ["8.4"]
-    name: ⚙️ Running tests on PHP ${{ matrix.php }}
-
+    name: ⚙️ Docker integration suite (PHP 8.5)
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      # ==========================
-      # 🔍 Detect commit range
-      # ==========================
-      - name: Determine commit range
-        id: commit-range
-        run: |
-          git fetch --prune
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            LAST_COMMIT="${{ github.event.pull_request.base.sha }}"
-            CURRENT_COMMIT="${{ github.event.pull_request.head.sha }}"
-          else
-            LAST_COMMIT="${{ github.event.before }}"
-            CURRENT_COMMIT="${{ github.sha }}"
-          fi
-          if [ -z "$LAST_COMMIT" ] || [ "$LAST_COMMIT" = "0000000000000000000000000000000000000000" ]; then
-            LAST_COMMIT=$(git rev-list --max-parents=0 "$CURRENT_COMMIT")
-          fi
-          echo "LAST_COMMIT=$LAST_COMMIT" >> $GITHUB_ENV
-          echo "CURRENT_COMMIT=$CURRENT_COMMIT" >> $GITHUB_ENV
-          echo "Debug: Commit range $LAST_COMMIT..$CURRENT_COMMIT"
-
-      # ==========================
-      # 🚫 Skip Dependabot commits
-      # ==========================
-      - name: Skip check for Dependabot
-        if: ${{ github.actor == 'dependabot[bot]' }}
-        run: echo "Skipping Conventional Commit check for Dependabot." && exit 0
-
-      # ==========================
-      # 🧩 Check commit messages
-      # ==========================
-      - name: Check commit messages
-        id: commit-check
-        run: |
-          COMMITS=$(git log --format='%s' "${LAST_COMMIT}..${CURRENT_COMMIT}")
-          echo "Debug: All commits in range:"
-          echo "$COMMITS"
-          INVALID_COMMITS=$(echo "$COMMITS" | grep -Ev '^(feat|fix|docs|style|refactor|test|build|perf|ci|chore|revert|merge|wip): ' || true)
-          if [ -z "$INVALID_COMMITS" ]; then
-            echo "✅ Commit messages follow Conventional Commits specification."
-          else
-            echo "❌ Some commit messages do not follow Conventional Commits specification."
-            echo "$INVALID_COMMITS"
-            exit 1
-          fi
-
-      # ==========================
-      # ⚙️ Setup PHP + Tools
-      # ==========================
-      - name: 🧰 Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: xdebug
-          extensions: redis
-          tools: composer:v2, phpstan
-
-      - name: 🔍 Check PHP version
-        run: php -v
-
-      - name: 📦 Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v5
-        with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-
-
-      - name: 📥 Install dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
-
-      # ==========================
-      # 🧪 Tests + Coverage
-      # ==========================
-      - name: ✅ Run tests
-        run: vendor/bin/phpunit --colors=always --testdox
-
-      - name: 🧪 Generate coverage report
-        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml

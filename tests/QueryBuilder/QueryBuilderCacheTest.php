@@ -37,6 +37,7 @@ class QueryBuilderCacheTest extends TestCase
             private PDOStatement $stmt;
             public function __construct($stmt) { $this->stmt = $stmt; }
             public function prepare(string $query, array $options = []): PDOStatement|false { return $this->stmt; }
+            public function inTransaction(): bool { return false; }
             public function lastInsertId($name = null): string|false { return '1'; }
         };
 
@@ -71,6 +72,8 @@ class QueryBuilderCacheTest extends TestCase
             public function has(string $key): bool { return isset($this->store[$key]); }
             public function get(string $key): mixed { return $this->store[$key] ?? null; }
             public function set(string $key, mixed $value, int $ttl = 3600): void { $this->store[$key] = $value; }
+            public function setWithTags(string $key, mixed $value, int $ttl, array $tags): void { $this->set($key, $value, $ttl); }
+            public function flushTags(array $tags): bool { return true; }
 
             public function delete(string $key): void
             {
@@ -186,7 +189,7 @@ class QueryBuilderCacheTest extends TestCase
         $cache = $this->createMock(CacheInterface::class);
 
         $qb = new QueryBuilder($connection, $paginator, $cache);
-        $qb->cache(180);
+        $qb->select('items')->cache(180);
 
         $reflection = new ReflectionClass($qb);
         $cacheKeyProperty = $reflection->getProperty('cacheKey');
@@ -207,11 +210,12 @@ class QueryBuilderCacheTest extends TestCase
             );
 
         $saveToCache = $reflection->getMethod('saveToCache');
+        $tags = $reflection->getMethod('cacheTagsForCurrentTable')->invoke($qb);
 
         $data = new ArrayIterator([['id' => 2]]);
         $result = new QueryResultDTO($data, 1);
 
-        $saveToCache->invoke($qb, $result);
+        $saveToCache->invoke($qb, $result, $tags);
     }
 
     public function testCacheTagsAreNormalizedAndIncludeTheCurrentTable(): void
@@ -223,8 +227,25 @@ class QueryBuilderCacheTest extends TestCase
         $qb->select('users')->cacheTags(['users', '', 'tenant:10', 'users']);
 
         $reflection = new ReflectionClass($qb);
+        $identity = (string) $reflection->getMethod('cacheConnectionIdentity')->invoke($qb);
         $method = $reflection->getMethod('cacheTagsForCurrentTable');
 
-        self::assertSame(['users', 'tenant:10'], $method->invoke($qb));
+        $expectedTags = [
+            'qb:' . $identity . ':custom:' . hash('xxh128', 'users'),
+            'qb:' . $identity . ':custom:' . hash('xxh128', 'tenant:10'),
+            'qb:' . $identity . ':table:' . hash('xxh128', 'users'),
+            'qb:' . $identity . ':database',
+        ];
+
+        self::assertSame($expectedTags, $method->invoke($qb));
+        self::assertSame($expectedTags, $method->invoke($qb));
+
+        $sameConnectionBuilder = new QueryBuilder($connection, null, $cache);
+        $sameConnectionBuilder->select('users')->cacheTags(['users', '', 'tenant:10', 'users']);
+        $sameBuilderReflection = new ReflectionClass($sameConnectionBuilder);
+        self::assertSame(
+            $expectedTags,
+            $sameBuilderReflection->getMethod('cacheTagsForCurrentTable')->invoke($sameConnectionBuilder)
+        );
     }
 }

@@ -9,7 +9,6 @@
 /vendor-benchmark/
 
 # Composer files
-composer.lock
 
 # Logs and cache
 *.log
@@ -30,6 +29,8 @@ Thumbs.db
 /phpunit.xml
 /phpunit.xml.dist
 /tests/_output/
+/.phpunit.result.cache
+/junit.xml
 
 # Arquivos gerados
 autoload.php
@@ -58,7 +59,6 @@ infection.log
 infection-summary.log
 
 # Arquivos de lock de outros gerenciadores (se houver)
-./composer.lock
 package-lock.json
 yarn.lock
 
@@ -69,3 +69,29 @@ docker-compose.override.yml
 # Outros temporários
 *.swp
 *~
+/.lock
+/big.csv
+**/benchmark.sqlite
+benchmarks/**/vendor/
+
+# Investigações locais; o benchmark reproduzível oficial fica em ecosystem/
+benchmarks/anomalies/
+benchmarks/bind-optimization/
+benchmarks/build-complex-investigation-2026/
+benchmarks/insert-batch-investigation-2026/
+benchmarks/performance-validation/
+benchmarks/real-scenarios-2026/
+benchmarks/sqlite-insert-batch/
+benchmarks/sqlite-insert-batch-investigation-2026/
+benchmarks/sqlite-insert-batch-positional-2026/
+benchmarks/compare-doctrine.php
+benchmarks/composer.json
+benchmarks/composer.lock
+benchmarks/require-docker.php
+logs/
+.axiom/
+.infection/
+.phpstan/
+benchmarks/**/results/*.jsonl
+benchmarks/**/results/*.csv
+benchmarks/**/results/*.gz

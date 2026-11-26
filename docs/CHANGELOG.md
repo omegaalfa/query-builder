@@ -10,6 +10,7 @@
 - `raw()` cria um placeholder distinto para cada ocorrência física de parâmetro.
 - `toSql(true)` continua sendo uma representação de diagnóstico e agora substitui placeholders sem corromper prefixos ou backslashes.
 - `selectRaw()` deixa explícito quando uma expressão SQL não deve ser tratada como identificador.
+- `insertBatch()` usa placeholders posicionais no SQLite e MySQL para reduzir o custo de preparação sem alterar a ordem dos bindings; PostgreSQL mantém o caminho nomeado.
 
 ### API
 
@@ -29,6 +30,8 @@
 - Adicionado `RedisCache::remember()` com lock distribuído curto para reduzir cache stampede após expiração de chaves.
 - A liberação do lock do `remember()` passou a ser atômica via Lua, impedindo a remoção de locks reassumidos por outro processo.
 - Adicionada invalidação por tags com `RedisCache::flushTags()` e tags opcionais em `RedisCache::set()`.
+- `RedisCache` usa namespaces Redis v2 isolados por SHA-256; a migração não lê nem remove automaticamente chaves legadas.
+- `RedisCache` aceita `SADD` com retorno `0` como associação já existente e converte retornos `false` de operações críticas de tags e exclusão em `CacheException`.
 - Adicionado `QueryBuilder::cacheTags()`, com indexação automática pela tabela e invalidação após operações de escrita usando Redis.
 - Adicionado `RedisCache::rememberStale()` para servir valores stale durante uma janela controlada e atualizar com lock distribuído.
 - Adicionados `RedisCache::getStats()` e `resetStats()` para observar hits, misses, stale hits, refreshes e contenções de lock.

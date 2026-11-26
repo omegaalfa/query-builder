@@ -38,7 +38,7 @@ O ambiente Docker opcional com PostgreSQL/pgvector, MySQL e Redis está document
 
 O logging estruturado e sua configuração segura para produção estão documentados em [docs/logging.md](docs/logging.md).
 
-A metodologia de comparação com Doctrine DBAL está documentada em [docs/benchmarks.md](docs/benchmarks.md).
+A configuração dos bancos e dos testes está documentada em [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md). O benchmark reproduzível do ecossistema fica em [benchmarks/ecosystem/README.md](benchmarks/ecosystem/README.md).
 
 ---
 
@@ -70,6 +70,10 @@ case-sensitive, a capitalização faz parte do caminho resolvido pelo autoload P
 - **Extensão PDO** habilitada
 - **Driver PDO** correspondente ao seu banco de dados
 - **Bancos suportados:** MySQL 5.7+, MariaDB 10.2+, PostgreSQL 9.6+ e SQLite 3.x+
+
+## Configuração dos bancos de dados
+
+Consulte o [guia de configuração dos bancos de dados](docs/DATABASE_SETUP.md) para instalar os drivers PHP, configurar SQLite, iniciar MySQL, PostgreSQL e Redis e executar os testes com Docker Compose.
 
 ---
 
@@ -152,63 +156,42 @@ $qb = new QueryBuilder(
 
 ## ⚡ Performance & Benchmarks
 
-### Streaming de Grandes Volumes
+### Benchmark comparativo atual
 
-Benchmark comparativo entre **Omegaalfa Query Builder** (`execute(false)`) e **Laravel Eloquent** (`cursor()`) para processamento de grandes datasets com **unbuffered queries** (streaming real).
+O benchmark oficial compara construção e execução com PDO, Doctrine DBAL,
+Illuminate Database, Cycle e Medoo em Docker. As medianas atuais do Omegaalfa
+estão na tabela abaixo, em µs/op.
 
-<details>
-<summary>📊 <b>Ver Resultados Completos</b></summary>
+O benchmark oficial atual mede construção e execução em Docker. As medianas em
+µs/op para o Omegaalfa são:
 
-#### Tabela Comparativa
+| Cenário | SQLite | MySQL | PostgreSQL |
+|---|---:|---:|---:|
+| `build_simple` | 2,13 | 2,21 | 2,26 |
+| `build_complex` | 7,26 | 6,99 | 7,42 |
+| `native_pk` | 35,24 | 353,98 | 387,46 |
+| `execute_pk` | 24,90 | 331,66 | 372,22 |
+| `materialize10000` | 2.072,15 | 2.845,18 | 4.148,45 |
+| `batch_1000` | 1.543,46 | 7.992,80 | 8.559,29 |
 
-| Registros | Omega Time (s) | Omega Mem (MB) | Laravel Time (s) | Laravel Mem (MB) | Verificação |
-|-----------|----------------|----------------|------------------|------------------|-------------|
-| 10        | 0.145          | 0.000          | 0.024            | 4.000            | ✅ 10/10    |
-| 100       | 0.001          | 0.000          | 0.002            | 0.000            | ✅ 100/100  |
-| 1,000     | 0.003          | 0.000          | 0.008            | 0.000            | ✅ 1K/1K    |
-| 10,000    | 0.097          | 0.000          | 0.067            | 0.000            | ✅ 10K/10K  |
-| 100,000   | 0.189          | 2.000          | 0.653            | 0.000            | ✅ 100K/100K |
-| **1,000,000** | **1.441**  | **32.016**     | **6.630**        | **0.000**        | ✅ **1M/1M** |
+Os valores são específicos das consultas, versões, drivers e máquina usados; não
+representam superioridade universal. A metodologia completa e os resultados por
+biblioteca estão em [benchmarks/ecosystem/README.md](benchmarks/ecosystem/README.md).
 
-#### Gráfico de Performance (Tempo de Execução)
 
-```
-Processamento de 1 Milhão de Registros
+### Interpretação
 
-Omegaalfa Query Builder:  ████                1.44s  (4.6x mais rápido)
-Laravel Eloquent Cursor:  ████████████████████ 6.63s
-```
+- Os números são específicos das consultas, versões, drivers e máquina usados.
+- Eles não representam superioridade universal entre as bibliotecas.
+- A metodologia completa e os resultados por biblioteca estão em
+  [benchmarks/ecosystem/README.md](benchmarks/ecosystem/README.md).
 
-#### Gráfico de Consumo de Memória
+### Condições do teste
 
-```
-Memória Peak para 1 Milhão de Registros
-
-Omegaalfa (streaming):    ████████████████████ 32.02 MB
-Laravel (cursor):                              ~0.00 MB*
-
-* Valores medidos pelo script de benchmark
-```
-
-</details>
-
-### 🏆 Conclusões
-
-- ✅ **Até 4.6x mais rápido** que Laravel Eloquent para volumes acima de 1M de registros
-- ✅ **Consumo de memória previsível** - ~32MB constantes para streaming de 1M de registros
-- ✅ **Escalabilidade linear** - performance proporcional ao volume de dados
-- ✅ **Ideal para:** ETL, relatórios, exports, processamento batch, big data
-
-### 📌 Condições do Teste
-
-- **PHP:** 8.4.1
-- **Banco:** MySQL 8.0 com `big.csv` (1M registros)
-- **Ambiente:** WSL2 Ubuntu
-- **Método Omega:** `execute(false)` - unbuffered query com Generator
-- **Método Laravel:** `DB::cursor()` - lazy collection streaming
-- **Hardware:** Ambiente de desenvolvimento padrão
-
-> ⚠️ **Nota:** Resultados podem variar conforme hardware, configuração do PHP/MySQL e características dos dados. Benchmark disponível em [`teste.php`](teste.php) para validação independente.
+- PHP e bancos são executados nos containers definidos em
+  `benchmarks/ecosystem/compose.yml`.
+- As medições separam construção, execução, materialização e batches.
+- Resultados variam conforme hardware, versões, drivers e configuração.
 
 ---
 
@@ -289,7 +272,7 @@ $qb->select('usuarios');
 $qb->select('produtos', ['id', 'nome', 'preco']);
 
 // Com funções SQL
-$qb->select('pedidos', ['id', 'COUNT(*) as total', 'SUM(valor) as total_valor']);
+$qb->select('pedidos', ['COUNT(*) as total', 'SUM(valor) as total_valor']);
 
 // Com aliases de tabela
 $qb->select('usuarios', ['u.id', 'u.nome', 'u.email'])->alias('u');
@@ -298,7 +281,14 @@ $qb->select('usuarios', ['u.id', 'u.nome', 'u.email'])->alias('u');
 ⚠️ **Segurança:** Para campos dinâmicos vindos de usuário, sempre use whitelist:
 ```php
 $allowedFields = ['id', 'nome', 'email'];
-$userFields = array_intersect($_GET['fields'], $allowedFields);
+$requestedFields = $_GET['fields'] ?? ['id'];
+if (!is_array($requestedFields) || array_filter($requestedFields, 'is_string') !== $requestedFields) {
+    throw new InvalidArgumentException('Campos inválidos.');
+}
+$userFields = array_values(array_intersect($requestedFields, $allowedFields));
+if ($userFields === []) {
+    throw new InvalidArgumentException('Selecione ao menos um campo permitido.');
+}
 $qb->select('usuarios', $userFields);
 ```
 
@@ -416,7 +406,7 @@ $qb->insertBatch('ai_chunks', $chunks)
 ```
 
 As colunas de conflito e atualização devem existir nos registros inseridos. A
-API falha precocemente quando usada fora do driver PostgreSQL.
+API suporta também INSERT unitário no SQLite; MySQL não é suportado por essa API de conflito.
 
 ---
 
@@ -502,7 +492,7 @@ public function where(string $column, SqlOperator|string $operator, mixed $value
 
 **Operadores disponíveis:**
 - `SqlOperator::EQUALS` - `=`
-- `SqlOperator::NOT_EQUALS` - `<>`
+- `SqlOperator::NOT_EQUALS` - `!=`
 - `SqlOperator::GREATER_THAN` - `>`
 - `SqlOperator::LESS_THAN` - `<`
 - `SqlOperator::GREATER_THAN_OR_EQUALS` - `>=`
@@ -875,7 +865,10 @@ $ativos = $qb->select('usuarios')
              ->count();
 
 // Contar valores únicos
-$categorias = $qb->select('produtos')->count('DISTINCT categoria_id');
+$categorias = $qb->selectRaw('produtos', 'COUNT(DISTINCT categoria_id) AS total')->execute();
+foreach ($categorias->data as $row) {
+    echo $row['total'];
+}
 ```
 
 ---
@@ -1066,9 +1059,9 @@ try {
         ])->execute();
         
         // 3. Atualizar estoque
-        $qb->update('produtos', ['estoque' => 'estoque - 2'])
-           ->where('id', SqlOperator::EQUALS, 1)
-           ->execute();
+        $stmt = $pdo->prepare('UPDATE produtos SET estoque = estoque - ? WHERE id = ?');
+        $stmt->execute([2, 1]);
+        // Escritas diretas pelo PDO não são rastreadas para invalidação do cache.
         
         return $pedidoId;
     });
@@ -1092,7 +1085,9 @@ public function cache(int $ttl = 3600): self
 ```
 
 **Parâmetros:**
-- `$ttl` - Tempo de vida em segundos (default: 1 hora)
+- `$ttl` - Tempo de vida em segundos (default: 1 hora). A configuração vale para a próxima execução bem-sucedida do builder.
+
+Sem chamar `cache()`, a operação não usa cache. `cache(0)` desabilita cache explicitamente, inclusive se um TTL positivo tiver sido configurado antes; valores negativos lançam `InvalidArgumentException`. Após uma execução bem-sucedida, o TTL é consumido. Se a consulta falhar no banco, a configuração permanece disponível para corrigir e repetir a operação.
 
 **Exemplo:**
 ```php
@@ -1110,6 +1105,8 @@ $result = $qb->select('produtos')
 // Cache por 24 horas
 $result = $qb->select('categorias')
              ->cache(86400)
+             ->execute();
+```
 
 Para usar Redis, instale `ext-redis` e crie uma instância de `RedisCache`. A implementação aplica o prefixo configurado a todas as chaves, serializa valores em JSON, respeita TTL e oferece `getMultiple()`, `deletePattern()` e `clear()`:
 
@@ -1239,6 +1236,14 @@ $cache->flushTags(['users']);
 
 Tags vazias são ignoradas e duplicatas são removidas. A invalidação remove todas as chaves indexadas pelas tags informadas.
 
+#### Namespace e limitações operacionais
+
+As chaves Redis usam o namespace v2, derivado por SHA-256 do prefixo configurado. Instâncias com o mesmo prefixo compartilham o namespace; prefixos diferentes ficam isolados. A biblioteca não lê nem migra automaticamente chaves do formato legado. Após a atualização, o cache começa vazio no namespace v2; valores legados permanecem até expirarem, e índices legados sem TTL podem permanecer no Redis.
+
+Faça uma implantação coordenada e encerre processos que ainda executem versões antigas antes de chamar `clear()`: versões antigas podem implementar a limpeza com `FLUSHDB`, que apaga todas as chaves do banco Redis, inclusive de outras aplicações. A implementação v2 limpa apenas seu namespace com `SCAN`, mas essa varredura não é um snapshot atômico; gravações concorrentes podem sobreviver ou ser removidas durante a limpeza.
+
+A gravação do valor e a atualização dos índices de tags usam vários comandos Redis e não são atômicas. Escritas simultâneas na mesma chave ou uma escrita concorrente com `flushTags()` podem deixar valor e índices inconsistentes. A expiração automática remove o valor, mas não os índices de tags, que não têm TTL. `deletePattern()` apaga valores correspondentes sem limpar suas associações de tags. A correção de retornos `false` de comandos detecta falhas operacionais, mas não elimina essas janelas de concorrência ou referências órfãs.
+
 No `QueryBuilder`, use `cacheTags()` para associar uma consulta a tags adicionais. A tabela consultada também é indexada automaticamente, e operações de `insert`, `update` e `delete` invalidam as entradas relacionadas quando o cache Redis está configurado:
 
 ```php
@@ -1315,7 +1320,7 @@ $sql = $qb->select('usuarios')
           ->getQuerySql();
 
 echo $sql;
-// SELECT * FROM `usuarios` WHERE `ativo` = :param0
+// SELECT * FROM `usuarios` WHERE `id` = :param0
 ```
 
 ---
@@ -1336,11 +1341,11 @@ $qb->select('usuarios')
 
 // SQL com placeholders
 echo $qb->toSql();
-// SELECT * FROM `usuarios` WHERE `ativo` = :param0 AND `nome` LIKE :param1
+// SELECT * FROM `usuarios` WHERE `id` = :param0 AND `nome` LIKE :param1
 
 // SQL com valores (apenas para debug!)
 echo $qb->toSql(true);
-// SELECT * FROM `usuarios` WHERE `ativo` = 123 AND `nome` LIKE '%João%'
+// SELECT * FROM `usuarios` WHERE `id` = 123 AND `nome` LIKE '%João%'
 ```
 
 ⚠️ **Apenas para debug!** Nunca use `toSql(true)` em produção.
@@ -1497,22 +1502,19 @@ try {
         
         // 3. Atualizar estoque
         foreach ($carrinho as $item) {
-            // Verificar estoque disponível
-            $produto = $qb->select('produtos', ['estoque'])
-                          ->where('id', SqlOperator::EQUALS, $item['produto_id'])
-                          ->execute();
-            
-            $estoque = $produto->data[0]['estoque'];
-            if ($estoque < $item['quantidade']) {
-                throw new Exception("Estoque insuficiente para produto {$item['produto_id']}");
+            // Valores separados do SQL; verifica o estoque na própria atualização.
+            $quantidade = (int) $item['quantidade'];
+            if ($quantidade <= 0) {
+                throw new InvalidArgumentException('Quantidade inválida.');
             }
-            
-            // Decrementar estoque
-            $pdo->exec("
-                UPDATE produtos 
-                SET estoque = estoque - {$item['quantidade']}
-                WHERE id = {$item['produto_id']}
-            ");
+            $stmt = $pdo->prepare(
+                'UPDATE produtos SET estoque = estoque - ? WHERE id = ? AND estoque >= ?'
+            );
+            $stmt->execute([$quantidade, $item['produto_id'], $quantidade]);
+            if ($stmt->rowCount() !== 1) {
+                throw new RuntimeException('Produto indisponível ou estoque insuficiente.');
+            }
+            // PDO direto não invalida o cache; este fluxo exige gestão própria dessa invalidação.
         }
         
         // 4. Limpar carrinho
@@ -1536,6 +1538,8 @@ try {
 
 ```php
 // Produtos mais vendidos do mês com informações de categoria
+// Este exemplo usa MONTH() e YEAR(), funções do MySQL. Para SQLite e PostgreSQL,
+// adapte o SQL ao dialeto ou utilize um intervalo de datas com parâmetros.
 $result = $qb->raw('
     SELECT 
         p.id,
@@ -1574,19 +1578,40 @@ foreach ($result->data as $produto) {
 
 ## 🧪 Testes
 
-O projeto possui **cobertura completa de testes** com PHPUnit.
+O projeto possui testes unitários e de integração com PHPUnit. Para os testes
+que dependem de PostgreSQL/pgvector, Redis e drivers PDO, há um ambiente Docker
+isolado; ele não depende da versão do PHP nem dos drivers instalados no host.
 
 ### Executar Testes
 
 ```bash
-# Todos os testes
+# Suíte local (usa o PHP instalado no host)
 vendor/bin/phpunit
 
-# Com cobertura
+# Suíte completa no Docker (PHP 8.5, pdo_sqlite, pdo_mysql, pdo_pgsql e Redis)
+docker compose -f docker-compose.test.yml run --build --rm php-test composer test
+
+# Comandos equivalentes via Composer
+composer test:docker
+composer quality:docker
+
+# Com cobertura local
 vendor/bin/phpunit --coverage-html coverage/
 
-# Testes específicos
+# Teste específico local
 vendor/bin/phpunit tests/QueryBuilder/QueryBuilderSecurityTest.php
+```
+
+O Compose de testes inicia MySQL, PostgreSQL com pgvector e Redis com healthchecks.
+Esses serviços usam volumes próprios, sem publicar portas no host e sem compartilhar
+os dados do ambiente de desenvolvimento. O runner é construído com PHP 8.5.4 e
+instala as versões travadas em `composer.lock` durante o build.
+
+Para desligar os serviços ou remover também os volumes de teste:
+
+```bash
+docker compose -f docker-compose.test.yml down
+docker compose -f docker-compose.test.yml down --volumes
 ```
 
 Além dos testes, o projeto possui validações de qualidade:
@@ -1609,7 +1634,9 @@ composer quality:mutation # Infection; código coberto, MSI mínimo de 60%
 - ✅ `QueryBuilderExecutionTest` - Testes de execução
 - ✅ `QueryBuilderFullTest` - Testes end-to-end
 
-**Status atual:** 157 testes, 346 assertions, 0 failures. Dez testes são opcionais e podem ser ignorados quando drivers de banco ou serviços externos não estiverem disponíveis.
+Os testes de PostgreSQL/pgvector são opcionais na execução local sem Docker e ficam
+ativos no runner Docker e no CI. Testes de Redis também usam o serviço do ambiente
+de teste quando a extensão `redis` está disponível.
 
 ---
 
@@ -1912,6 +1939,79 @@ $settings = new DatabaseSettings(
 
 $query = DatabaseFactory::create($settings);
 ```
+
+### SQLite: caminho do banco por ambiente
+
+O Query Builder recebe o caminho do SQLite em `DatabaseSettings`; ele não carrega
+arquivos `.env`. A aplicação consumidora pode carregar sua configuração com a
+ferramenta que já utiliza, ou receber as variáveis do processo/contêiner:
+
+```dotenv
+DB_CONNECTION=sqlite
+DB_DATABASE=/var/lib/app/data/app.sqlite
+```
+
+Repassando os valores de ambiente para a assinatura real de `DatabaseSettings`:
+
+```php
+use Omegaalfa\QueryBuilder\Connection\PDOConnection;
+use Omegaalfa\QueryBuilder\DatabaseSettings;
+
+$driver = getenv('DB_CONNECTION') ?: 'sqlite';
+$database = getenv('DB_DATABASE');
+
+if ($database === false || $database === '') {
+    throw new RuntimeException('DB_DATABASE deve conter o caminho do arquivo SQLite.');
+}
+
+$settings = new DatabaseSettings(
+    driver: $driver,
+    host: '',
+    database: $database,
+    port: 0,
+    username: '',
+    password: '',
+);
+
+$connection = new PDOConnection($settings);
+```
+
+Use um caminho absoluto para evitar que o arquivo dependa do diretório de
+trabalho do processo PHP. Um caminho relativo, como `var/app.sqlite`, é resolvido
+relativamente ao diretório atual do processo. `:memory:` cria um banco em memória
+e seus dados não persistem depois que a conexão é fechada.
+
+Um arquivo SQLite inexistente é criado ao abrir a conexão quando o diretório pai
+já existe e permite escrita. A biblioteca não cria diretórios: se o diretório não
+existir, a conexão falhará. Um valor vazio produz a DSN `sqlite:` e abre um banco
+temporário, que não persiste após o fechamento; por isso, valide `DB_DATABASE`
+na aplicação antes de criar a conexão.
+
+O processo PHP precisa poder ler e escrever o banco e escrever no diretório que o
+contém. SQLite pode criar arquivos auxiliares de journal, `-wal` e `-shm` junto
+do banco. Mantenha o arquivo e seu diretório fora da raiz pública do servidor.
+
+Em Docker, monte um volume persistente no caminho configurado e garanta que o
+usuário do PHP tenha as permissões necessárias nesse ponto de montagem. Por
+exemplo, para um serviço de aplicação:
+
+```yaml
+services:
+  app:
+    volumes:
+      - sqlite_data:/var/lib/app/data
+
+volumes:
+  sqlite_data:
+```
+
+O valor de `DB_DATABASE` dentro do contêiner deve ser
+`/var/lib/app/data/app.sqlite`. O volume precisa persistir durante recriações do
+contêiner; apagar o volume remove o banco.
+
+O Query Builder não verifica permissões antes de conectar; testes automatizados
+de negação de escrita não são portáveis porque dependem do usuário efetivo e do
+sistema operacional. Uma falha real de acesso é reportada como erro de conexão.
 
 ### Qualidade e testes
 

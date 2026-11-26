@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Omegaalfa\QueryBuilder\Interfaces\DatabaseValueInterface;
 use Omegaalfa\QueryBuilder\Interfaces\QueryLoggerInterface;
+use PDOException;
 use RuntimeException;
 use Stringable;
 use Throwable;
@@ -106,7 +107,9 @@ class FileQueryLogger implements QueryLoggerInterface
             'error' => [
                 'type' => $error::class,
                 'code' => $error->getCode(),
-                'message' => $this->truncate($error->getMessage()),
+                // Driver messages can embed bindings even when logParameters is disabled.
+                'message' => 'Query execution failed.',
+                'sqlstate' => $this->sqlState($error),
             ],
         ];
 
@@ -118,6 +121,21 @@ class FileQueryLogger implements QueryLoggerInterface
         }
 
         $this->writeEntry($entry);
+    }
+
+    private function sqlState(Throwable $error): ?string
+    {
+        do {
+            if ($error instanceof PDOException) {
+                $state = $error->errorInfo[0] ?? $error->getCode();
+                if (is_string($state) && preg_match('/^[A-Z0-9]{5}$/D', $state) === 1) {
+                    return $state;
+                }
+            }
+            $error = $error->getPrevious();
+        } while ($error !== null);
+
+        return null;
     }
 
     /**

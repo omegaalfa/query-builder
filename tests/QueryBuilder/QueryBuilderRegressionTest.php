@@ -182,7 +182,7 @@ final class QueryBuilderRegressionTest extends TestCase
             ->getQuerySql();
 
         self::assertStringContainsString(
-            'WHERE (`created_at` < :param0 OR (`created_at` = :param0 AND `id` < :param1))',
+            'WHERE (`created_at` < :param0 OR (`created_at` = :param1 AND `id` < :param2))',
             $sql,
         );
         self::assertStringContainsString('ORDER BY `created_at` DESC, `id` DESC', $sql);

@@ -1,0 +1,10 @@
+/benchmarks/ export-ignore
+/tests/ export-ignore
+/docs/ export-ignore
+/docker/ export-ignore
+/.github/ export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/phpstan* export-ignore
+/phpunit* export-ignore
+/.php-cs-fixer* export-ignore

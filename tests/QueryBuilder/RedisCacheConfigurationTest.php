@@ -37,7 +37,7 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $redis->expects(self::once())->method('mGet')
-            ->with(['test:false', 'test:zero', 'test:empty'])
+            ->with([$this->valueKey('false'), $this->valueKey('zero'), $this->valueKey('empty')])
             ->willReturn([json_encode(false), json_encode(0), json_encode('')]);
         $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
@@ -51,7 +51,7 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $redis->expects(self::once())->method('mGet')
-            ->with(['test:missing', 'test:present'])
+            ->with([$this->valueKey('missing'), $this->valueKey('present')])
             ->willReturn([false, json_encode(['id' => 1])]);
         $cache = $this->cacheWithRedis($redis, retryAttempts: 0);
 
@@ -94,7 +94,7 @@ final class RedisCacheConfigurationTest extends TestCase
     public function testRememberReturnsCachedValueWithoutResolving(): void
     {
         $redis = $this->redisMock();
-        $redis->expects(self::once())->method('get')->with('test:item')->willReturn('{"value":1}');
+        $redis->expects(self::once())->method('get')->with($this->valueKey('item'))->willReturn('{"value":1}');
         $redis->expects(self::never())->method('set');
         $cache = $this->cacheWithRedis($redis);
 
@@ -107,11 +107,11 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $token = null;
-        $redis->expects(self::once())->method('get')->with('test:item')->willReturn(false);
+        $redis->expects(self::once())->method('get')->with($this->valueKey('item'))->willReturn(false);
         $redis->expects(self::once())->method('set')
             ->with(
-                'test:item:lock',
-                self::isType('string'),
+                $this->lockKey('remember', 'item'),
+                self::isString(),
                 ['nx', 'ex' => 30],
             )
             ->willReturnCallback(function (string $key, string $value) use (&$token): bool {
@@ -119,12 +119,12 @@ final class RedisCacheConfigurationTest extends TestCase
                 return true;
             });
         $redis->expects(self::once())->method('setex')
-            ->with('test:item', 30, '{"value":2}')
+            ->with($this->valueKey('item'), 30, '{"value":2}')
             ->willReturn(true);
         $redis->expects(self::once())->method('eval')
             ->with(
                 self::stringContains("redis.call('get', KEYS[1]) == ARGV[1]"),
-                self::callback(static fn(array $arguments): bool => $arguments[0] === 'test:item:lock'
+                self::callback(fn(array $arguments): bool => $arguments[0] === $this->lockKey('remember', 'item')
                     && is_string($arguments[1])
                     && strlen($arguments[1]) === 32),
                 1,
@@ -138,17 +138,17 @@ final class RedisCacheConfigurationTest extends TestCase
     public function testRememberDoesNotDeleteAReplacedLock(): void
     {
         $redis = $this->redisMock();
-        $redis->expects(self::once())->method('get')->with('test:item')->willReturn(false);
+        $redis->expects(self::once())->method('get')->with($this->valueKey('item'))->willReturn(false);
         $redis->expects(self::once())->method('set')->willReturn(true);
         $redis->expects(self::once())->method('setex')->willReturn(true);
         $redis->expects(self::once())->method('eval')
             ->with(
                 self::stringContains('ARGV[1]'),
-                self::isType('array'),
+                self::isArray(),
                 1,
             )
             ->willReturn(0);
-        $redis->expects(self::once())->method('del')->with('test:key-tags:item');
+        $redis->expects(self::once())->method('del')->with($this->namespaceRoot() . 'key-tags:item');
         $cache = $this->cacheWithRedis($redis);
 
         self::assertSame('value', $cache->remember('item', 30, static fn(): string => 'value'));
@@ -161,7 +161,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis->expects(self::exactly(2))->method('get')
             ->willReturnCallback(function (string $key) use (&$reads): string|false {
                 ++$reads;
-                return $key === 'test:item' && $reads === 2 ? '"ready"' : false;
+                return $key === $this->valueKey('item') && $reads === 2 ? '"ready"' : false;
             });
         $redis->expects(self::once())->method('set')->willReturn(false);
         $cache = $this->cacheWithRedis($redis);
@@ -276,7 +276,7 @@ final class RedisCacheConfigurationTest extends TestCase
     public function testRememberReturnsResolvedValueWhenCacheWriteFailsInFailOpenMode(): void
     {
         $redis = $this->redisMock();
-        $redis->expects(self::once())->method('get')->with('test:item')->willReturn(false);
+        $redis->expects(self::once())->method('get')->with($this->valueKey('item'))->willReturn(false);
         $redis->expects(self::once())->method('set')->willReturn(true);
         $redis->expects(self::once())->method('setex')->willThrowException(new RedisException('write failed'));
         $redis->expects(self::once())->method('eval')->willReturn(1);
@@ -339,7 +339,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $redis = $this->redisMock();
         $redis->expects(self::once())
             ->method('setex')
-            ->with('test:item', 30, '{"enabled":true}')
+            ->with($this->valueKey('item'), 30, '{"enabled":true}')
             ->willReturn(true);
         $cache = $this->cacheWithRedis($redis);
 
@@ -349,7 +349,12 @@ final class RedisCacheConfigurationTest extends TestCase
     public function testDeletePatternReturnsTrueWhenNoKeysExist(): void
     {
         $redis = $this->redisMock();
-        $redis->expects(self::once())->method('keys')->with('test:*')->willReturn([]);
+        $redis->expects(self::once())->method('scan')
+            ->willReturnCallback(static function (?int &$iterator): array {
+                $iterator = 0;
+                return [];
+            });
+        $redis->expects(self::never())->method('unlink');
         $redis->expects(self::never())->method('del');
         $cache = $this->cacheWithRedis($redis);
 
@@ -360,7 +365,7 @@ final class RedisCacheConfigurationTest extends TestCase
     {
         $redis = $this->redisMock();
         $redis->expects(self::once())
-            ->method('flushDB')
+            ->method('scan')
             ->willThrowException(new RedisException('connection lost'));
         $cache = $this->cacheWithRedis($redis);
 
@@ -375,7 +380,10 @@ final class RedisCacheConfigurationTest extends TestCase
             self::markTestSkipped('ext-redis is not installed.');
         }
 
-        return $this->createMock(Redis::class);
+        $redis = $this->createMock(Redis::class);
+        $redis->method('sMembers')->willReturn([]);
+        $redis->method('del')->willReturn(0);
+        return $redis;
     }
 
     private function cacheWithRedis(
@@ -388,6 +396,7 @@ final class RedisCacheConfigurationTest extends TestCase
         $cache = $reflection->newInstanceWithoutConstructor();
         $reflection->getProperty('redis')->setValue($cache, $redis);
         $reflection->getProperty('prefix')->setValue($cache, 'test:');
+        $reflection->getProperty('namespaceRoot')->setValue($cache, $this->namespaceRoot());
         $reflection->getProperty('circuitFailureThreshold')->setValue($cache, 3);
         $reflection->getProperty('circuitRecoverySeconds')->setValue($cache, 30);
         $reflection->getProperty('failOpen')->setValue($cache, $failOpen);
@@ -397,5 +406,20 @@ final class RedisCacheConfigurationTest extends TestCase
         $reflection->getProperty('observer')->setValue($cache, null);
 
         return $cache;
+    }
+
+    private function namespaceRoot(): string
+    {
+        return 'qb:v2:{' . hash('sha256', 'test:') . '}:';
+    }
+
+    private function valueKey(string $key): string
+    {
+        return $this->namespaceRoot() . 'value:' . $key;
+    }
+
+    private function lockKey(string $purpose, string $key): string
+    {
+        return $this->namespaceRoot() . 'lock:' . $purpose . ':' . $key;
     }
 }

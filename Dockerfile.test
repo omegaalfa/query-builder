@@ -1,0 +1,47 @@
+FROM php:8.4-cli-bookworm
+
+COPY --from=composer:2@sha256:d8f6343d3fae98107426bc49163ccad46ef85aabd4a27d80a74401fab4aba332 /usr/bin/composer /usr/local/bin/composer
+
+ARG REDIS_EXTENSION_VERSION=6.3.0
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        $PHPIZE_DEPS \
+        libicu-dev \
+        libonig-dev \
+        libpq-dev \
+        libsqlite3-dev \
+        libxml2-dev \
+        unzip \
+    && docker-php-ext-install -j"$(nproc)" \
+        dom \
+        intl \
+        mbstring \
+        pdo_mysql \
+        pdo_pgsql \
+        pdo_sqlite \
+        xml \
+        xmlwriter \
+    && pecl install "redis-${REDIS_EXTENSION_VERSION}" \
+    && docker-php-ext-enable redis \
+    && apt-get purge -y --auto-remove $PHPIZE_DEPS \
+    && rm -rf /var/lib/apt/lists/* /tmp/pear
+
+WORKDIR /workspace
+
+ENV COMPOSER_ROOT_VERSION=dev-main
+ENV QUERY_BUILDER_BENCHMARK_CONTAINER=1
+
+COPY composer.json composer.lock ./
+COPY benchmarks/composer.json benchmarks/composer.lock ./benchmarks/
+RUN mkdir -p src tests benchmarks \
+    && composer install --no-interaction --prefer-dist --no-progress \
+    && composer install --working-dir=benchmarks --no-interaction --prefer-dist --no-progress
+
+COPY .env.example ./.env
+COPY phpunit.xml phpstan.neon .php-cs-fixer.php infection.json5 ./
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY benchmarks/ ./benchmarks/
+
+CMD ["composer", "test"]

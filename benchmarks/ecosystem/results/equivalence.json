@@ -1,0 +1,604 @@
+{
+    "sqlite": {
+        "simple": {
+            "Omegaalfa": {
+                "sql": "SELECT \"id\", \"score\" FROM \"items\"",
+                "bindings": []
+            },
+            "Doctrine": {
+                "sql": "SELECT id, score FROM items",
+                "bindings": []
+            },
+            "Illuminate": {
+                "sql": "select \"id\", \"score\" from \"items\"",
+                "bindings": []
+            },
+            "Cycle": {
+                "sql": "SELECT \"id\", \"score\"\nFROM \"items\"",
+                "bindings": []
+            }
+        },
+        "filters": {
+            "Omegaalfa": {
+                "sql": "SELECT \"id\", \"score\" FROM \"items\" WHERE \"items\".\"score\" >= :param0 AND \"items\".\"score\" < :param1",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT id, score FROM items WHERE (items.score >= ?) AND (items.score < ?)",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select \"id\", \"score\" from \"items\" where \"items\".\"score\" >= ? and \"items\".\"score\" < ?",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT \"id\", \"score\"\nFROM \"items\"\nWHERE \"items\".\"score\" >= ? AND \"items\".\"score\" < ? ",
+                "bindings": [
+                    20,
+                    30
+                ]
+            }
+        },
+        "join": {
+            "Omegaalfa": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\" FROM \"items\" INNER JOIN \"bench_groups\" ON \"items\".\"group_id\" = \"bench_groups\".\"id\" WHERE \"items\".\"score\" >= :param0 AND \"items\".\"score\" < :param1",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT items.id, bench_groups.label FROM items INNER JOIN bench_groups bench_groups ON items.group_id = bench_groups.id WHERE (items.score >= ?) AND (items.score < ?)",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select \"items\".\"id\", \"bench_groups\".\"label\" from \"items\" inner join \"bench_groups\" on \"items\".\"group_id\" = \"bench_groups\".\"id\" where \"items\".\"score\" >= ? and \"items\".\"score\" < ?",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\"\nFROM \"items\" \nINNER JOIN \"bench_groups\"\n    ON \"items\".\"group_id\" = \"bench_groups\".\"id\"  \nWHERE \"items\".\"score\" >= ? AND \"items\".\"score\" < ? ",
+                "bindings": [
+                    20,
+                    30
+                ]
+            }
+        },
+        "complex": {
+            "Omegaalfa": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\" FROM \"items\" INNER JOIN \"bench_groups\" ON \"items\".\"group_id\" = \"bench_groups\".\"id\" WHERE \"items\".\"score\" >= :param0 AND \"items\".\"score\" < :param1 ORDER BY \"items\".\"id\" ASC LIMIT 10 OFFSET 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT items.id, bench_groups.label FROM items INNER JOIN bench_groups bench_groups ON items.group_id = bench_groups.id WHERE (items.score >= ?) AND (items.score < ?) ORDER BY items.id LIMIT 10 OFFSET 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select \"items\".\"id\", \"bench_groups\".\"label\" from \"items\" inner join \"bench_groups\" on \"items\".\"group_id\" = \"bench_groups\".\"id\" where \"items\".\"score\" >= ? and \"items\".\"score\" < ? order by \"items\".\"id\" asc limit 10 offset 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\"\nFROM \"items\" \nINNER JOIN \"bench_groups\"\n    ON \"items\".\"group_id\" = \"bench_groups\".\"id\"  \nWHERE \"items\".\"score\" >= ? AND \"items\".\"score\" < ? \nORDER BY \"items\".\"id\" ASC\nLIMIT ? OFFSET ?",
+                "bindings": [
+                    20,
+                    30,
+                    10,
+                    5
+                ]
+            }
+        },
+        "insert": {
+            "Omegaalfa": {
+                "sql": "INSERT INTO \"writes\" (\"id\", \"score\") VALUES (:param0, :param1)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Doctrine": {
+                "sql": "INSERT INTO writes (id, score) VALUES(?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Illuminate": {
+                "sql": "insert into \"writes\" (\"id\", \"score\") values (?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Cycle": {
+                "sql": "INSERT INTO \"writes\" (\"id\", \"score\") VALUES (?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            }
+        },
+        "update": {
+            "Omegaalfa": {
+                "sql": "UPDATE \"writes\" SET \"score\" = :param0 WHERE \"id\" = :param1",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Doctrine": {
+                "sql": "UPDATE writes SET score = ? WHERE id = ?",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Illuminate": {
+                "sql": "update \"writes\" set \"score\" = ? where \"id\" = ?",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Cycle": {
+                "sql": "UPDATE \"writes\"\nSET \"score\" = ?\nWHERE \"id\" = ? ",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            }
+        },
+        "delete": {
+            "Omegaalfa": {
+                "sql": "DELETE FROM \"writes\" WHERE \"id\" = :param0",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Doctrine": {
+                "sql": "DELETE FROM writes WHERE id = ?",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Illuminate": {
+                "sql": "delete from \"writes\" where \"id\" = ?",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Cycle": {
+                "sql": "DELETE FROM \"writes\"\nWHERE \"id\" = ? ",
+                "bindings": [
+                    20001
+                ]
+            }
+        }
+    },
+    "unsupported": {
+        "sqlite": {
+            "Cycle": {
+                "batch_1000": "Native batch generates compound SELECT exceeding SQLite limit; reproduced, no custom chunking applied.",
+                "batch_10000": "Native batch generates compound SELECT exceeding SQLite limit; reproduced, no custom chunking applied."
+            }
+        }
+    },
+    "mysql": {
+        "simple": {
+            "Omegaalfa": {
+                "sql": "SELECT `id`, `score` FROM `items`",
+                "bindings": []
+            },
+            "Doctrine": {
+                "sql": "SELECT id, score FROM items",
+                "bindings": []
+            },
+            "Illuminate": {
+                "sql": "select `id`, `score` from `items`",
+                "bindings": []
+            },
+            "Cycle": {
+                "sql": "SELECT `id`, `score`\nFROM `items`",
+                "bindings": []
+            }
+        },
+        "filters": {
+            "Omegaalfa": {
+                "sql": "SELECT `id`, `score` FROM `items` WHERE `items`.`score` >= :param0 AND `items`.`score` < :param1",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT id, score FROM items WHERE (items.score >= ?) AND (items.score < ?)",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select `id`, `score` from `items` where `items`.`score` >= ? and `items`.`score` < ?",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT `id`, `score`\nFROM `items`\nWHERE `items`.`score` >= ? AND `items`.`score` < ? ",
+                "bindings": [
+                    20,
+                    30
+                ]
+            }
+        },
+        "join": {
+            "Omegaalfa": {
+                "sql": "SELECT `items`.`id`, `bench_groups`.`label` FROM `items` INNER JOIN `bench_groups` ON `items`.`group_id` = `bench_groups`.`id` WHERE `items`.`score` >= :param0 AND `items`.`score` < :param1",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT items.id, bench_groups.label FROM items INNER JOIN bench_groups bench_groups ON items.group_id = bench_groups.id WHERE (items.score >= ?) AND (items.score < ?)",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select `items`.`id`, `bench_groups`.`label` from `items` inner join `bench_groups` on `items`.`group_id` = `bench_groups`.`id` where `items`.`score` >= ? and `items`.`score` < ?",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT `items`.`id`, `bench_groups`.`label`\nFROM `items` \nINNER JOIN `bench_groups`\n    ON `items`.`group_id` = `bench_groups`.`id`  \nWHERE `items`.`score` >= ? AND `items`.`score` < ? ",
+                "bindings": [
+                    20,
+                    30
+                ]
+            }
+        },
+        "complex": {
+            "Omegaalfa": {
+                "sql": "SELECT `items`.`id`, `bench_groups`.`label` FROM `items` INNER JOIN `bench_groups` ON `items`.`group_id` = `bench_groups`.`id` WHERE `items`.`score` >= :param0 AND `items`.`score` < :param1 ORDER BY `items`.`id` ASC LIMIT 5 , 10",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT items.id, bench_groups.label FROM items INNER JOIN bench_groups bench_groups ON items.group_id = bench_groups.id WHERE (items.score >= ?) AND (items.score < ?) ORDER BY items.id LIMIT 10 OFFSET 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select `items`.`id`, `bench_groups`.`label` from `items` inner join `bench_groups` on `items`.`group_id` = `bench_groups`.`id` where `items`.`score` >= ? and `items`.`score` < ? order by `items`.`id` asc limit 10 offset 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT `items`.`id`, `bench_groups`.`label`\nFROM `items` \nINNER JOIN `bench_groups`\n    ON `items`.`group_id` = `bench_groups`.`id`  \nWHERE `items`.`score` >= ? AND `items`.`score` < ? \nORDER BY `items`.`id` ASC\nLIMIT ? OFFSET ?",
+                "bindings": [
+                    20,
+                    30,
+                    10,
+                    5
+                ]
+            }
+        },
+        "insert": {
+            "Omegaalfa": {
+                "sql": "INSERT INTO `writes` (`id`, `score`) VALUES (:param0, :param1)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Doctrine": {
+                "sql": "INSERT INTO writes (id, score) VALUES(?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Illuminate": {
+                "sql": "insert into `writes` (`id`, `score`) values (?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Cycle": {
+                "sql": "INSERT INTO `writes` (`id`, `score`) VALUES (?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            }
+        },
+        "update": {
+            "Omegaalfa": {
+                "sql": "UPDATE `writes` SET `score` = :param0 WHERE `id` = :param1",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Doctrine": {
+                "sql": "UPDATE writes SET score = ? WHERE id = ?",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Illuminate": {
+                "sql": "update `writes` set `score` = ? where `id` = ?",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Cycle": {
+                "sql": "UPDATE `writes`\nSET `score` = ?\nWHERE `id` = ? ",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            }
+        },
+        "delete": {
+            "Omegaalfa": {
+                "sql": "DELETE FROM `writes` WHERE `id` = :param0",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Doctrine": {
+                "sql": "DELETE FROM writes WHERE id = ?",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Illuminate": {
+                "sql": "delete from `writes` where `id` = ?",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Cycle": {
+                "sql": "DELETE FROM `writes`\nWHERE `id` = ? ",
+                "bindings": [
+                    20001
+                ]
+            }
+        }
+    },
+    "pgsql": {
+        "simple": {
+            "Omegaalfa": {
+                "sql": "SELECT \"id\", \"score\" FROM \"items\"",
+                "bindings": []
+            },
+            "Doctrine": {
+                "sql": "SELECT id, score FROM items",
+                "bindings": []
+            },
+            "Illuminate": {
+                "sql": "select \"id\", \"score\" from \"items\"",
+                "bindings": []
+            },
+            "Cycle": {
+                "sql": "SELECT \"id\", \"score\"\nFROM \"items\"",
+                "bindings": []
+            }
+        },
+        "filters": {
+            "Omegaalfa": {
+                "sql": "SELECT \"id\", \"score\" FROM \"items\" WHERE \"items\".\"score\" >= :param0 AND \"items\".\"score\" < :param1",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT id, score FROM items WHERE (items.score >= ?) AND (items.score < ?)",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select \"id\", \"score\" from \"items\" where \"items\".\"score\" >= ? and \"items\".\"score\" < ?",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT \"id\", \"score\"\nFROM \"items\"\nWHERE \"items\".\"score\" >= ? AND \"items\".\"score\" < ? ",
+                "bindings": [
+                    20,
+                    30
+                ]
+            }
+        },
+        "join": {
+            "Omegaalfa": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\" FROM \"items\" INNER JOIN \"bench_groups\" ON \"items\".\"group_id\" = \"bench_groups\".\"id\" WHERE \"items\".\"score\" >= :param0 AND \"items\".\"score\" < :param1",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT items.id, bench_groups.label FROM items INNER JOIN bench_groups bench_groups ON items.group_id = bench_groups.id WHERE (items.score >= ?) AND (items.score < ?)",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select \"items\".\"id\", \"bench_groups\".\"label\" from \"items\" inner join \"bench_groups\" on \"items\".\"group_id\" = \"bench_groups\".\"id\" where \"items\".\"score\" >= ? and \"items\".\"score\" < ?",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\"\nFROM \"items\" \nINNER JOIN \"bench_groups\"\n    ON \"items\".\"group_id\" = \"bench_groups\".\"id\"  \nWHERE \"items\".\"score\" >= ? AND \"items\".\"score\" < ? ",
+                "bindings": [
+                    20,
+                    30
+                ]
+            }
+        },
+        "complex": {
+            "Omegaalfa": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\" FROM \"items\" INNER JOIN \"bench_groups\" ON \"items\".\"group_id\" = \"bench_groups\".\"id\" WHERE \"items\".\"score\" >= :param0 AND \"items\".\"score\" < :param1 ORDER BY \"items\".\"id\" ASC LIMIT 10 OFFSET 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Doctrine": {
+                "sql": "SELECT items.id, bench_groups.label FROM items INNER JOIN bench_groups bench_groups ON items.group_id = bench_groups.id WHERE (items.score >= ?) AND (items.score < ?) ORDER BY items.id LIMIT 10 OFFSET 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Illuminate": {
+                "sql": "select \"items\".\"id\", \"bench_groups\".\"label\" from \"items\" inner join \"bench_groups\" on \"items\".\"group_id\" = \"bench_groups\".\"id\" where \"items\".\"score\" >= ? and \"items\".\"score\" < ? order by \"items\".\"id\" asc limit 10 offset 5",
+                "bindings": [
+                    20,
+                    30
+                ]
+            },
+            "Cycle": {
+                "sql": "SELECT \"items\".\"id\", \"bench_groups\".\"label\"\nFROM \"items\" \nINNER JOIN \"bench_groups\"\n    ON \"items\".\"group_id\" = \"bench_groups\".\"id\"  \nWHERE \"items\".\"score\" >= ? AND \"items\".\"score\" < ? \nORDER BY \"items\".\"id\" ASC\nLIMIT ? OFFSET ?",
+                "bindings": [
+                    20,
+                    30,
+                    10,
+                    5
+                ]
+            }
+        },
+        "insert": {
+            "Omegaalfa": {
+                "sql": "INSERT INTO \"writes\" (\"id\", \"score\") VALUES (:param0, :param1)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Doctrine": {
+                "sql": "INSERT INTO writes (id, score) VALUES(?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Illuminate": {
+                "sql": "insert into \"writes\" (\"id\", \"score\") values (?, ?)",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            },
+            "Cycle": {
+                "sql": "INSERT INTO \"writes\" (\"id\", \"score\") VALUES (?, ?) RETURNING \"id\"",
+                "bindings": [
+                    20001,
+                    7
+                ]
+            }
+        },
+        "update": {
+            "Omegaalfa": {
+                "sql": "UPDATE \"writes\" SET \"score\" = :param0 WHERE \"id\" = :param1",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Doctrine": {
+                "sql": "UPDATE writes SET score = ? WHERE id = ?",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Illuminate": {
+                "sql": "update \"writes\" set \"score\" = ? where \"id\" = ?",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            },
+            "Cycle": {
+                "sql": "UPDATE \"writes\"\nSET \"score\" = ?\nWHERE \"id\" = ? ",
+                "bindings": [
+                    7,
+                    20001
+                ]
+            }
+        },
+        "delete": {
+            "Omegaalfa": {
+                "sql": "DELETE FROM \"writes\" WHERE \"id\" = :param0",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Doctrine": {
+                "sql": "DELETE FROM writes WHERE id = ?",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Illuminate": {
+                "sql": "delete from \"writes\" where \"id\" = ?",
+                "bindings": [
+                    20001
+                ]
+            },
+            "Cycle": {
+                "sql": "DELETE FROM \"writes\"\nWHERE \"id\" = ? ",
+                "bindings": [
+                    20001
+                ]
+            }
+        }
+    }
+}

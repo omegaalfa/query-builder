@@ -16,6 +16,8 @@ use PHPUnit\Framework\TestCase;
 
 final class PgVectorIntegrationTest extends TestCase
 {
+    private DatabaseSettings $settings;
+
     private PDOConnection $connection;
     private QueryBuilder $builder;
     private PDO $pdo;
@@ -28,14 +30,15 @@ final class PgVectorIntegrationTest extends TestCase
 
         EnvLoader::load(dirname(__DIR__, 2), required: true);
 
-        $this->connection = new PDOConnection(new DatabaseSettings(
+        $this->settings = new DatabaseSettings(
             driver: 'pgsql',
             host: EnvLoader::get('PGVECTOR_HOST', '127.0.0.1'),
             database: EnvLoader::require('PGVECTOR_DATABASE'),
             port: EnvLoader::getInt('PGVECTOR_PORT', 54329) ?? 54329,
             username: EnvLoader::require('PGVECTOR_USERNAME'),
             password: EnvLoader::require('PGVECTOR_PASSWORD'),
-        ));
+        );
+        $this->connection = new PDOConnection($this->settings);
         $this->connection->connect();
         $this->pdo = $this->connection->pdo();
         $this->pdo->exec('CREATE EXTENSION IF NOT EXISTS vector');
@@ -80,8 +83,8 @@ final class PgVectorIntegrationTest extends TestCase
                 ->where('tenant_id', '=', 1)
                 ->limit(2);
             $sql = $query->getQuerySql();
-            self::assertSame(1, substr_count($sql, ':expr0'));
-            self::assertSame(1, substr_count($sql, ':expr1'));
+            self::assertSame(1, substr_count($sql, ':param0'));
+            self::assertSame(1, substr_count($sql, ':param1'));
             $rows = iterator_to_array($query->execute(true)->data, false);
             self::assertCount(2, $rows);
             self::assertLessThanOrEqual((float) $rows[1]['distance'], (float) $rows[0]['distance']);
@@ -96,7 +99,10 @@ final class PgVectorIntegrationTest extends TestCase
             ->nearestNeighbors('embedding', [1, 0, 0])->limit(2)->explain();
         self::assertNotEmpty($explain);
 
-        $streamed = $this->builder->select('documents', ['id'])
+        $streamConnection = new PDOConnection($this->settings);
+        $streamConnection->setBufferedQuery(false);
+        $streamBuilder = new QueryBuilder($streamConnection);
+        $streamed = $streamBuilder->select('documents', ['id'])
             ->nearestNeighbors('embedding', [1, 0, 0])->limit(2)->execute(false);
         self::assertInstanceOf(Generator::class, $streamed->data);
         self::assertCount(2, iterator_to_array($streamed->data, false));

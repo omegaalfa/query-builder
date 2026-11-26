@@ -7,6 +7,7 @@ namespace Omegaalfa\QueryBuilder\Connection;
 use Omegaalfa\QueryBuilder\DatabaseSettings;
 use Omegaalfa\QueryBuilder\Exceptions\DatabaseException;
 use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
+use Omegaalfa\QueryBuilder\Internal\TransactionalCacheDependencyRegistry;
 use PDO;
 use Pdo\Mysql;
 use PDOException;
@@ -38,7 +39,7 @@ final class PDOConnection implements ConnectionInterface
             'search_path' => true,
         ],
         'sqlite' => [
-            'savepoints' => false,
+            'savepoints' => true,
             'foreign_keys' => true,
             'wal' => true,
         ],
@@ -56,6 +57,8 @@ final class PDOConnection implements ConnectionInterface
      */
     /** @var array<int, string> */
     private array $savepoints = [];
+
+    private ?string $sqliteSavepointPrefix = null;
     /**
      * @var bool
      */
@@ -72,6 +75,9 @@ final class PDOConnection implements ConnectionInterface
      */
     public function __construct(protected DatabaseSettings $dbSettings)
     {
+        if ($this->dbSettings->driver === 'sqlite') {
+            $this->sqliteSavepointPrefix = 'SAVEPOINT_' . bin2hex(random_bytes(16)) . '_';
+        }
     }
 
     /**
@@ -121,7 +127,28 @@ final class PDOConnection implements ConnectionInterface
             $this->commit();
             return $result;
         } catch (Throwable $e) {
-            $this->rollBack();
+            try {
+                $this->rollBack();
+            } catch (Throwable $rollbackException) {
+                if ($this->dbSettings->driver !== 'sqlite') {
+                    throw $rollbackException;
+                }
+
+                $failureContext = new \Omegaalfa\QueryBuilder\Internal\RollbackFailureContext(
+                    $e,
+                    $rollbackException,
+                );
+                throw new DatabaseException(
+                    message: sprintf(
+                        'SQLite transaction rollback failed; the transaction may contain partial changes. Original failure: %s. %s',
+                        $e->getMessage(),
+                        $failureContext->getMessage(),
+                    ),
+                    code: (int) $rollbackException->getCode(),
+                    previousException: $failureContext,
+                );
+            }
+
             throw new DatabaseException(
                 message: "Transaction failed: {$e->getMessage()}",
                 code: (int)$e->getCode(),
@@ -214,6 +241,7 @@ final class PDOConnection implements ConnectionInterface
         $this->connection = null;
         $this->transactionLevel = 0;
         $this->savepoints = [];
+        TransactionalCacheDependencyRegistry::reset($this);
     }
 
     /**
@@ -504,6 +532,7 @@ final class PDOConnection implements ConnectionInterface
                 $result = $pdo->beginTransaction();
                 if ($result) {
                     $this->transactionLevel++;
+                    TransactionalCacheDependencyRegistry::beginLevel($this, $this->transactionLevel);
                 }
                 return $result;
             } catch (PDOException $e) {
@@ -521,12 +550,15 @@ final class PDOConnection implements ConnectionInterface
             );
         }
 
-        $savepoint = 'SAVEPOINT_' . $this->transactionLevel;
+        $savepoint = $this->dbSettings->driver === 'sqlite'
+            ? $this->sqliteSavepointPrefix . $this->transactionLevel
+            : 'SAVEPOINT_' . $this->transactionLevel;
 
         try {
             $pdo->exec("SAVEPOINT $savepoint");
             $this->savepoints[] = $savepoint;
             $this->transactionLevel++;
+            TransactionalCacheDependencyRegistry::beginLevel($this, $this->transactionLevel);
         } catch (PDOException $e) {
             throw new DatabaseException(
                 "Failed to create savepoint: {$e->getMessage()}",
@@ -593,10 +625,12 @@ final class PDOConnection implements ConnectionInterface
                 $result = $pdo->commit();
                 if ($result) {
                     $this->transactionLevel = 0;
+                    TransactionalCacheDependencyRegistry::commitOutermost($this);
                 }
                 return $result;
             }
 
+            $level = $this->transactionLevel;
             $savepoint = $this->savepoints[count($this->savepoints) - 1] ?? null;
             if ($savepoint === null) {
                 throw new DatabaseException('Transaction savepoint state is inconsistent.');
@@ -604,6 +638,7 @@ final class PDOConnection implements ConnectionInterface
             $pdo->exec("RELEASE SAVEPOINT $savepoint");
             array_pop($this->savepoints);
             $this->transactionLevel--;
+            TransactionalCacheDependencyRegistry::releaseLevel($this, $level, $level - 1);
 
         } catch (PDOException $e) {
             throw new DatabaseException(
@@ -639,17 +674,21 @@ final class PDOConnection implements ConnectionInterface
                 if ($result) {
                     $this->savepoints = [];
                     $this->transactionLevel = 0;
+                    TransactionalCacheDependencyRegistry::rollbackLevel($this, 1, true);
                 }
                 return $result;
             }
 
+            $level = $this->transactionLevel;
             $savepoint = $this->savepoints[count($this->savepoints) - 1] ?? null;
             if ($savepoint === null) {
                 throw new DatabaseException('Transaction savepoint state is inconsistent.');
             }
             $pdo->exec("ROLLBACK TO SAVEPOINT $savepoint");
+            $pdo->exec("RELEASE SAVEPOINT $savepoint");
             array_pop($this->savepoints);
             $this->transactionLevel--;
+            TransactionalCacheDependencyRegistry::rollbackLevel($this, $level, false);
 
         } catch (PDOException $e) {
             throw new DatabaseException(

@@ -54,6 +54,32 @@ class QueryBuilderOperations implements QueryBuilderInterface
     /** @var list<string> */
     protected array $insertColumns = [];
 
+    protected bool $batchInsert = false;
+
+    /** @internal True only for SELECT operations built through structured read APIs. */
+    protected bool $cacheEligibleRead = false;
+
+    /** @internal Structured operation intent used for cache invalidation. */
+    protected ?string $operationType = null;
+
+    /**
+     * @internal
+     * @var list<string>
+     */
+    protected array $cacheTableDependencies = [];
+
+    /** @internal */
+    protected bool $cacheDependenciesIdentifiable = true;
+
+    /**
+     * @internal
+     * @var array<int, array<string, mixed>>|null Original SQLite batch rows while bindings are deferred.
+     */
+    protected ?array $sqliteBatchRows = null;
+
+    /** @internal Enables positional bindings only for an executing SQLite/MySQL batch. */
+    protected bool $batchPositionalExecution = false;
+
     /** @var list<string>|null */
     protected ?array $conflictColumns = null;
 
@@ -71,6 +97,14 @@ class QueryBuilderOperations implements QueryBuilderInterface
     protected array $sql = [];
 
     protected ?SqlCompilationContext $compilationContext = null;
+
+    protected int $ctePlaceholderCounter = 0;
+
+    /** @var array<string, mixed> */
+    protected array $cteParams = [];
+
+    /** @var array<int|string, mixed>|null */
+    protected ?array $compiledQueryParams = null;
 
 
     /**
@@ -111,12 +145,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function with(string $alias, Closure|string|QueryBuilderInterface $query, array $params = []): self
     {
+        $this->cacheEligibleRead = false;
         $this->assertSafeCteAlias($alias);
         $subquery = $query instanceof Closure ? $query(new self()) : $query;
         if (is_string($subquery)) {
-            $builder = new self();
-            $builder->raw($subquery, $params);
-            $subquery = $builder;
+            $subquery = $this->createCteRawBuilder($subquery, $params);
         }
 
         if (!$subquery instanceof self) {
@@ -125,9 +158,17 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
         $subquery->driver = $this->driver;
         $sql = $subquery->getQuerySql();
-        foreach ($subquery->params as $placeholder => $value) {
-            $replacement = $this->bindValue($value);
-            $sql = str_replace($placeholder, $replacement, $sql);
+        $placeholderMap = [];
+        foreach ($subquery->currentQueryParams() as $placeholder => $value) {
+            $internalPlaceholder = ':__cte' . $this->ctePlaceholderCounter++;
+            $placeholderMap[$placeholder] = $internalPlaceholder;
+            $this->cteParams[$internalPlaceholder] = $value;
+        }
+        if ($placeholderMap !== []) {
+            $sql = $this->replaceSqlPlaceholders(
+                $sql,
+                static fn (string $candidate): ?string => $placeholderMap[$candidate] ?? null,
+            );
         }
 
         $this->ctes[] = [
@@ -192,6 +233,7 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->sql = [
             'SELECT * FROM (' . $this->compileSubquery($subquery, $params) . ') AS ' . $this->table,
         ];
+        $this->cacheEligibleRead = false;
         return $this;
     }
 
@@ -273,7 +315,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function select(string $table, array $fields = ['*']): self
     {
         $this->resetOperationsState();
+        $this->cacheEligibleRead = true;
         $this->table = $this->quoteIdentifier($table);
+        $this->recordCacheTableDependency($table);
 
         // ✅ SECURITY FIX: Apply normalization/quoting to fields to prevent identifier injection
         // Uses normalizeField from HelperQueryOperationsTrait which allows functions/aliases but quotes identifiers
@@ -292,7 +336,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
     public function selectRaw(string $table, string|array $expressions): self
     {
         $this->resetOperationsState();
+        $this->cacheEligibleRead = true;
         $this->table = $this->quoteIdentifier($table);
+        $this->recordCacheTableDependency($table);
         $fields = is_array($expressions) ? $expressions : [$expressions];
         if ($fields === []) {
             throw new QueryException('selectRaw() requires at least one expression.');
@@ -313,15 +359,23 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->groupBy = [];
         $this->having = [];
         $this->table = null;
+        $this->cacheTableDependencies = [];
+        $this->cacheDependenciesIdentifiable = true;
         $this->limit = null;
         $this->paginationRequested = false;
         $this->cursorPagination = null;
         $this->insertColumns = [];
+        $this->batchInsert = false;
+        $this->cacheEligibleRead = false;
+        $this->operationType = null;
+        $this->sqliteBatchRows = null;
+        $this->batchPositionalExecution = false;
         $this->conflictColumns = null;
         $this->conflictActionDefined = false;
         $this->returnLastInsertIdRequested = false;
         $this->returningColumns = [];
         $this->params = [];
+        $this->compiledQueryParams = null;
         $this->whereGroups = [];
         $this->isOrGroup = false;
         $this->compilationContext = null;
@@ -342,6 +396,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $this->resetOperationsState();
         $this->table = $this->quoteIdentifier($table);
+        $this->recordCacheTableDependency($table);
+        $this->operationType = 'INSERT';
         $fields = array_keys($data);
         $this->insertColumns = $fields;
         $quotedFields = array_map([$this, 'quoteIdentifier'], $fields);
@@ -379,6 +435,9 @@ class QueryBuilderOperations implements QueryBuilderInterface
 
         $this->resetOperationsState();
         $this->table = $this->quoteIdentifier($table);
+        $this->recordCacheTableDependency($table);
+        $this->operationType = 'INSERT';
+        $this->batchInsert = true;
 
         // Pega colunas do primeiro registro
         $firstRow = reset($data);
@@ -392,14 +451,43 @@ class QueryBuilderOperations implements QueryBuilderInterface
             }
         }
 
+        if ($this->driver === 'sqlite') {
+            // Retain the row source; materialized bindings are created only when needed.
+            $this->sqliteBatchRows = $data;
+        }
+
         $quotedFields = array_map([$this, 'quoteIdentifier'], $fields);
+
+        if ($this->driver === 'sqlite') {
+            foreach ($data as $row) {
+                foreach ($fields as $field) {
+                    $value = $row[$field];
+                    if ($value instanceof DatabaseValueInterface) {
+                        $this->valueSql(':param', $value);
+                    }
+                }
+            }
+            $this->sql = ['INSERT INTO', $this->table, '(' . implode(', ', $quotedFields) . ')', 'VALUES'];
+            return $this;
+        }
 
         // Constrói placeholders
         $valueSets = [];
+        $parameterIndex = 0;
         foreach ($data as $rowIndex => $row) {
             $placeholders = [];
             foreach ($fields as $field) {
-                $param = $this->bindValue($row[$field]);
+                if ($this->driver === 'sqlite') {
+                    $value = $row[$field];
+                    if ($value instanceof DatabaseValueInterface && !$value->supportsDriver($this->driver)) {
+                        throw new UnsupportedDatabaseFeatureException(
+                            sprintf('%s is not supported by the %s driver.', $value::class, $this->driver),
+                        );
+                    }
+                    $param = ':param' . $parameterIndex++;
+                } else {
+                    $param = $this->bindValue($row[$field]);
+                }
                 $placeholders[] = $this->valueSql($param, $row[$field]);
             }
             $valueSets[] = '(' . implode(', ', $placeholders) . ')';
@@ -414,6 +502,100 @@ class QueryBuilderOperations implements QueryBuilderInterface
         ];
 
         return $this;
+    }
+
+    /**
+     * Materializes bindings for the current operation without retaining a second SQLite batch representation.
+     *
+     * @return array<int|string, mixed>
+     */
+    protected function currentQueryParams(): array
+    {
+        if ($this->compiledQueryParams !== null) {
+            return $this->compiledQueryParams;
+        }
+
+        if ($this->sqliteBatchRows === null) {
+            return $this->cteParams + $this->params;
+        }
+
+        $params = [];
+        $parameterIndex = 0;
+        foreach ($this->sqliteBatchRows as $row) {
+            foreach ($this->insertColumns as $field) {
+                $params[':param' . $parameterIndex++] = $row[$field];
+            }
+        }
+
+        return $this->cteParams + $params;
+    }
+
+    /** @return array<int|string, mixed> */
+    protected function currentNamedQueryParams(): array
+    {
+        if (!$this->batchPositionalExecution) {
+            return $this->currentQueryParams();
+        }
+
+        if ($this->sqliteBatchRows === null) {
+            return $this->cteParams + $this->params;
+        }
+
+        $params = [];
+        $parameterIndex = 0;
+        foreach ($this->sqliteBatchRows as $row) {
+            foreach ($this->insertColumns as $field) {
+                $params[':param' . $parameterIndex++] = $row[$field];
+            }
+        }
+
+        return $this->cteParams + $params;
+    }
+
+    /**
+     * Compiles one SQLite batch range with an independent placeholder context.
+     *
+     * @internal
+     * @return array{sql: string, params: array<string, mixed>}
+     */
+    protected function compileSQLiteBatchChunk(int $offset, int $length): array
+    {
+        if ($this->driver !== 'sqlite' || !$this->batchInsert || $this->sqliteBatchRows === null) {
+            throw new QueryException('SQLite batch chunk compilation requires an active SQLite insertBatch().');
+        }
+        if ($offset < 0 || $length < 1 || $offset >= count($this->sqliteBatchRows)) {
+            throw new QueryException('SQLite batch chunk range is invalid.');
+        }
+
+        $rows = array_slice($this->sqliteBatchRows, $offset, $length);
+        $params = [];
+        $context = new SqlCompilationContext(
+            $params,
+            $this->driver,
+            fn (string $identifier): string => $this->quoteIdentifier($identifier),
+        );
+        $quotedFields = array_map([$this, 'quoteIdentifier'], $this->insertColumns);
+        $valueSets = [];
+
+        foreach ($rows as $row) {
+            $placeholders = [];
+            foreach ($this->insertColumns as $field) {
+                $placeholder = $context->bind($row[$field]);
+                $placeholders[] = $this->valueSql($placeholder, $row[$field]);
+            }
+            $valueSets[] = '(' . implode(', ', $placeholders) . ')';
+        }
+
+        return [
+            'sql' => implode(' ', [
+                'INSERT INTO',
+                $this->table,
+                '(' . implode(', ', $quotedFields) . ')',
+                'VALUES',
+                implode(', ', $valueSets),
+            ]),
+            'params' => $params,
+        ];
     }
 
     /**
@@ -437,17 +619,21 @@ class QueryBuilderOperations implements QueryBuilderInterface
         return $this;
     }
 
-    /**
-     * Adds a typed PostgreSQL RETURNING clause.
-     *
-     * @param list<string> $columns
-     */
+    /** @param list<string> $columns */
     public function returning(array $columns): self
     {
-        if ($this->driver !== 'pgsql') {
+        if ($this->driver === 'pgsql') {
+            $this->assertActiveInsert('returning');
+        } elseif ($this->driver === 'sqlite') {
+            $operation = $this->sql[0] ?? null;
+            $isSingleInsert = $this->insertColumns !== [] && !$this->batchInsert;
+            $isUpdateOrDelete = $operation === 'UPDATE' || $operation === 'DELETE FROM';
+            if (!$isSingleInsert && !$isUpdateOrDelete) {
+                throw new QueryException('returning() requires an active SQLite INSERT, UPDATE, or DELETE operation.');
+            }
+        } else {
             throw new UnsupportedDatabaseFeatureException('RETURNING is currently supported only by the pgsql driver.');
         }
-        $this->assertActiveInsert('returning');
         if ($this->returnLastInsertIdRequested) {
             throw new QueryException('returning() cannot be combined with returnLastInsertId().');
         }
@@ -471,8 +657,11 @@ class QueryBuilderOperations implements QueryBuilderInterface
      */
     public function onConflict(array $columns): self
     {
-        if ($this->driver !== 'pgsql') {
+        if ($this->driver !== 'pgsql' && $this->driver !== 'sqlite') {
             throw new UnsupportedDatabaseFeatureException('ON CONFLICT is currently supported only by the pgsql driver.');
+        }
+        if ($this->driver === 'sqlite' && $this->batchInsert) {
+            throw new UnsupportedDatabaseFeatureException('SQLite ON CONFLICT is not enabled for insertBatch().');
         }
         if ($this->insertColumns === []) {
             throw new QueryException('onConflict() requires an active insert or insertBatch operation.');
@@ -568,6 +757,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
         $this->resetOperationsState();
         $assignments = [];
         $this->table = $this->quoteIdentifier($table);
+        $this->recordCacheTableDependency($table);
+        $this->operationType = 'UPDATE';
         foreach ($data as $key => $value) {
             $param = $this->bindValue($value);
             $assignments[] = sprintf('%s = %s', $this->quoteIdentifier($key), $this->valueSql($param, $value));
@@ -587,6 +778,8 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $this->resetOperationsState();
         $this->table = $this->quoteIdentifier($table);
+        $this->recordCacheTableDependency($table);
+        $this->operationType = 'DELETE';
         $this->sql = ['DELETE FROM', $this->table];
         return $this;
     }
@@ -841,8 +1034,55 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $operator,
             $this->quoteIdentifier($refer)
         );
+        $this->recordCacheTableDependency($table);
 
         return $this;
+    }
+
+    /** @internal */
+    private function recordCacheTableDependency(string $table): void
+    {
+        $parts = preg_split('/\s+AS\s+/i', trim($table));
+        if ($parts === false || count($parts) > 2) {
+            $this->cacheDependenciesIdentifiable = false;
+            return;
+        }
+        if (isset($parts[1]) && $this->decodeCacheIdentifierPart(trim($parts[1])) === null) {
+            $this->cacheDependenciesIdentifiable = false;
+            return;
+        }
+        $normalized = [];
+        foreach (explode('.', trim($parts[0])) as $part) {
+            $decoded = $this->decodeCacheIdentifierPart(trim($part));
+            if ($decoded === null) {
+                $this->cacheDependenciesIdentifiable = false;
+                return;
+            }
+            $normalized[] = strtolower($decoded);
+        }
+        if ($this->driver === 'sqlite' && count($normalized) > 1 && $normalized[0] === 'main') {
+            array_shift($normalized);
+        }
+        $dependency = implode('.', $normalized);
+        if (!in_array($dependency, $this->cacheTableDependencies, true)) {
+            $this->cacheTableDependencies[] = $dependency;
+        }
+    }
+
+    private function decodeCacheIdentifierPart(string $part): ?string
+    {
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_$]*$/D', $part) === 1) {
+            return $part;
+        }
+        foreach ([['"', '"'], ['`', '`']] as [$open, $close]) {
+            if (strlen($part) >= 2 && $part[0] === $open && substr($part, -1) === $close) {
+                $decoded = str_replace($open . $close, $close, substr($part, 1, -1));
+                if ($decoded !== '' && !str_contains($decoded, '.')) {
+                    return $decoded;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -1152,6 +1392,25 @@ class QueryBuilderOperations implements QueryBuilderInterface
     {
         $query = $this->sql;
 
+        $positionalBatchParams = null;
+        if ($this->driver === 'sqlite' && $this->batchInsert && $this->sqliteBatchRows !== null) {
+            $valueSets = [];
+            $parameterIndex = 0;
+            foreach ($this->sqliteBatchRows as $row) {
+                $placeholders = [];
+                foreach ($this->insertColumns as $field) {
+                    $value = $row[$field];
+                    $placeholder = $this->batchPositionalExecution ? '?' : ':param' . $parameterIndex++;
+                    $placeholders[] = $this->valueSql($placeholder, $row[$field]);
+                    if ($this->batchPositionalExecution) {
+                        $positionalBatchParams[] = $value;
+                    }
+                }
+                $valueSets[] = '(' . implode(', ', $placeholders) . ')';
+            }
+            $query[] = implode(', ', $valueSets);
+        }
+
         if ($this->joins) {
             $query[] = implode(' ', $this->joins);
         }
@@ -1205,6 +1464,88 @@ class QueryBuilderOperations implements QueryBuilderInterface
             )) . ' ' . $compiled;
         }
 
+        $operationParams = $this->sqliteBatchRows === null ? $this->params : $this->currentQueryParams();
+        if ($this->sqliteBatchRows !== null) {
+            $operationParams = array_diff_key($operationParams, $this->cteParams);
+        }
+        $sourceParams = $this->cteParams + $operationParams;
+        $compiledParams = [];
+
+        if ($this->batchPositionalExecution) {
+            $batchParams = $positionalBatchParams ?? [];
+            if ($this->sqliteBatchRows !== null && $this->cteParams === []) {
+                foreach ($batchParams as $index => $value) {
+                    $compiledParams[$index + 1] = $value;
+                }
+                $this->compiledQueryParams = $compiledParams;
+                return $compiled;
+            }
+
+            $batchIndex = 0;
+            $compiled = $this->replaceSqlPlaceholders(
+                $compiled,
+                function (string $placeholder) use ($batchParams, $sourceParams, &$batchIndex, &$compiledParams): ?string {
+                    if ($placeholder === '?') {
+                        $compiledParams[] = $batchParams[$batchIndex++] ?? null;
+                        return '?';
+                    }
+                    if (array_key_exists($placeholder, $sourceParams)) {
+                        $compiledParams[] = $sourceParams[$placeholder];
+                        return '?';
+                    }
+                    return null;
+                },
+            );
+            $compiledParams = $compiledParams === []
+                ? []
+                : array_combine(range(1, count($compiledParams)), $compiledParams);
+            $this->compiledQueryParams = $compiledParams;
+            return $compiled;
+        }
+
+        if ($sourceParams === []) {
+            $this->compiledQueryParams = $compiledParams;
+            return $compiled;
+        }
+
+        // Structured bindings already use the final internal :paramN names.
+        // CTEs still require scanning to remap their isolated parameters.
+        $canUseInternalBindingFastPath = $this->ctes === [];
+        if ($canUseInternalBindingFastPath) {
+            $sourcePlaceholders = array_keys($sourceParams);
+            $occurrences = [];
+            foreach ($sourcePlaceholders as $placeholder) {
+                $placeholder = (string) $placeholder;
+                if (substr_count($compiled, $placeholder) !== 1
+                    || ($position = strpos($compiled, $placeholder)) === false) {
+                    $canUseInternalBindingFastPath = false;
+                    break;
+                }
+                $occurrences[$position] = $placeholder;
+            }
+            if ($canUseInternalBindingFastPath) {
+                ksort($occurrences);
+                $canUseInternalBindingFastPath = array_values($occurrences) === $sourcePlaceholders;
+            }
+        }
+        if ($canUseInternalBindingFastPath) {
+            $this->compiledQueryParams = $sourceParams;
+            return $compiled;
+        }
+
+        $compiled = $this->replaceSqlPlaceholders(
+            $compiled,
+            function (string $placeholder) use ($sourceParams, &$compiledParams): ?string {
+                if (!array_key_exists($placeholder, $sourceParams)) {
+                    return null;
+                }
+                $compiledPlaceholder = ':param' . count($compiledParams);
+                $compiledParams[$compiledPlaceholder] = $sourceParams[$placeholder];
+                return $compiledPlaceholder;
+            },
+        );
+        $this->compiledQueryParams = $compiledParams;
+
         return $compiled;
     }
 
@@ -1215,5 +1556,217 @@ class QueryBuilderOperations implements QueryBuilderInterface
             $this->whereGroups = [];
             $this->isOrGroup = false;
         }
+    }
+
+    /** Clears only bindings and placeholders retained for completed CTEs. */
+    protected function clearCteBindings(): void
+    {
+        $this->ctes = [];
+        $this->cteParams = [];
+        $this->compiledQueryParams = null;
+        $this->ctePlaceholderCounter = 0;
+    }
+
+    /**
+     * Replaces SQL placeholders outside quoted text, identifiers and comments.
+     *
+     * @param callable(string): ?string $replacement
+     */
+    protected function replaceSqlPlaceholders(string $sql, callable $replacement): string
+    {
+        $result = '';
+        $state = 'normal';
+        $quote = '';
+        $quotedBackslashEscapes = false;
+        $length = strlen($sql);
+
+        for ($index = 0; $index < $length; $index++) {
+            if ($state === 'normal') {
+                $span = strcspn($sql, "'\"`[-/#?\$:", $index);
+                if ($span > 0) {
+                    $result .= substr($sql, $index, $span);
+                    $index += $span - 1;
+                    continue;
+                }
+            }
+
+            $character = $sql[$index];
+            $next = $sql[$index + 1] ?? '';
+
+            if ($state === 'line_comment') {
+                $result .= $character;
+                if ($character === "\n" || $character === "\r") {
+                    $state = 'normal';
+                }
+                continue;
+            }
+            if ($state === 'block_comment') {
+                $result .= $character;
+                if ($character === '*' && $next === '/') {
+                    $result .= $next;
+                    $index++;
+                    $state = 'normal';
+                }
+                continue;
+            }
+            if ($state === 'quoted') {
+                $result .= $character;
+                if ($character === '\\' && $next !== '' && $quotedBackslashEscapes) {
+                    $result .= $next;
+                    $index++;
+                    continue;
+                }
+                if ($quote === '[') {
+                    if ($character === ']') {
+                        if ($next === ']') {
+                            $result .= $next;
+                            $index++;
+                        } else {
+                            $state = 'normal';
+                        }
+                    }
+                    continue;
+                }
+                if ($character === $quote) {
+                    if ($next === $quote) {
+                        $result .= $next;
+                        $index++;
+                    } else {
+                        $state = 'normal';
+                    }
+                }
+                continue;
+            }
+
+            $dashComment = $character === '-' && $next === '-'
+                && ($this->driver !== 'mysql' || ($sql[$index + 2] ?? ' ') <= ' ');
+            $hashComment = $character === '#' && $this->driver === 'mysql';
+            if ($dashComment || $hashComment) {
+                $result .= $character . ($hashComment ? '' : $next);
+                if ($dashComment) {
+                    $index++;
+                }
+                $state = 'line_comment';
+                continue;
+            }
+            if ($character === '/' && $next === '*') {
+                $result .= '/*';
+                $index++;
+                $state = 'block_comment';
+                continue;
+            }
+            if ($character === "'" || $character === '"' || $character === '`' || $character === '[') {
+                $result .= $character;
+                $state = 'quoted';
+                $quote = $character;
+                $previous = $sql[$index - 1] ?? '';
+                $beforePrevious = $sql[$index - 2] ?? '';
+                $postgresEscapeString = $this->driver === 'pgsql'
+                    && $character === "'"
+                    && ($previous === 'E' || $previous === 'e')
+                    && ($beforePrevious === '' || preg_match('/[^A-Za-z0-9_]/', $beforePrevious) === 1);
+                $quotedBackslashEscapes = $this->driver === 'mysql' || $postgresEscapeString;
+                continue;
+            }
+            if ($character === '$' && $this->driver === 'pgsql') {
+                $delimiter = $this->postgresDollarQuoteDelimiter($sql, $index);
+                if ($delimiter !== null) {
+                    $result .= $delimiter;
+                    $index += strlen($delimiter) - 1;
+                    $end = strpos($sql, $delimiter, $index + 1);
+                    if ($end === false) {
+                        $result .= substr($sql, $index + 1);
+                        break;
+                    }
+                    $result .= substr($sql, $index + 1, $end - $index - 1) . $delimiter;
+                    $index = $end + strlen($delimiter) - 1;
+                    continue;
+                }
+            }
+
+            if ($character === '?') {
+                $result .= $replacement('?') ?? '?';
+                continue;
+            }
+            if ($character === ':' && $next !== ':' && $next !== '=' && ($sql[$index - 1] ?? '') !== ':') {
+                $isIdentifierStart = ($next >= 'A' && $next <= 'Z')
+                    || ($next >= 'a' && $next <= 'z')
+                    || $next === '_';
+                if ($isIdentifierStart) {
+                    $end = $index + 2;
+                    while ($end < $length) {
+                        $candidate = $sql[$end];
+                        if (!(($candidate >= 'A' && $candidate <= 'Z')
+                            || ($candidate >= 'a' && $candidate <= 'z')
+                            || ($candidate >= '0' && $candidate <= '9')
+                            || $candidate === '_')) {
+                            break;
+                        }
+                        $end++;
+                    }
+                    $placeholder = substr($sql, $index, $end - $index);
+                    $result .= $replacement($placeholder) ?? $placeholder;
+                    $index = $end - 1;
+                    continue;
+                }
+            }
+            $result .= $character;
+        }
+
+        return $result;
+    }
+
+    /** @return string|null */
+    private function postgresDollarQuoteDelimiter(string $sql, int $offset): ?string
+    {
+        $remaining = substr($sql, $offset);
+        return preg_match('/\A\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/', $remaining, $matches) === 1
+            ? $matches[0]
+            : null;
+    }
+
+    /**
+     * Builds a CTE from trusted SQL while binding only placeholders outside quoted text and comments.
+     * The public raw() method and its behavior are unchanged.
+     *
+     * @param array<int|string, mixed> $params
+     */
+    private function createCteRawBuilder(string $sql, array $params): self
+    {
+        $builder = new self();
+        $builder->driver = $this->driver;
+        $builder->sql = [$sql];
+
+        if ($params === []) {
+            return $builder;
+        }
+
+        if (array_is_list($params)) {
+            $parameterIndex = 0;
+            $builder->sql = [$this->replaceSqlPlaceholders(
+                $sql,
+                static function (string $placeholder) use ($builder, $params, &$parameterIndex): ?string {
+                    if ($placeholder !== '?') {
+                        return null;
+                    }
+                    return $builder->bindValue($params[$parameterIndex++] ?? null);
+                },
+            )];
+            return $builder;
+        }
+
+        $builder->sql = [$this->replaceSqlPlaceholders(
+            $sql,
+            static function (string $placeholder) use ($builder, $params): ?string {
+                if (!str_starts_with($placeholder, ':')) {
+                    return null;
+                }
+                $name = substr($placeholder, 1);
+                $key = array_key_exists($name, $params) ? $name : $placeholder;
+                return array_key_exists($key, $params) ? $builder->bindValue($params[$key]) : null;
+            },
+        )];
+
+        return $builder;
     }
 }

@@ -10,7 +10,11 @@ use Omegaalfa\QueryBuilder\Interfaces\DatabaseValueInterface;
 
 final class SqlCompilationContext
 {
-    /** @var array<string, mixed> */
+    /**
+     * Bindings are read by the caller through the constructor's reference.
+     * @var array<string, mixed>
+     * @phpstan-ignore property.onlyWritten
+     */
     private array $params;
 
     private int $counter = 0;
@@ -68,9 +72,7 @@ final class SqlCompilationContext
         }
 
         $placeholder = ':param' . $this->counter++;
-        $params = $this->params;
-        $params[$placeholder] = $value;
-        $this->params = $params;
+        $this->params[$placeholder] = $value;
         return $placeholder;
     }
 }

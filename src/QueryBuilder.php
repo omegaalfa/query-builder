@@ -5,17 +5,21 @@ declare(strict_types=1);
 
 namespace Omegaalfa\QueryBuilder;
 
+use Omegaalfa\QueryBuilder\Connection\PDOConnection;
 use Omegaalfa\QueryBuilder\Exceptions\DatabaseException;
 use Omegaalfa\QueryBuilder\Exceptions\QueryException;
+use Omegaalfa\QueryBuilder\Exceptions\UnsupportedDatabaseFeatureException;
 use Omegaalfa\QueryBuilder\Interfaces\CacheInterface;
 use Omegaalfa\QueryBuilder\Interfaces\ConnectionInterface;
 use Omegaalfa\QueryBuilder\Interfaces\DatabaseValueInterface;
 use Omegaalfa\QueryBuilder\Interfaces\PaginatorInterface;
 use Omegaalfa\QueryBuilder\Interfaces\QueryLoggerInterface;
+use Omegaalfa\QueryBuilder\Internal\RollbackFailureContext;
 use Omegaalfa\QueryBuilder\Traits\QueryBuilderCacheTrait;
 use PDO;
 use PDOException;
 use PDOStatement;
+use Throwable;
 
 final class QueryBuilder extends QueryBuilderOperations
 {
@@ -73,25 +77,41 @@ final class QueryBuilder extends QueryBuilderOperations
     {
         $sql = $this->getQuerySql();
 
-        if (!$withParams || empty($this->params)) {
+        if (!$withParams) {
             return $sql;
+        }
+
+        $params = $this->currentQueryParams();
+        if ($params === []) {
+            return $sql;
+        }
+        $formatValue = static function (mixed $value): string {
+            if ($value instanceof DatabaseValueInterface) {
+                $value = $value->value();
+            }
+            return match (true) {
+                is_null($value) => 'NULL',
+                is_bool($value) => $value ? '1' : '0',
+                is_int($value) || is_float($value) => (string) $value,
+                $value instanceof \DateTimeInterface => "'" . $value->format('Y-m-d H:i:s') . "'",
+                default => "'" . addslashes((string) $value) . "'",
+            };
+        };
+
+        if ($this->ctes !== []) {
+            return $this->replaceSqlPlaceholders(
+                $sql,
+                static fn (string $placeholder): ?string => array_key_exists($placeholder, $params)
+                    ? $formatValue($params[$placeholder])
+                    : null,
+            );
         }
 
         // Substitui placeholders por valores (APENAS PARA DEBUG!)
         $debugSql = $sql;
-        $params = $this->params;
         uksort($params, static fn (string $left, string $right): int => strlen($right) <=> strlen($left));
         foreach ($params as $param => $value) {
-            if ($value instanceof DatabaseValueInterface) {
-                $value = $value->value();
-            }
-            $replace = match (true) {
-                is_null($value) => 'NULL',
-                is_bool($value) => $value ? '1' : '0',
-                is_int($value) || is_float($value) => (string)$value,
-                $value instanceof \DateTimeInterface => "'" . $value->format('Y-m-d H:i:s') . "'",
-                default => "'" . addslashes((string)$value) . "'"
-            };
+            $replace = $formatValue($value);
 
             $debugSql = preg_replace_callback(
                 '/' . preg_quote($param, '/') . '(?![A-Za-z0-9_])/',
@@ -123,8 +143,9 @@ final class QueryBuilder extends QueryBuilderOperations
         try {
             $pdo = $this->connection->pdo(true);
             $stmt = $pdo->prepare($explainSql);
+            $params = $this->currentQueryParams();
 
-            foreach ($this->params as $param => $value) {
+            foreach ($params as $param => $value) {
                 if ($value instanceof DatabaseValueInterface) {
                     $stmt->bindValue($param, $value->value(), $value->pdoType());
                     continue;
@@ -162,8 +183,32 @@ final class QueryBuilder extends QueryBuilderOperations
      */
     public function execute(bool $bufferedQuery = true): QueryResultDTO
     {
+        $enableMysqlBatchPositionals = $this->driver === 'mysql'
+            && $this->batchInsert
+            && $this->insertColumns !== []
+            && count($this->params) > count($this->insertColumns);
+        if ($enableMysqlBatchPositionals) {
+            $this->batchPositionalExecution = true;
+        }
+
         try {
-            if ($cached = $this->getFromCache()) {
+            if (
+                $this->driver === 'sqlite'
+                && $this->batchInsert
+                && $this->sqliteBatchRows !== null
+                && $this->returningColumns === []
+            ) {
+                return $this->executeSQLiteBatchIncrementally($bufferedQuery);
+            }
+
+            $cacheEligible = $bufferedQuery
+                && $this->isCacheEligibleForCurrentQuery()
+                && $this->supportsReliableCacheInvalidation()
+                && !$this->hasActiveOrUnknownTransaction($bufferedQuery);
+            $cacheTags = $cacheEligible ? $this->cacheTagsForCurrentTable() : [];
+            if ($cacheEligible && ($cached = $this->getFromCache())) {
+                $this->consumeCacheTtl();
+                $this->clearCteBindings();
                 $this->resetOperationsState(preserveCacheKey: true);
                 return $cached;
             }
@@ -182,7 +227,10 @@ final class QueryBuilder extends QueryBuilderOperations
             $stmt = $this->prepareAndExecute($bufferedQuery);
             $count = $stmt->rowCount();
 
-            $isCacheEnabled = $this->cacheTtl > 0 && $this->cache !== null;
+            $isCacheEnabled = $cacheEligible
+                && $this->cacheTtl > 0
+                && $this->cache !== null
+                && !$this->hasActiveOrUnknownTransaction($bufferedQuery);
             $data = $this->streamData($stmt);
             if ($this->cursorPagination !== null) {
                 $rows = iterator_to_array($data, false);
@@ -222,18 +270,165 @@ final class QueryBuilder extends QueryBuilderOperations
             }
             if ($isCacheEnabled) {
                 $result = new QueryResultDTO(iterator_to_array($data, false), $count, $pagination, $this->insertId);
-                $this->saveToCache($result);
+                $this->saveToCache($result, $cacheTags);
+                $this->consumeCacheTtl();
+                $this->clearCteBindings();
                 return $result;
             }
 
-            return new QueryResultDTO($data, $count, $pagination, $this->insertId);
+            $result = new QueryResultDTO($data, $count, $pagination, $this->insertId);
+            $this->consumeCacheTtl();
+            $this->clearCteBindings();
+            return $result;
         } catch (PDOException $e) {
             throw new QueryException(
                 message: "Query execution failed: {$e->getMessage()}",
                 code: (int)$e->getCode(),
                 previousException: $e
             );
+        } finally {
+            if ($enableMysqlBatchPositionals) {
+                $this->batchPositionalExecution = false;
+            }
         }
+    }
+
+    private function executeSQLiteBatchIncrementally(bool $bufferedQuery): QueryResultDTO
+    {
+        $rows = $this->sqliteBatchRows ?? [];
+        $pdo = $this->connection->pdo($bufferedQuery);
+        $startedTransaction = false;
+        $count = 0;
+        $lastInsertId = false;
+        $offset = 0;
+        $rawSavepoint = null;
+
+        try {
+            if ($this->connection instanceof PDOConnection) {
+                if ($this->connection->getTransactionLevel() > 0) {
+                    $this->connection->beginTransaction();
+                    $startedTransaction = true;
+                } elseif (!$pdo->inTransaction()) {
+                    $this->connection->beginTransaction();
+                    $startedTransaction = true;
+                } else {
+                    $rawSavepoint = 'QB_BATCH_' . bin2hex(random_bytes(8));
+                    $pdo->exec('SAVEPOINT ' . $rawSavepoint);
+                }
+            }
+            while ($offset < count($rows)) {
+                $length = min(450, count($rows) - $offset);
+                $failure = null;
+                while (true) {
+                    $chunk = clone $this;
+                    $chunk->sqliteBatchRows = array_slice($rows, $offset, $length);
+                    // Keep the single-row fallback for drivers/adapters that report
+                    // SQLite variable-limit failures through named placeholders.
+                    $chunk->batchPositionalExecution = $length > 1;
+                    try {
+                        $statement = $chunk->prepareAndExecute($bufferedQuery);
+                        $count += $statement->rowCount();
+                        $lastInsertId = $chunk->insertId;
+                        break;
+                    } catch (PDOException $exception) {
+                        $tooManyVariables = str_contains(strtolower($exception->getMessage()), 'too many sql variables');
+                        if (!$tooManyVariables || $length <= 1) {
+                            if ($tooManyVariables && $length === 1) {
+                                $failure = new QueryException(
+                                    message: 'cannot prepare one insertBatch row: ' . $exception->getMessage(),
+                                    sql: $chunk->getQuerySql(),
+                                    bindings: $chunk->currentQueryParams(),
+                                    previousException: $exception,
+                                );
+                            } else {
+                                $failure = new QueryException(
+                                    message: 'Query execution failed: ' . $exception->getMessage(),
+                                    code: (int) $exception->getCode(),
+                                    previousException: $exception,
+                                );
+                            }
+                            break;
+                        }
+                        $length = max(1, intdiv($length, 2));
+                    }
+                }
+                if ($failure !== null) {
+                    if ($startedTransaction) {
+                        $rollbackException = $this->rollbackSQLiteBatchTransaction($pdo);
+                        if ($rollbackException !== null) {
+                            $context = new RollbackFailureContext($failure, $rollbackException);
+                            $startedTransaction = false;
+                            throw $this->sqliteBatchRollbackFailureException($context);
+                        }
+                        $startedTransaction = false;
+                    } elseif ($rawSavepoint !== null) {
+                        $pdo->exec('ROLLBACK TO SAVEPOINT ' . $rawSavepoint);
+                        $pdo->exec('RELEASE SAVEPOINT ' . $rawSavepoint);
+                    }
+                    throw $failure;
+                }
+                $offset += $length;
+            }
+
+            if ($startedTransaction) {
+                $commitException = $this->commitSQLiteBatchTransaction($pdo);
+                if ($commitException !== null) {
+                    throw new DatabaseException(
+                        'Transaction failed: ' . $commitException->getMessage(),
+                        (int) $commitException->getCode(),
+                        $commitException,
+                    );
+                }
+            } elseif ($rawSavepoint !== null) {
+                $pdo->exec('RELEASE SAVEPOINT ' . $rawSavepoint);
+            }
+
+            $this->insertId = $lastInsertId;
+            $result = new QueryResultDTO([], $count, null, $lastInsertId);
+            $this->consumeCacheTtl();
+            $this->clearCteBindings();
+            $this->resetOperationsState(preserveCacheKey: true);
+            return $result;
+        } catch (\Throwable $exception) {
+            if ($startedTransaction) {
+                $rollbackException = $this->rollbackSQLiteBatchTransaction($pdo);
+                if ($rollbackException !== null) {
+                    $context = new RollbackFailureContext($exception, $rollbackException);
+                    throw $this->sqliteBatchRollbackFailureException($context);
+                }
+            }
+            throw $exception;
+        }
+    }
+
+    private function rollbackSQLiteBatchTransaction(PDO $pdo): ?Throwable
+    {
+        try {
+            if ($this->connection instanceof PDOConnection) {
+                $this->connection->rollBack();
+            } else {
+                $pdo->rollBack();
+            }
+        } catch (\Throwable $exception) {
+            return $exception;
+        }
+
+        return null;
+    }
+
+    private function commitSQLiteBatchTransaction(PDO $pdo): ?Throwable
+    {
+        try {
+            if ($this->connection instanceof PDOConnection) {
+                $this->connection->commit();
+            } else {
+                $pdo->commit();
+            }
+        } catch (Throwable $exception) {
+            return $exception;
+        }
+
+        return null;
     }
 
     /**
@@ -249,10 +444,33 @@ final class QueryBuilder extends QueryBuilderOperations
         $sql = $this->getQuerySql();
         $captureInsertId = $this->returnLastInsertIdRequested;
         $this->insertId = false;
+        $params = [];
+        $logParams = [];
         try {
             $pdo = $this->connection->pdo($bufferedQuery);
+            $minimumSqliteVersion = null;
+            if ($this->driver === 'sqlite') {
+                $minimumSqliteVersion = match (true) {
+                    $this->returningColumns !== [] => '3.35.0',
+                    $this->conflictActionDefined => '3.24.0',
+                    default => null,
+                };
+            }
+            if ($minimumSqliteVersion !== null) {
+                $sqliteVersion = $pdo->query('SELECT sqlite_version()')->fetchColumn();
+                if (!is_string($sqliteVersion) || version_compare($sqliteVersion, $minimumSqliteVersion, '<')) {
+                    $feature = $this->returningColumns !== [] ? 'RETURNING' : 'UPSERT';
+                    throw new UnsupportedDatabaseFeatureException(
+                        sprintf('SQLite %s requires SQLite %s or newer.', $feature, $minimumSqliteVersion)
+                    );
+                }
+            }
+            $params = $this->currentQueryParams();
+            $logParams = $this->batchPositionalExecution
+                ? $this->currentNamedQueryParams()
+                : $params;
             $stmt = $pdo->prepare($sql);
-            foreach ($this->params as $param => $value) {
+            foreach ($params as $param => $value) {
                 if ($value instanceof DatabaseValueInterface) {
                     $stmt->bindValue($param, $value->value(), $value->pdoType());
                     continue;
@@ -309,20 +527,21 @@ final class QueryBuilder extends QueryBuilderOperations
 
             if ($this->logger) {
                 $duration = microtime(true) - $startTime;
-                $this->logger->logQuery($sql, $this->params, $duration, $stmt->rowCount());
+                $this->logger->logQuery($sql, $logParams, $duration, $stmt->rowCount());
             }
 
-            if (str_starts_with(strtoupper(ltrim($sql)), 'INSERT')
+            if ($this->operationType !== null
+                || str_starts_with(strtoupper(ltrim($sql)), 'INSERT')
                 || str_starts_with(strtoupper(ltrim($sql)), 'UPDATE')
                 || str_starts_with(strtoupper(ltrim($sql)), 'DELETE')) {
-                $this->invalidateCacheTags();
+                $this->invalidateCacheTags($bufferedQuery);
             }
 
             $this->resetOperationsState(preserveCacheKey: true);
 
             return $stmt;
         } catch (\PDOException $e) {
-            $this->logger?->logError($sql, $this->params, $e);
+            $this->logger?->logError($sql, $logParams, $e);
             throw $e;
         }
 
@@ -455,6 +674,7 @@ final class QueryBuilder extends QueryBuilderOperations
         $aggregate = clone $this;
         $aggregate->sql[1] = sprintf('%s(%s) AS %s', $function, $aggregate->quoteIdentifier($column), $alias);
         $result = $aggregate->execute();
+        $this->clearCteBindings();
         $data = is_array($result->data) ? $result->data : iterator_to_array($result->data);
 
         return $data[0][$alias] ?? null;
@@ -465,5 +685,23 @@ final class QueryBuilder extends QueryBuilderOperations
         if (($this->sql[0] ?? null) !== 'SELECT' || !array_key_exists(1, $this->sql)) {
             throw new QueryException('Aggregate methods require a query created with select(); raw() queries are not supported.');
         }
+    }
+
+    private function sqliteBatchRollbackFailureException(
+        \Omegaalfa\QueryBuilder\Internal\RollbackFailureContext $context,
+    ): \Throwable {
+        $originalFailure = $context->getOriginalFailure();
+        $rollbackFailure = $context->getRollbackFailure();
+        $message = sprintf(
+            'SQLite batch failed and rollback was not confirmed; the enclosing transaction may contain partial changes. Original failure: %s. Rollback failure: %s',
+            $originalFailure->getMessage(),
+            $rollbackFailure->getMessage(),
+        );
+
+        return new DatabaseException(
+            message: $message,
+            code: (int) $rollbackFailure->getCode(),
+            previousException: $context,
+        );
     }
 }
